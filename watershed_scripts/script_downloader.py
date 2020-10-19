@@ -4,7 +4,6 @@ import sys
 import urllib
 import glob
 from shutil import copyfile
-#import usace
 from usace.cavi.script import CAVI
 import hec2
 from com.rma.model import Project
@@ -16,9 +15,6 @@ import tempfile, shutil
 import json	
 import zipfile
 import webbrowser
-
-import distutils
-from distutils import dir_util
 
 cwms_home = os.getcwd()
 watershed_path = Project.getCurrentProject().getProjectDirectory()
@@ -113,10 +109,6 @@ def script_downloader(remote_repo, selection, appConfig):
 			else:
 				print 'Skipping download of config file: {}'.format(fname)
 
-
-	
-	
-	print('-----------------')
 	
 	try:
 		temp_dir = tempfile.mkdtemp()
