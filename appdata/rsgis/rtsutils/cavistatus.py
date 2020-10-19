@@ -44,6 +44,15 @@ def get_database_directory():
     _list.append('database')
     return os.sep.join(_list)
 
+def get_shared_directory():
+    '''
+    Return java.lang.String
+
+    Get the open watershed and return its project's shared directory
+    '''
+    _dir = get_project_directory()
+    return os.sep.join([_dir, "shared"])
+
 def get_data_timewindow():
     '''
     Return (java.lang.String StartTime, java.lang.String EndTime)
