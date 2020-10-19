@@ -4,7 +4,7 @@
 			"remote_dir":"watershed_scripts",
 			"filename":"cwms_radar.py",
 			"update_libs":true,
-			"help_url": "https://github.com/usace/rts-utils-test/blob/master/CWMSRADAR.md",
+			"help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/CWMSRADAR.md",
 			"config_files":[
 				"cwms_radar.config"
 			]
