@@ -196,10 +196,18 @@ def script_downloader(remote_repo, selection, appConfig):
 		for cf in downloaded_configs:
 			msg += '\n'+cf
 	
-	if help_url is not None:
-		webbrowser.open(help_url, new=2, autoraise=True)
-	
 	JOptionPane.showMessageDialog(None, msg, "Success", JOptionPane.INFORMATION_MESSAGE)
+	
+	# Prompt for help documentation if available
+	if help_url is not None:
+		confirm_docs_msg = "Would you like to view to the documentation for this script?"
+		confirm_docs_result = JOptionPane.showConfirmDialog(None, confirm_docs_msg)
+		if confirm_docs_result == 0:
+			webbrowser.open(help_url, new=2, autoraise=True)
+		else:
+			return
+	
+	
 ################################################################################
 def getAppConfig(filePath):
 	try:
@@ -275,6 +283,8 @@ def main():
 	script_filename = appConfig['scripts'][selection]['filename']	
 
 	script_downloader(remote_repo, selection, appConfig)
+
+	print("Script complete")
 ################################################################################
 if __name__ == '__main__':
 	main()
