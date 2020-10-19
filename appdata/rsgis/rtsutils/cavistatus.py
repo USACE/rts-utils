@@ -4,12 +4,12 @@ CAVI status functions providing attributes for CAVI, CAVI modules, and Forecasts
 import os
 from hec2.rts.script import RTS as ScriptRts, Forecast
 from hec2.rts.client import RTS as ClientRts
-from hec2.rts.ui import ForecastTab
+from hec2.rts.ui import DataAcqTab, DataVisTab, ForecastTab, RtsProjectTab
 
 __all__ = ['get_working_dir', 'get_watershed',
-    'get_project_directory', 'get_database_directory', 'get_data_timewindow',
-    'get_current_module', 'get_timewindow', 'get_selected_forecast',
-    'get_extract_timewindow', 'get_forecast_dss']
+    'get_project_directory', 'get_database_directory', 'get_shared_directory',
+    'get_data_timewindow', 'get_current_module', 'get_timewindow',
+    'get_selected_forecast', 'get_extract_timewindow', 'get_forecast_dss']
 
 def get_working_dir():
     '''
@@ -75,12 +75,19 @@ def get_timewindow():
 
     Get the selected module and return its timewindow as a tuple of times.
     '''
+    result = None
     _rtstab = get_current_module()
-    if isinstance(_rtstab, ForecastTab) and \
-        _rtstab.getForecast() == None:
-            return None
+    if isinstance(_rtstab, RtsProjectTab):
+    	result = None
+    elif isinstance(_rtstab, ForecastTab):
+    	if _rtstab.getForecast() == None:
+            result = None
+        else:
+        	result = get_extract_timewindow()
     else:
-        return (_rtstab.getTimeWindowString().split(";"))
+        result = tuple(_rtstab.getTimeWindowString().split(";"))
+
+    return result
 
 def get_selected_forecast():
     '''
