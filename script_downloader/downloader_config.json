@@ -13,7 +13,7 @@
 			"remote_dir":"watershed_scripts",
 			"filename":"get_usgs.py",
 			"update_libs":true,
-			"help_url": null,
+			"help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/GETUSGS.md",
 			"config_files":[
 				"usgs_locations.csv"
 			]
