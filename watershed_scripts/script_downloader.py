@@ -242,7 +242,7 @@ def main():
 	# Get the config file stored on Github.
 	# This allows new scripts to be added without this script needing to be replaced on every PC/Server Watershed
 
-	remote_repo = "https://raw.githubusercontent.com/adamscarberry/rts-da-utils-test/master"
+	remote_repo = "https://raw.githubusercontent.com/usace/rts-utils-test/master"
 
 	remote_config = get_remote_data(remote_repo+'/script_downloader/downloader_config.json')
 	# Verify remote data was returned, otherwise exit
