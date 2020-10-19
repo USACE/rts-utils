@@ -4,11 +4,8 @@ Get USGS data Python package
 
 __all__ = ['USGSDataRetrieve']
 
-# Java Imports
-import java.util.TimeZone
-# HEC Imports
-import hec
-# Python Imports
+from java.util import TimeZone
+from hec.script import Constants
 import os
 import sys
 import csv
@@ -16,9 +13,8 @@ import logging
 import tempfile
 import threading
 
-# Set some constants
-True = hec.script.Constants.TRUE
-False = hec.script.Constants.FALSE
+True = Constants.TRUE
+False = Constants.FALSE
 
 #getusgs_path = getusgs.__file__.replace("$py.class", ".py")
 getusgs_path = os.path.join(os.path.dirname(__file__), 'getusgs.py')
@@ -110,7 +106,7 @@ class USGSDataRetrieve():
         '''
         Set the timezone for the start and ending dates
         '''
-        if tz not in java.util.TimeZone.getAvailableIDs():
+        if tz not in TimeZone.getAvailableIDs():
             raise Exception('Incompatible timezone.\n Application quitting.')
         self.timezone = tz
 
@@ -130,30 +126,34 @@ class USGSDataRetrieve():
         shef_time_zone values plus any valid Java time zone ID
         (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
         '''
-        if tz not in java.util.TimeZone.getAvailableIDs():
+        if tz not in TimeZone.getAvailableIDs():
             sys.exit(1)
             #raise Exception('Incompatible timezone.\n Application quitting.')
         self.tzdss = tz
 
-    def set_locations(self, loc_parameters=None, file_path=None):
+    def set_locations(self, loc_parameters):
         '''
         Specifies locations input file.
         '''
         headers = ['[USGS_LOC]','SHEF_LOC','DSS_A-PART','DSS_B-PART',
             'DSS_F-PART', 'CWMS_LOC', 'CWMS_VER', 'PARAMETERS']
             
-        if file_path == None:
-            file_path = os.path.join(tempfile.gettempdir(), 'usgs-locations.csv')
+        file_path = os.path.join(tempfile.gettempdir(), 'usgs-locations.csv')
+    
+        with open(file_path, 'wb') as csvfile:
+            csvwriter = csv.DictWriter(csvfile, fieldnames=headers)
+            csvwriter.writeheader()
+            for loc_parameter in loc_parameters:
+                csvwriter.writerow(loc_parameter)
         
-            with open(file_path, 'wb') as csvfile:
-                csvwriter = csv.DictWriter(csvfile, fieldnames=headers)
-                csvwriter.writeheader()
-                for loc_parameter in loc_parameters:
-                    csvwriter.writerow(loc_parameter)
-            self.locations_file = file_path
-        else:
-            self.locations_file = file_path
-                
+        self.set_locations_file(file_path)
+
+    def set_locations_file(self, file_path):
+        '''
+        Set the FQPN to the locations CSV file
+        '''
+        self.locations_file = file_path
+
     def set_parameters(self, p):
         '''
         Specifies parameters input file. Defaults to Parameters.csv.
