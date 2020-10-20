@@ -12,7 +12,7 @@ from javax.swing    import JButton, JDialog, JOptionPane, JEditorPane, UIManager
 import xml.etree.ElementTree as ET
 import datetime
 import tempfile, shutil
-import json	
+import json
 import zipfile
 import webbrowser
 
@@ -53,14 +53,14 @@ def recursive_overwrite(src, dest, ignore=None):
             ignored = set()
         for f in files:
             if f not in ignored:
-                recursive_overwrite(os.path.join(src, f), 
-                                    os.path.join(dest, f), 
+                recursive_overwrite(os.path.join(src, f),
+                                    os.path.join(dest, f),
                                     ignore)
     else:
         shutil.copyfile(src, dest)
 #################################################################################
 def script_downloader(remote_repo, selection, appConfig):
-	
+
 	update_libs = bool(appConfig['scripts'][selection]['update_libs'])
 	config_files = appConfig['scripts'][selection]['config_files']
 	watershed_path = Project.getCurrentProject().getProjectDirectory()
@@ -93,13 +93,13 @@ def script_downloader(remote_repo, selection, appConfig):
 	print(config_files)
 	print('Config file count: {}'.format(len(config_files)))
 
-	if len(config_files) > 0:	
-		
+	if len(config_files) > 0:
+
 		config_files_dir = os.path.join(watershed_path, 'shared')
 
 		# Keep track of what was actually downloaded
 		downloaded_configs = []
-		
+
 		for fname in config_files:
 			fileSrcURL = '{}/{}/{}/{}'.format(remote_repo, appConfig['scripts'][selection]['remote_dir'], 'shared', fname)
 			fileDstPath = os.path.join(config_files_dir, fname)
@@ -109,12 +109,12 @@ def script_downloader(remote_repo, selection, appConfig):
 			else:
 				print 'Skipping download of config file: {}'.format(fname)
 
-	
+
 	try:
 		temp_dir = tempfile.mkdtemp()
 		print 'created temp folder {}'.format(temp_dir)
-		
-		# Download the master repo zip for the library packages		
+
+		# Download the master repo zip for the library packages
 		repo_url_parts = remote_repo.split('/')
 		repo_url_parts[2] = 'github.com'
 		repo_url_parts[5] = 'archive'
@@ -130,7 +130,7 @@ def script_downloader(remote_repo, selection, appConfig):
 			for f in os.listdir(temp_dir):
 				print(f)
 				if os.path.isdir(os.path.join(temp_dir, f)):
-										
+
 					pkg_dir_src = os.path.join(temp_dir, f, 'appdata', 'rsgis')
 					pkg_dir_dst = os.path.join(os.getenv('APPDATA'), 'rsgis')
 
@@ -141,26 +141,26 @@ def script_downloader(remote_repo, selection, appConfig):
 					print('*'*50)
 
 					# Copy the packages/libs from temp folder to destination
-					recursive_overwrite(pkg_dir_src, pkg_dir_dst)				
-					
+					recursive_overwrite(pkg_dir_src, pkg_dir_dst)
+
 					# Check for 3rd party libraries that need to be downloaded
 					#------------------------------------------------------------
 					for lib_name, lib_obj in appConfig['third_party_libs'].items():
 						filename = os.path.basename(lib_obj['url'])
 						lib_dest_dir = os.path.join(os.getenv('APPDATA'), 'rsgis', lib_name)
 						version_file = os.path.join(lib_dest_dir, 'version.json')
-						
+
 						download_lib = True
 
 						if os.path.isfile(version_file):
 							print 'Loading json file {}'.format(version_file)
 							with open(version_file) as json_file:
-								version = json.load(json_file)['version']							
+								version = json.load(json_file)['version']
 								if version == lib_obj['version']:
 									download_lib = False
 									print 'Will not download lib: {}'.format(lib_name)
-						
-						
+
+
 						if download_lib:
 
 							dest_file = os.path.join(lib_dest_dir, filename)
@@ -171,8 +171,8 @@ def script_downloader(remote_repo, selection, appConfig):
 									z.extractall(lib_dest_dir)
 
 								# Delete the zip file
-								os.remove(dest_file)							
-							
+								os.remove(dest_file)
+
 							# Write the version to json file for comparison later
 							with open(version_file, 'w') as outfile:
 								json.dump(lib_obj, outfile)
@@ -189,15 +189,15 @@ def script_downloader(remote_repo, selection, appConfig):
 		help_url = appConfig['scripts'][selection]['help_url']
 	except:
 		help_url = None
-	
+
 	msg = 'Script downloaded for '+selection
 	if len(downloaded_configs) > 0:
 		msg += '\n\nThe following configuration file(s) have been downloaded:'
 		for cf in downloaded_configs:
 			msg += '\n'+cf
-	
+
 	JOptionPane.showMessageDialog(None, msg, "Success", JOptionPane.INFORMATION_MESSAGE)
-	
+
 	# Prompt for help documentation if available
 	if help_url is not None:
 		confirm_docs_msg = "Would you like to view to the documentation for this script?"
@@ -206,8 +206,8 @@ def script_downloader(remote_repo, selection, appConfig):
 			webbrowser.open(help_url, new=2, autoraise=True)
 		else:
 			return
-	
-	
+
+
 ################################################################################
 def getAppConfig(filePath):
 	try:
@@ -238,7 +238,7 @@ def isScriptButtonAdded(filename):
 ################################################################################
 def main():
 
-	code_version = '19Oct2020'
+	code_version = '20Oct2020'
 	# Get the config file stored on Github.
 	# This allows new scripts to be added without this script needing to be replaced on every PC/Server Watershed
 
@@ -266,6 +266,7 @@ def main():
 		print('Script Downloader Version is current.')
 
 	choices = appConfig['scripts'].keys()
+	choices.sort()
 
 	selection = JOptionPane.showInputDialog(
 			None,                                               # dialog parent component
@@ -280,7 +281,7 @@ def main():
 	if selection is None:
 		return
 
-	script_filename = appConfig['scripts'][selection]['filename']	
+	script_filename = appConfig['scripts'][selection]['filename']
 
 	script_downloader(remote_repo, selection, appConfig)
 
