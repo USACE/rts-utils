@@ -1,12 +1,5 @@
 {
 	"scripts":{
-		"Cumulus":{
-			"remote_dir":"watershed_scripts",
-			"filename":"CumulusRtsUI.py",
-			"update_libs":true,
-			"help_url": "",
-			"config_files":[]
-		},
 		"CWMS Radar":{
 			"remote_dir":"watershed_scripts",
 			"filename":"cwms_radar.py",
@@ -33,6 +26,12 @@
 			"config_files":[]
 		}
 	},
-	"third_party_libs":{},
-	"version":"20Oct2020"
+	"third_party_libs":{
+		"gdal":{
+			"version":"3.1.3",
+			"url": "http://download.gisinternals.com/sdk/downloads/release-1911-x64-gdal-3-1-3-mapserver-7-6-1.zip"
+		}
+
+	},
+	"version":"19Oct2020"
 }
