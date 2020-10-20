@@ -1,5 +1,12 @@
 {
 	"scripts":{
+		"Cumulus":{
+			"remote_dir":"watershed_scripts",
+			"filename":"CumulusRtsUI.py",
+			"update_libs":true,
+			"help_url": "",
+			"config_files":[]
+		},
 		"CWMS Radar":{
 			"remote_dir":"watershed_scripts",
 			"filename":"cwms_radar.py",
