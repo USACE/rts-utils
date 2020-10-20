@@ -69,8 +69,8 @@ cwmsdat = cwmsradar.CwmsRADAR()
 cwmsdat.begintime = cwmsdat.format_datetime(HecTime(st))
 cwmsdat.endtime = cwmsdat.format_datetime(HecTime(et))
 cwmsdat.dssfile = os.path.join(cavistatus.get_database_directory(), 'test-data.dss')
-cwmsdat.read_config(/path/to/cwmsradar_config.json")
-cwmsdat.set_tsids()             # Reading the configutation file defines the lists but they still need to be set
+cwmsdat.read_config(os.path.join(cavistatus.get_database_directory(), 'cwms_radar.config'))
+cwmsdat.set_tsids()  # Reading the configutation file defines the lists but they still need to be set
 cwmsdat.run()
 ```
 
