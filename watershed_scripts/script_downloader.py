@@ -93,12 +93,12 @@ def script_downloader(remote_repo, selection, appConfig):
 	print(config_files)
 	print('Config file count: {}'.format(len(config_files)))
 
+	# Keep track of what was actually downloaded
+	downloaded_configs = []
+
 	if len(config_files) > 0:
 
 		config_files_dir = os.path.join(watershed_path, 'shared')
-
-		# Keep track of what was actually downloaded
-		downloaded_configs = []
 
 		for fname in config_files:
 			fileSrcURL = '{}/{}/{}/{}'.format(remote_repo, appConfig['scripts'][selection]['remote_dir'], 'shared', fname)
