@@ -8,7 +8,7 @@ from usace.cavi.script import CAVI
 import hec2
 from com.rma.model import Project
 from javax.swing    import JButton, JDialog, JOptionPane, JEditorPane, UIManager
-#import traceback
+import traceback
 import xml.etree.ElementTree as ET
 import datetime
 import tempfile, shutil
@@ -181,6 +181,7 @@ def script_downloader(remote_repo, selection, appConfig):
 	except:
 		print('Unable to create temp folder')
 		print "Unexpected error:", sys.exc_info()
+		print(traceback.print_exc())
 	finally:
 		shutil.rmtree(temp_dir)
 		print 'removing {}'.format(temp_dir)
