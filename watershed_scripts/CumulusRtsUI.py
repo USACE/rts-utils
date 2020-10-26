@@ -1,4 +1,5 @@
 # Java
+
 from java.lang import String, Short, Thread
 from java.net import URL, MalformedURLException
 from java.time import ZoneId, LocalDateTime, ZonedDateTime
@@ -257,6 +258,7 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
                 grid_data = grid_container.getGridData()
                 GridUtilities.storeGridToDss(dest_dss, pathname, grid_data)
                 if dest_dss not in merged_paths: merged_paths.append(dest_dss)
+            result = True
         except DSSFileException, ex:
             # MessageBox.showError(ex, "Exception")
             raise
