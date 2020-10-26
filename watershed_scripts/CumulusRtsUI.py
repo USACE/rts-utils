@@ -18,7 +18,7 @@ from javax.swing.border import TitledBorder
 from javax.swing.filechooser import FileNameExtensionFilter
 # HEC
 from hec.script import Constants, MessageBox
-from hec.heclib.util import Heclib
+from hec.heclib.util import Heclib, HecTime
 from hec.heclib.dss import HecDss, DSSPathname
 from hec.heclib.grid import GridUtilities
 from hec.hecmath import DSSFileException
@@ -199,7 +199,7 @@ def download_dss(dss_url):
     DSS file downloaded to user's temporary directory as to not clober any existing
     DSS file and all records written to DSS OUT Path.
     '''
-    Heclib.zset('DSSV', '', 6)
+    # Heclib.zset('DSSV', '', 7)
     result = None
     try:
         # Create input stream reader to read the file
@@ -216,8 +216,8 @@ def download_dss(dss_url):
             input_stream.close()
             result = tempfile
     except IOException, ex:
-        MessageBox.showError(ex, "Exception")
-        raise Exception(ex)
+        # MessageBox.showError(ex, "Exception")
+        raise
 
     return result
 
@@ -228,22 +228,22 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
     Input: java.nio.file.Path src_path java.lang.String dest_path
     Merge all grid paths in the source dss file into the destination dss file
     '''
-    def cwms_dssname(src, pn):
+    def cwms_dssname(pn):
         '''Return FQPN to CWMS naming dss file
-        Input: java.lang.String source java.lang.String DSSPathname
+        Input: java.lang.String source_directory java.lang.String DSSPathname
         '''
-        if src.endswith(".dss"):
-            src = os.path.dirname(src)
         dsspn = DSSPathname(pn)
-        epart = dsspn.ePart()
+        dpart = dsspn.dPart()
+        dpart_date, dpart_time = dpart.split(":")
         cpart = String(dsspn.cPart().split("-")[0]).toLowerCase()
-        dt = TimeFormatter().parse_local_date_time(epart)
-        new_filename = "{p}.{yr}.{mn:02}.dss".format(
+        # dt = TimeFormatter().parse_local_date_time(dpart)
+        dt = HecTime(dpart_date, dpart_time, HecTime.MINUTE_GRANULARITY)
+        new_filename = "{p}.{y}.{m:02}.dss".format(
             p=cpart,
-            yr=dt.getYear(),
-            mn=dt.getMonthValue())
+            y=dt.year(),
+            m=dt.month())
         
-        return os.path.join(src, new_filename)
+        return new_filename
 
     dssin = None
     merged_paths = list()
@@ -251,12 +251,17 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
     if Files.exists(src_dss):
         try:
             dssin = HecDss.open(src_dss.toString())
-            for pathname in dssin.getCatalogedPathnames():
-                if cwms_name: dest_dss = cwms_dssname(dest_dss, pathname)
-                grid_container = dssin.get(pathname)
-                grid_data = grid_container.getGridData()
-                GridUtilities.storeGridToDss(dest_dss, pathname, grid_data)
-                if dest_dss not in merged_paths: merged_paths.append(dest_dss)
+            if cwms_name:
+                for pathname in dssin.getCatalogedPathnames(True):
+                    dest_dss = os.path.join(os.path.dirname(dest_dss), cwms_dssname(pathname))
+                    grid_container = dssin.get(pathname)
+                    grid_data = grid_container.getGridData()
+                    GridUtilities.storeGridToDss(dest_dss, pathname, grid_data)
+                    if dest_dss not in merged_paths: merged_paths.append(dest_dss)
+            else:
+                dssin.copyRecordsFrom(dest_dss, dssin.getCatalogedPathnames(True))
+                merged_paths.append(dest_dss)
+
         except DSSFileException, ex:
             # MessageBox.showError(ex, "Exception")
             raise
@@ -403,6 +408,7 @@ class CumulusUI(JFrame):
 
         self.cwms_dssname.setText("CWMS DSS filename")
         self.cwms_dssname.setToolTipText("Parameter.yyyy.mm.dss")
+        self.cwms_dssname.setVisible(False)
 
         layout = GroupLayout(self.getContentPane())
         self.getContentPane().setLayout(layout)
@@ -531,11 +537,11 @@ class CumulusUI(JFrame):
             s = br.readLine()
             br.close()
         except MalformedURLException() as ex:
-            MessageBox.showError(ex, "Exception")
-            raise Exception(ex)
+            # MessageBox.showError(ex, "Exception")
+            raise
         except IOException as ex:
-            MessageBox.showError(ex, "Exception")
-            raise Exception(ex)
+            # MessageBox.showError(ex, "Exception")
+            raise
         return s
 
     def http_post(self, json_string, url):
@@ -683,7 +689,7 @@ class CumulusUI(JFrame):
                     stat = json_get_result['status']                                #SUCCESS
                     fname = json_get_result['file']                                 # not null
 
-                    print("Status: {}".format(stat))
+                    print("Status: {}\tFilename: {}\tProgress: {}%\tTimeout: {}".format(stat, fname, progress, timeout))
 
                     if stat == 'FAILED':
                         MessageBox.showError(
@@ -692,7 +698,7 @@ class CumulusUI(JFrame):
                             )
                         break
 
-                    if int(progress) == 100 and stat == 'SUCCESS':                  # May add file check to make sure not None
+                    if int(progress) == 100 and stat == 'SUCCESS' and fname is not None:
                         dest_dssfile = self.txt_select_file.getText()
                         cwmsdss_naming = self.cwms_dssname.isSelected()
                         downloaded_dssfile = download_dss(fname)
@@ -767,4 +773,7 @@ def main():
         cui.setVisible(True)
 
 if __name__ == "__main__":
+    # DELETE THIS LIST.  ONLY FOR TESTING
+    sys.argv[1:] = ["2020-09-01T12:00:00", "2020-09-14T12:00:00", "D:/WS_CWMS/lrn-m3000-v31-pro/database/grid.dss", "C:/app/CWMS/CWMS-Production/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
+    # DELETE THIS LIST.  ONLY FOR TESTING
     main()
