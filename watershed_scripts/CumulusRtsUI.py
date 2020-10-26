@@ -1,5 +1,5 @@
 # Java
-from java.lang import Short, Thread
+from java.lang import String, Short, Thread
 from java.net import URL, MalformedURLException
 from java.time import ZoneId, LocalDateTime, ZonedDateTime
 from java.time.format import DateTimeFormatterBuilder, DateTimeFormatter, DateTimeParseException
@@ -10,7 +10,7 @@ from java.nio.file import Files, StandardCopyOption, FileSystemException
 from java.awt import Font, Point
 
 from javax.swing import UIManager
-from javax.swing import JFrame, JButton, JLabel, JTextField, JList
+from javax.swing import JFrame, JButton, JLabel, JTextField, JList, JCheckBox
 from javax.swing import JScrollPane, JFileChooser
 from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
 from javax.swing import ListSelectionModel
@@ -19,7 +19,7 @@ from javax.swing.filechooser import FileNameExtensionFilter
 # HEC
 from hec.script import Constants, MessageBox
 from hec.heclib.util import Heclib
-from hec.heclib.dss import HecDss
+from hec.heclib.dss import HecDss, DSSPathname
 from hec.heclib.grid import GridUtilities
 from hec.hecmath import DSSFileException
 # Python
@@ -160,7 +160,7 @@ class TimeFormatter():
         '''
         fb = DateTimeFormatterBuilder()
         fb.parseCaseInsensitive()
-        fb.appendPattern("[[d][dd]MMMyyyy[[,] [Hmm[ss]][H:mm[:ss]][HHmm][HH:mm[:ss]]]]" + \
+        fb.appendPattern("[[d][dd]MMMyyyy[[,][ ][:][Hmm[ss]][H:mm[:ss]][HHmm][HH:mm[:ss]]]]" + \
             "[[d][dd]-[M][MM][MMM]-yyyy[[,] [Hmm[ss]][H:mm[:ss]][HHmm][HH:mm[:ss]]]]" + \
             "[yyyy-[M][MM][MMM]-[d][dd][['T'][ ][Hmm[ss]][H:mm[:ss]][HHmm[ss]][HH:mm[:ss]]]]")
         return fb.toFormatter()
@@ -199,7 +199,7 @@ def download_dss(dss_url):
     DSS file downloaded to user's temporary directory as to not clober any existing
     DSS file and all records written to DSS OUT Path.
     '''
-    # Heclib.zset('DSSV', '', 6)
+    Heclib.zset('DSSV', '', 6)
     result = None
     try:
         # Create input stream reader to read the file
@@ -221,24 +221,42 @@ def download_dss(dss_url):
 
     return result
 
-def merge_dss(src_dss, dest_dss):
+def merge_dss(src_dss, dest_dss, cwms_name=False):
     '''
-    Return Boolean
+    Return list containing FQPN of DSS files
 
     Input: java.nio.file.Path src_path java.lang.String dest_path
     Merge all grid paths in the source dss file into the destination dss file
     '''
-    result = False
+    def cwms_dssname(src, pn):
+        '''Return FQPN to CWMS naming dss file
+        Input: java.lang.String source java.lang.String DSSPathname
+        '''
+        if src.endswith(".dss"):
+            src = os.path.dirname(src)
+        dsspn = DSSPathname(pn)
+        epart = dsspn.ePart()
+        cpart = String(dsspn.cPart().split("-")[0]).toLowerCase()
+        dt = TimeFormatter().parse_local_date_time(epart)
+        new_filename = "{p}.{yr}.{mn:02}.dss".format(
+            p=cpart,
+            yr=dt.getYear(),
+            mn=dt.getMonthValue())
+        
+        return os.path.join(src, new_filename)
+
     dssin = None
+    merged_paths = list()
     # Process the DSS file
     if Files.exists(src_dss):
         try:
             dssin = HecDss.open(src_dss.toString())
             for pathname in dssin.getCatalogedPathnames():
+                if cwms_name: dest_dss = cwms_dssname(dest_dss, pathname)
                 grid_container = dssin.get(pathname)
                 grid_data = grid_container.getGridData()
                 GridUtilities.storeGridToDss(dest_dss, pathname, grid_data)
-            result = True
+                if dest_dss not in merged_paths: merged_paths.append(dest_dss)
         except DSSFileException, ex:
             # MessageBox.showError(ex, "Exception")
             raise
@@ -254,10 +272,8 @@ def merge_dss(src_dss, dest_dss):
             except FileSystemException, ex:
                 # MessageBox.showError(ex, "Exception")
                 raise
-    else:
-        result = False
     
-    return result
+    return merged_paths
 
 # Cumulus UI class
 class CumulusUI(JFrame):
@@ -319,6 +335,8 @@ class CumulusUI(JFrame):
         JScrollPane2 = JScrollPane()
         self.lst_watershed = JList()
         self.lst_watershed = JList(self.jlist_basins, valueChanged = self.choose_watershed)
+
+        self.cwms_dssname = JCheckBox()
 
         self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
         self.setTitle("Cumulus CAVI UI")
@@ -383,6 +401,9 @@ class CumulusUI(JFrame):
         self.lst_watershed.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         JScrollPane2.setViewportView(self.lst_watershed)
 
+        self.cwms_dssname.setText("CWMS DSS filename")
+        self.cwms_dssname.setToolTipText("Parameter.yyyy.mm.dss")
+
         layout = GroupLayout(self.getContentPane())
         self.getContentPane().setLayout(layout)
         layout.setHorizontalGroup(
@@ -390,7 +411,10 @@ class CumulusUI(JFrame):
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, False)
-                    .addComponent(lbl_select_file)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lbl_select_file)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(self.cwms_dssname))
                     .addComponent(JScrollPane1)
                     .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(paren_l1)
@@ -473,7 +497,9 @@ class CumulusUI(JFrame):
                 .addGap(39, 39, 39)
                 .addComponent(JScrollPane1, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, Short.MAX_VALUE)
-                .addComponent(lbl_select_file)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_select_file)
+                    .addComponent(self.cwms_dssname))
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
@@ -667,14 +693,17 @@ class CumulusUI(JFrame):
                         break
 
                     if int(progress) == 100 and stat == 'SUCCESS':                  # May add file check to make sure not None
-                        source_dssfile = self.txt_select_file.getText()
+                        dest_dssfile = self.txt_select_file.getText()
+                        cwmsdss_naming = self.cwms_dssname.isSelected()
                         downloaded_dssfile = download_dss(fname)
                         if downloaded_dssfile is not None:
                             print("DSS file downloaded.")
-                            merged_dssfile = merge_dss(downloaded_dssfile, source_dssfile)
-                            if merged_dssfile:
+                            merged_dssfiles = merge_dss(downloaded_dssfile, dest_dssfile, cwmsdss_naming)
+                            if len(merged_dssfiles) > 0:
                                 MessageBox.showInformation(
-                                    "DSS file downloaded and merged to:\n{}".format(source_dssfile),
+                                    "DSS file downloaded and merged to:\n{}".format(
+                                        '\n'.join([f for f in merged_dssfiles])
+                                        ),
                                     "Successful Processing"
                                 )
                             else:
@@ -738,7 +767,4 @@ def main():
         cui.setVisible(True)
 
 if __name__ == "__main__":
-    # DELETE THIS LIST.  ONLY FOR TESTING
-    sys.argv[1:] = ["22SEP2020, 12:00", "22SEP2020, 13:00", "D:/WS_CWMS/lrn-m3000-v31-pro/database/grid.dss", "C:/app/CWMS/CWMS-Production/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
-    # DELETE THIS LIST.  ONLY FOR TESTING
     main()

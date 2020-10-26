@@ -33,7 +33,11 @@
           <Group type="102" attributes="0">
               <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="lbl_select_file" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="lbl_select_file" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="isCwmsName" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="paren_l1" min="-2" max="-2" attributes="0"/>
@@ -70,7 +74,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="1" attributes="0">
                           <Component id="btn_submit" min="-2" max="-2" attributes="0"/>
-                          <Component id="txt_select_file" alignment="1" min="-2" pref="377" max="-2" attributes="0"/>
+                          <Component id="txt_select_file" min="-2" pref="377" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="btn_select_file" min="-2" max="-2" attributes="0"/>
@@ -137,7 +141,10 @@
               <EmptySpace min="-2" pref="39" max="-2" attributes="0"/>
               <Component id="jScrollPane1" min="-2" pref="201" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="32767" attributes="0"/>
-              <Component id="lbl_select_file" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="lbl_select_file" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="isCwmsName" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="txt_select_file" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -145,7 +152,7 @@
               </Group>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Component id="btn_submit" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -290,12 +297,6 @@
               <StringArray count="0"/>
             </Property>
           </Properties>
-          <AccessibilityProperties>
-            <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="Available Products"/>
-            <Property name="AccessibleContext.accessibleParent" type="javax.accessibility.Accessible" editor="org.netbeans.modules.form.ComponentChooserEditor">
-              <ComponentRef name="jScrollPane2"/>
-            </Property>
-          </AccessibilityProperties>
         </Component>
       </SubComponents>
     </Container>
@@ -326,5 +327,14 @@
         </Component>
       </SubComponents>
     </Container>
+    <Component class="javax.swing.JCheckBox" name="isCwmsName">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="CWMS DSS file naming"/>
+        <Property name="toolTipText" type="java.lang.String" value="Parameter.yyyy.mm.dss"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="isCwmsNameActionPerformed"/>
+      </Events>
+    </Component>
   </SubComponents>
 </Form>

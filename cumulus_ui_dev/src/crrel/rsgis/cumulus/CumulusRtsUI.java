@@ -51,6 +51,7 @@ public class CumulusRtsUI extends javax.swing.JFrame {
         lst_products = new javax.swing.JList();
         jScrollPane2 = new javax.swing.JScrollPane();
         lst_watershed = new javax.swing.JList();
+        isCwmsName = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Cumulus CAVI UI");
@@ -110,13 +111,19 @@ public class CumulusRtsUI extends javax.swing.JFrame {
         lst_products.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Available Products", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.TOP, new java.awt.Font("Tahoma", 0, 14))); // NOI18N
         lst_products.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jScrollPane1.setViewportView(lst_products);
-        lst_products.getAccessibleContext().setAccessibleName("Available Products");
-        lst_products.getAccessibleContext().setAccessibleParent(jScrollPane2);
 
         lst_watershed.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Available Watersheds", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.TOP, new java.awt.Font("Tahoma", 0, 14))); // NOI18N
         lst_watershed.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         lst_watershed.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(lst_watershed);
+
+        isCwmsName.setText("CWMS DSS file naming");
+        isCwmsName.setToolTipText("Parameter.yyyy.mm.dss");
+        isCwmsName.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                isCwmsNameActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -125,7 +132,10 @@ public class CumulusRtsUI extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lbl_select_file)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lbl_select_file)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(isCwmsName))
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(paren_l1)
@@ -208,7 +218,9 @@ public class CumulusRtsUI extends javax.swing.JFrame {
                 .addGap(39, 39, 39)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, Short.MAX_VALUE)
-                .addComponent(lbl_select_file)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lbl_select_file)
+                    .addComponent(isCwmsName))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txt_select_file, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -221,6 +233,11 @@ public class CumulusRtsUI extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void isCwmsNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_isCwmsNameActionPerformed
+        // TODO add your handling code here:
+        System.out.println(this.isCwmsName.isSelected());
+    }//GEN-LAST:event_isCwmsNameActionPerformed
 
     /**
      * @param args the command line arguments
@@ -263,6 +280,7 @@ public class CumulusRtsUI extends javax.swing.JFrame {
     private javax.swing.JButton btn_submit;
     private javax.swing.JLabel comma1;
     private javax.swing.JLabel comma2;
+    private javax.swing.JCheckBox isCwmsName;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lbl_end_date;
