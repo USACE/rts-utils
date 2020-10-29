@@ -752,8 +752,8 @@ def main():
         batfile = tempfile.NamedTemporaryFile(mode='w+b', suffix='.cmd', delete=False)
         batfile.write(cmd)
         batfile.close()
-        p = subprocess.Popen(batfile.name, shell=True)
-        # os.remove(batfile.name)
+        p = subprocess.Popen("start cmd /C " + batfile.name, shell=True)
+        os.remove(batfile.name)
     else:                                                                       # This is all the stuff to do if initiated outside the CAVI environment
         args = sys.argv[1:]
         if len(args) < 5:

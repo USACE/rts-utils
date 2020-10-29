@@ -4,7 +4,7 @@
 			"remote_dir":"watershed_scripts",
 			"filename":"CumulusRtsUI.py",
 			"update_libs":true,
-			"help_url": "",
+			"help_url": null,
 			"config_files":[]
 		},
 		"CWMS Radar":{
