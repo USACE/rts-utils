@@ -8,16 +8,20 @@
 
 ## Package Installation
 
-1. Click [here](https://raw.githubusercontent.com/USACE/rts-utils/master/watershed_scripts/script_downloader.py)
+___Read instructions before executing.___
 
-2. Select all text (Ctrl + A)
+1. Click [here](https://raw.githubusercontent.com/USACE/rts-utils/master/watershed_scripts/script_downloader.py) for the raw `script_downloader` code
 
-3. Copy text (Ctrl + C)
+1. Select all code in the browser (Ctrl + A)
 
-4. Paste text (Ctrl + V) into a new CAVI script in the Script Editor
+1. Copy code to your clipboard (Ctrl + C)
 
-5. In the Script Editor: Save script
+1. Create a new script from the CAVI Script Editor
 
-6. Run `script_downloader`
+1. Paste code (Ctrl + V) into the new CAVI script
 
-The `script_downloader` will download and install necessary package(s) and template watershed scripts to the currently open watershed.
+1. In the Script Editor: Save script
+
+1. Run `script_downloader`
+
+The `script_downloader` will download and install necessary package(s) and template watershed scripts to the currently opened watershed.  Installing/Updating with the `script_downloader` will ask you if you want to view instructions for that script, which comes back to this repository specific to the utility.
