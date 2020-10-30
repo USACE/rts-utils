@@ -639,10 +639,23 @@ class CumulusUI(JFrame):
         it comes from a Jlist.  Use getValueIsAdjusting() to only get the
         mouse up value.
         '''
+        output_str = '''{name}
+After: {after}
+Before: {before}
+Parameter: {para}
+Unit: {u}
+'''
         index = self.lst_product.selectedIndex
         if not event.getValueIsAdjusting():
-            pass
-            # print(self.product_meta[self.lst_product.getSelectedValues()])
+            pnames = self.lst_product.getSelectedValues()
+            for pname in pnames:
+                print(output_str.format(
+                    name = pname,
+                    after = self.product_meta[pname]['after'],
+                    before = self.product_meta[pname]['before'],
+                    para = self.product_meta[pname]['parameter'],
+                    u = self.product_meta[pname]['unit']
+                    ))
 
     def choose_watershed(self, event):
         '''The event here is a javax.swing.event.ListSelectionEvent because
@@ -773,4 +786,8 @@ def main():
         cui.setVisible(True)
 
 if __name__ == "__main__":
+    # DELETE THIS LIST.  ONLY FOR TESTING
+    sys.argv[1:] = ["22SEP2020, 12:00", "22SEP2020, 13:00", "D:/WS_CWMS/lrn-m3000-v31-pro/database/grid.dss", "C:/app/CWMS/CWMS-Production/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
+    # DELETE THIS LIST.  ONLY FOR TESTING
+
     main()
