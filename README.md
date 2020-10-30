@@ -8,7 +8,7 @@
 
 ## Package Installation
 
-1. Click [here]("https://raw.githubusercontent.com/USACE/rts-utils/master/watershed_scripts/script_downloader.py")
+1. Click [here](https://raw.githubusercontent.com/USACE/rts-utils/master/watershed_scripts/script_downloader.py)
 
 2. Select all text (Ctrl + A)
 
