@@ -216,7 +216,7 @@ def download_dss(dss_url):
             input_stream.close()
             result = tempfile
     except IOException, ex:
-        # MessageBox.showError(ex, "Exception")
+        # MessageBox.showError(str(ex), "Exception")
         raise
 
     return result
@@ -263,10 +263,10 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
                 merged_paths.append(dest_dss)
 
         except DSSFileException, ex:
-            # MessageBox.showError(ex, "Exception")
+            # MessageBox.showError(str(ex), "Exception")
             raise
         except Exception, ex:
-            # MessageBox.showError(ex, "Exception")
+            # MessageBox.showError(str(ex), "Exception")
             raise
         finally:
             if dssin:
@@ -275,7 +275,7 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
             try:
                 Files.deleteIfExists(src_dss)
             except FileSystemException, ex:
-                # MessageBox.showError(ex, "Exception")
+                # MessageBox.showError(str(ex), "Exception")
                 raise
     
     return merged_paths
@@ -537,10 +537,10 @@ class CumulusUI(JFrame):
             s = br.readLine()
             br.close()
         except MalformedURLException() as ex:
-            # MessageBox.showError(ex, "Exception")
+            # MessageBox.showError(str(ex), "Exception")
             raise
         except IOException as ex:
-            # MessageBox.showError(ex, "Exception")
+            # MessageBox.showError(str(ex), "Exception")
             raise
         return s
 
@@ -575,10 +575,10 @@ class CumulusUI(JFrame):
             s = br.readLine()
             br.close()
         except MalformedURLException() as ex:
-            MessageBox.showError(ex, "Exception")
+            MessageBox.showError(str(ex), "Exception")
             raise Exception(ex)
         except IOException as ex:
-            MessageBox.showError(ex, "Exception")
+            MessageBox.showError(str(ex), "Exception")
             raise Exception(ex)
         return s
 
@@ -786,8 +786,4 @@ def main():
         cui.setVisible(True)
 
 if __name__ == "__main__":
-    # DELETE THIS LIST.  ONLY FOR TESTING
-    sys.argv[1:] = ["22SEP2020, 12:00", "22SEP2020, 13:00", "D:/WS_CWMS/lrn-m3000-v31-pro/database/grid.dss", "C:/app/CWMS/CWMS-Production/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
-    # DELETE THIS LIST.  ONLY FOR TESTING
-
     main()
