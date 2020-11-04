@@ -786,8 +786,4 @@ def main():
         cui.setVisible(True)
 
 if __name__ == "__main__":
-    # DELETE THIS LIST.  ONLY FOR TESTING
-    sys.argv[1:] = ["22SEP2020, 12:00", "22SEP2020, 13:00", "D:/WS_CWMS/lrn-m3000-v31-pro/database/grid.dss", "C:/app/CWMS/CWMS-Production/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
-    # DELETE THIS LIST.  ONLY FOR TESTING
-
     main()
