@@ -1,5 +1,5 @@
 # Java
-from java.lang import String, Short, Thread
+from java.lang import String, Short, Thread, System
 from java.net import URL, MalformedURLException
 from java.time import ZoneId, LocalDateTime, ZonedDateTime
 from java.time.format import DateTimeFormatterBuilder, DateTimeFormatter, DateTimeParseException
@@ -28,16 +28,45 @@ import sys
 import json
 import tempfile
 import subprocess
+import logging
+import logging.handlers
 #
 True = Constants.TRUE
 False = Constants.FALSE
+APPDATA = os.getenv("APPDATA")
 # Max timeout for downloading dss files in seconds.
-max_timeout = 60
+max_timeout = 600
 # List of URLs used in the script
 url_basins = "https://api.rsgis.dev/development/cumulus/basins"
 url_products = "https://api.rsgis.dev/development/cumulus/products"
 url_downloads = "https://api.rsgis.dev/development/cumulus/downloads"
 #
+
+# Add some logging but check to see if it already exists because we are running in the CAVI
+# if not "cumulus_logger" in dir():
+log_filename = os.path.join(APPDATA, "cumulus_rts_ui.log")
+cumulus_logger = logging.Logger("Cumulus UI Log")
+cumulus_logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s.%(msecs)03d - ' +
+    '%(name)s:%(funcName)15s - %(levelname)-5s - %(message)s',
+    '%Y-%m-%dT%H:%M:%S')
+# Console Handler
+ch = logging.StreamHandler()
+ch.setFormatter(formatter)
+cumulus_logger.addHandler(ch)
+
+# File logger
+try:
+    fh = logging.handlers.RotatingFileHandler(log_filename, maxBytes=5000000,
+        backupCount=1)
+    fh.setFormatter(formatter)
+    cumulus_logger.addHandler(fh)
+    cumulus_logger.info('Logging file set to: {}'.format(log_filename))
+except IOError as ex:
+    cumulus_logger.warning(ex)
+    cumulus_logger.warning('Rotating File Handler not created.')
+
 '''Try importing rtsutils, which imports hec2, package.  An exception is thrown
 if not in CWMS CAVI or RTS CAVI.  This will determine if this script runs in the
 CAVI or outside that environment.  ClientAppCheck.haveClientApp() was tried but
@@ -52,7 +81,7 @@ try:
     from rtsutils import cavistatus
     cavi_env = True
 except ImportError as ex:
-    print(ex)
+    cumulus_logger.warning(str(ex) + ", which means running outside of CAVI")
     cavi_env = False
 
 # Look and feel class
@@ -141,7 +170,7 @@ class FileChooser(JFileChooser):
     def approve_option(self):
         selected_file = self.getSelectedFile().getPath()
         if not selected_file.endswith(".dss"): selected_file += ".dss"
-        with open(os.path.join(os.getenv('APPDATA'), self.config_filename), 'w+b') as f:
+        with open(os.path.join(APPDATA, self.config_filename), 'w') as f:
             f.write(selected_file)
         self.output_path.setText(selected_file)
 
@@ -199,6 +228,7 @@ def download_dss(dss_url):
     DSS file downloaded to user's temporary directory as to not clober any existing
     DSS file and all records written to DSS OUT Path.
     '''
+    start_timer = System.currentTimeMillis()
     # Heclib.zset('DSSV', '', 7)
     result = None
     try:
@@ -215,9 +245,16 @@ def download_dss(dss_url):
                 )
             input_stream.close()
             result = tempfile
-    except IOException, ex:
+    except IOException as ex:
         # MessageBox.showError(str(ex), "Exception")
         raise
+
+    end_timer = System.currentTimeMillis()
+    cumulus_logger.debug(
+        "DSS Download (milliseconds): {}".format(
+            (end_timer - start_timer)
+        )
+    )
 
     return result
 
@@ -228,6 +265,7 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
     Input: java.nio.file.Path src_path java.lang.String dest_path
     Merge all grid paths in the source dss file into the destination dss file
     '''
+    start_timer = System.currentTimeMillis()
     def cwms_dssname(pn):
         '''Return FQPN to CWMS naming dss file
         Input: java.lang.String source_directory java.lang.String DSSPathname
@@ -262,10 +300,12 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
                 dssin.copyRecordsFrom(dest_dss, dssin.getCatalogedPathnames(True))
                 merged_paths.append(dest_dss)
 
-        except DSSFileException, ex:
+        except DSSFileException as ex:
             # MessageBox.showError(str(ex), "Exception")
+            cumulus_logger.error(str(ex))
             raise
-        except Exception, ex:
+        except Exception as ex:
+            cumulus_logger.error(str(ex))
             # MessageBox.showError(str(ex), "Exception")
             raise
         finally:
@@ -274,10 +314,20 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
                 dssin.close()
             try:
                 Files.deleteIfExists(src_dss)
-            except FileSystemException, ex:
+                cumulus_logger.debug(
+                    "Deleteing the source DSS file: {}".format(src_dss))
+            except FileSystemException as ex:
                 # MessageBox.showError(str(ex), "Exception")
+                cumulus_logger.error(str(ex))
                 raise
     
+    end_timer = System.currentTimeMillis()
+    cumulus_logger.debug(
+        "Merging DSS records (milliseconds): {}".format(
+            (end_timer - start_timer)
+        )
+    )
+
     return merged_paths
 
 # Cumulus UI class
@@ -298,7 +348,7 @@ class CumulusUI(JFrame):
 
         # Get the DSS Path if one was saved in the "cumulus.config" file
         if os.path.isfile(self.config):
-            with open(os.path.join(os.getenv('APPDATA'), "cumulus.config")) as f:
+            with open(os.path.join(APPDATA, "cumulus.config")) as f:
                 self.dss_path = f.read()
 
         # Get the basins and products, load JSON, create lists for JList, and create dictionaries
@@ -319,25 +369,16 @@ class CumulusUI(JFrame):
         btn_select_file = JButton()
         lbl_origin = JLabel()
         lbl_extent = JLabel()
-        self.txt_originx = JTextField()
-        self.txt_originy = JTextField()
-        self.txt_extentx = JTextField()
-        self.txt_extenty = JTextField()
         lbl_select_file = JLabel()
-        comma1 = JLabel()
-        comma2 = JLabel()
-        paren_l1 = JLabel()
-        paren_l2 = JLabel()
-        paren_r1 = JLabel()
-        paren_r2 = JLabel()
+
         self.txt_start_time = JTextField()
         self.txt_end_time = JTextField()
 
-        JScrollPane1 = JScrollPane()
+        jScrollPane1 = JScrollPane()
         self.lst_product = JList()
         self.lst_product = JList(self.jlist_products, valueChanged = self.choose_product)
         
-        JScrollPane2 = JScrollPane()
+        jScrollPane2 = JScrollPane()
         self.lst_watershed = JList()
         self.lst_watershed = JList(self.jlist_basins, valueChanged = self.choose_watershed)
 
@@ -368,87 +409,36 @@ class CumulusUI(JFrame):
 
         lbl_extent.setText("Maximum (x,y):")
 
-        self.txt_originx.setToolTipText("Minimum X")
-
-        self.txt_originy.setToolTipText("Minimum Y")
-
-        self.txt_extentx.setToolTipText("Maximum X")
-
-        self.txt_extenty.setToolTipText("Maximum Y")
-
         lbl_select_file.setText("Output File Location")
-
-        comma1.setFont(Font("Tahoma", 0, 12))
-        comma1.setText(",")
-
-        comma2.setFont(Font("Tahoma", 0, 12))
-        comma2.setText(",")
-
-        paren_l1.setText("(")
-
-        paren_l2.setText("(")
-
-        paren_r1.setText(")")
-
-        paren_r2.setText(")")
 
         self.txt_start_time.setToolTipText("Start Time")
         self.txt_end_time.setToolTipText("End Time")
 
         self.lst_product.setBorder(BorderFactory.createTitledBorder(None, "Available Products", TitledBorder.CENTER, TitledBorder.TOP, Font("Tahoma", 0, 14)))
         self.lst_product.setFont(Font("Tahoma", 0, 14))
-        JScrollPane1.setViewportView(self.lst_product)
+        jScrollPane1.setViewportView(self.lst_product)
         self.lst_product.getAccessibleContext().setAccessibleName("Available Products")
-        self.lst_product.getAccessibleContext().setAccessibleParent(JScrollPane2)
+        self.lst_product.getAccessibleContext().setAccessibleParent(jScrollPane2)
 
         self.lst_watershed.setBorder(BorderFactory.createTitledBorder(None, "Available Watersheds", TitledBorder.CENTER, TitledBorder.TOP, Font("Tahoma", 0, 14)))
         self.lst_watershed.setFont(Font("Tahoma", 0, 14))
         self.lst_watershed.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-        JScrollPane2.setViewportView(self.lst_watershed)
+        jScrollPane2.setViewportView(self.lst_watershed)
 
         self.cwms_dssname.setText("CWMS DSS filename")
         self.cwms_dssname.setToolTipText("Parameter.yyyy.mm.dss")
         self.cwms_dssname.setVisible(False)
 
-        layout = GroupLayout(self.getContentPane())
-        self.getContentPane().setLayout(layout)
+        layout = GroupLayout(self.getContentPane());
+        self.getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, False)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbl_select_file)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(self.cwms_dssname))
-                    .addComponent(JScrollPane1)
-                    .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(paren_l1)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                            .addComponent(lbl_origin)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(self.txt_originx, GroupLayout.PREFERRED_SIZE, 65, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(comma1, GroupLayout.PREFERRED_SIZE, 5, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(self.txt_originy, GroupLayout.PREFERRED_SIZE, 65, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(paren_r1)))
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(paren_l2)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                            .addComponent(lbl_extent)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(self.txt_extentx, GroupLayout.PREFERRED_SIZE, 65, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(comma2)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(self.txt_extenty, GroupLayout.PREFERRED_SIZE, 65, GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(paren_r2))))
-                    .addComponent(JScrollPane2)
+                    .addComponent(lbl_select_file)
+                    .addComponent(jScrollPane1)
+                    .addComponent(jScrollPane2)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
                             .addComponent(btn_submit)
@@ -458,20 +448,18 @@ class CumulusUI(JFrame):
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                             .addComponent(lbl_start_date)
-                            .addComponent(self.txt_start_time, GroupLayout.PREFERRED_SIZE, 140, GroupLayout.PREFERRED_SIZE))
+                            .addComponent(self.txt_start_time, GroupLayout.PREFERRED_SIZE, 170, GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lbl_end_date)
-                                .addGap(70, 70, 70))
-                            .addComponent(self.txt_end_time, GroupLayout.Alignment.LEADING, GroupLayout.PREFERRED_SIZE, 140, GroupLayout.PREFERRED_SIZE))))
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                            .addComponent(self.txt_end_time, GroupLayout.PREFERRED_SIZE, 170, GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_end_date))))
                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         )
         layout.setVerticalGroup(
             layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(lbl_start_date)
                     .addComponent(lbl_end_date))
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -479,33 +467,11 @@ class CumulusUI(JFrame):
                     .addComponent(self.txt_start_time, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addComponent(self.txt_end_time, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(JScrollPane2, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, False)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbl_extent)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                            .addComponent(self.txt_extentx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addComponent(self.txt_extenty, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addComponent(comma2)
-                            .addComponent(paren_l2)
-                            .addComponent(paren_r2)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbl_origin)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                            .addComponent(self.txt_originx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addComponent(self.txt_originy, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                            .addComponent(comma1)
-                            .addComponent(paren_l1)
-                            .addComponent(paren_r1))))
-                .addGap(39, 39, 39)
-                .addComponent(JScrollPane1, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbl_select_file)
-                    .addComponent(self.cwms_dssname))
+                .addComponent(lbl_select_file)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
@@ -514,6 +480,7 @@ class CumulusUI(JFrame):
                 .addComponent(btn_submit)
                 .addContainerGap())
         )
+
         self.txt_select_file.setText(self.dss_path)
         self.txt_start_time.setText(self.start_time)
         self.txt_end_time.setText(self.end_time)
@@ -526,6 +493,7 @@ class CumulusUI(JFrame):
         
         Input: java.lang.String URL
         '''
+        start_timer = System.currentTimeMillis()
         try:
             url = URL(url)
             urlconnect = url.openConnection()
@@ -537,11 +505,20 @@ class CumulusUI(JFrame):
             s = br.readLine()
             br.close()
         except MalformedURLException() as ex:
-            # MessageBox.showError(str(ex), "Exception")
+            cumulus_logger.error(str(ex))
+            MessageBox.showError(str(ex), "Exception")
             raise
         except IOException as ex:
-            # MessageBox.showError(str(ex), "Exception")
+            cumulus_logger.error(str(ex))
+            MessageBox.showError(str(ex), "Exception")
             raise
+        end_timer = System.currentTimeMillis()
+        cumulus_logger.debug(
+            "HTTP GET (milliseconds): {}".format(
+                (end_timer - start_timer)
+                )
+        )
+
         return s
 
     def http_post(self, json_string, url):
@@ -549,6 +526,8 @@ class CumulusUI(JFrame):
 
         Input: java.lang.String JSON, java.lang.String URL
         '''
+        start_timer = System.currentTimeMillis()
+
         try:
             # Get a connection and set the request properties
             url = URL(url)
@@ -575,11 +554,21 @@ class CumulusUI(JFrame):
             s = br.readLine()
             br.close()
         except MalformedURLException() as ex:
+            cumulus_logger.error(str(ex))
             MessageBox.showError(str(ex), "Exception")
             raise Exception(ex)
         except IOException as ex:
+            cumulus_logger.error(str(ex))
             MessageBox.showError(str(ex), "Exception")
             raise Exception(ex)
+
+        end_timer = System.currentTimeMillis()
+        cumulus_logger.debug(
+            "HTTP GET (milliseconds): {}".format(
+                (end_timer - start_timer)
+                )
+        )
+
         return s
 
     def json_build(self):
@@ -649,13 +638,16 @@ Unit: {u}
         if not event.getValueIsAdjusting():
             pnames = self.lst_product.getSelectedValues()
             for pname in pnames:
-                print(output_str.format(
-                    name = pname,
-                    after = self.product_meta[pname]['after'],
-                    before = self.product_meta[pname]['before'],
-                    para = self.product_meta[pname]['parameter'],
-                    u = self.product_meta[pname]['unit']
-                    ))
+                cumulus_logger.info("~" * 50)
+                cumulus_logger.info("Product: {}".format(pname))
+                cumulus_logger.info(
+                    "After time: {}".format(self.product_meta[pname]['after']))
+                cumulus_logger.info(
+                    "Before time: {}".format(self.product_meta[pname]['before']))
+                cumulus_logger.info(
+                    "Parameter: {}".format(self.product_meta[pname]['parameter']))
+                cumulus_logger.info(
+                    "unit: {}".format(self.product_meta[pname]['unit']))
 
     def choose_watershed(self, event):
         '''The event here is a javax.swing.event.ListSelectionEvent because
@@ -665,10 +657,6 @@ Unit: {u}
         index = self.lst_watershed.selectedIndex
         if not event.getValueIsAdjusting():
             _dict = self.basin_meta[self.lst_watershed.getSelectedValue()]
-            self.txt_originx.setText(str(_dict['x_min']))
-            self.txt_originy.setText(str(_dict['y_min']))
-            self.txt_extentx.setText(str(_dict['x_max']))
-            self.txt_extenty.setText(str(_dict['y_max']))
 
     def select_file(self, event):
         '''Provide the user a JFileChooser to select the DSS file data is to download to.
@@ -686,10 +674,16 @@ Unit: {u}
 
         Event is a java.awt.event.ActionEvent
         '''
+
+        start_timer = end_timer = System.currentTimeMillis()
         # Build the JSON from the UI inputs and POST if we have JSON
         json_string = self.json_build()
+        cumulus_logger.debug("JSON String Builder: {}".format(json_string))
 
         if json_string is not None:
+            cumulus_logger.info("*" * 50)
+            cumulus_logger.info("Initiated Cumulus Product Request")
+            cumulus_logger.info("*" * 50)
             post_result = self.http_post(json_string, url_downloads)
             json_post_result = json.loads(post_result)
             id = json_post_result['id']
@@ -702,9 +696,10 @@ Unit: {u}
                     stat = json_get_result['status']                                #SUCCESS
                     fname = json_get_result['file']                                 # not null
 
-                    print("Status: {}\tFilename: {}\tProgress: {}%\tTimeout: {}".format(stat, fname, progress, timeout))
+                    cumulus_logger.info("Status: {:>10} Filename: {} Progress: {:>3}% Timeout: {:>4}".format(stat, fname, progress, timeout))
 
                     if stat == 'FAILED':
+                        cumulus_logger.error("Failed to load grid products.")
                         MessageBox.showError(
                             "Failed to load grid products.",
                             "Failed Download"
@@ -716,29 +711,41 @@ Unit: {u}
                         cwmsdss_naming = self.cwms_dssname.isSelected()
                         downloaded_dssfile = download_dss(fname)
                         if downloaded_dssfile is not None:
-                            print("DSS file downloaded.")
+                            cumulus_logger.info("DSS file downloaded.")
                             merged_dssfiles = merge_dss(downloaded_dssfile, dest_dssfile, cwmsdss_naming)
                             if len(merged_dssfiles) > 0:
-                                MessageBox.showInformation(
-                                    "DSS file downloaded and merged to:\n{}".format(
+                                end_timer = System.currentTimeMillis()
+
+                                msg = "DSS file downloaded and merged to: {}".format(
                                         '\n'.join([f for f in merged_dssfiles])
-                                        ),
+                                        )
+                                cumulus_logger.info(msg)
+                                MessageBox.showInformation(msg,
                                     "Successful Processing"
                                 )
                             else:
-                                MessageBox.showWarning(
-                                    "DSS file merge unsuccessful",
+                                msg = "DSS file merge unsuccessful"
+                                cumulus_logger.warning(msg)
+                                MessageBox.showWarning(msg,
                                     "Unsuccessful Merge"
                                 )
                         else:
-                            MessageBox.showError(
-                                "Downloading and processing the DSS file failed!",
+                            msg = "Downloading and processing the DSS file failed!"
+                            cumulus_logger.error(msg)
+                            MessageBox.showError(msg,
                                 "Failed Processing"
                                 )
                         break
                     else:
                         Thread.sleep(1000)
                     timeout += 1
+
+            cumulus_logger. info(
+                "Submit time duration (milliseconds): {}".format(
+                    (end_timer - start_timer)
+                )
+            )
+                                
 
 def main():
     ''' The main section to determine is the script is executed within or
@@ -748,11 +755,18 @@ def main():
         script_name = "{}.py".format(arg2)
         tw = cavistatus.get_timewindow()
         if tw == None:
-        	raise Exception("No forecast open on Modeling tab to get a timewindow.")
+            msg = "No forecast open on Modeling tab to get a timewindow."
+            cumulus_logger.warning(msg)
+            raise Exception(msg)
         db = os.path.join(cavistatus.get_database_directory(), "grid.dss")
         cwms_home = cavistatus.get_working_dir()
         common_exe = os.path.join(os.path.split(cwms_home)[0], "common", "exe")
-        cumulus_config = os.path.join(os.getenv("APPDATA"), "cumulus.config")
+
+        cumulus_logger.debug("DSS file default: {}".format(db))
+        cumulus_logger.debug("CWMS working directory: {}".format(cwms_home))
+        cumulus_logger.debug("Jython execution directory: {}".format(common_exe))
+        
+        cumulus_config = os.path.join(APPDATA, "cumulus.config")
         this_script = os.path.join(cavistatus.get_project_directory(), "scripts", script_name)
         cmd = "@PUSHD {pushd}\n"
         cmd += "Jython.bat {script} "
@@ -760,11 +774,11 @@ def main():
         cmd = cmd.format(pushd=common_exe, script=this_script, start=tw[0],
             end=tw[1], dss=db, home=cwms_home, config=cumulus_config
             )
-        print(cmd)
         # Create a temporary file that will be executed outside the CAVI env
-        batfile = tempfile.NamedTemporaryFile(mode='w+b', suffix='.cmd', delete=False)
+        batfile = tempfile.NamedTemporaryFile(mode='w', suffix='.cmd', delete=False)
         batfile.write(cmd)
         batfile.close()
+        cumulus_logger.info("Initiated Subprocess")
         p = subprocess.Popen("start cmd /C " + batfile.name, shell=True)
         # os.remove(batfile.name)
     else:                                                                       # This is all the stuff to do if initiated outside the CAVI environment
@@ -785,5 +799,10 @@ def main():
         cui = CumulusUI(ordered_dict)
         cui.setVisible(True)
 
+
+
 if __name__ == "__main__":
+    # DELETE THIS LIST.  ONLY FOR TESTING
+    sys.argv[1:] = ["01SEP2020, 00:00", "04SEP2020, 13:00", "D:/WS_CWMS/lrn-m3000-v31-pro/database/grid.dss", "C:/app/CWMS/CWMS-Production/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
+    # DELETE THIS LIST.  ONLY FOR TESTING
     main()

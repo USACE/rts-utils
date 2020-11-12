@@ -9,7 +9,7 @@ package crrel.rsgis.cumulus;
  *
  * @author h3ecxjsg
  */
-public class CumulusRtsUI extends javax.swing.JFrame {
+public class CumulusRtsUI extends JFrame {
 
     /**
      * Creates new form CumulusRtsUi
@@ -27,38 +27,25 @@ public class CumulusRtsUI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        btn_submit = new javax.swing.JButton();
-        lbl_start_date = new javax.swing.JLabel();
-        lbl_end_date = new javax.swing.JLabel();
-        txt_select_file = new javax.swing.JTextField();
-        btn_select_file = new javax.swing.JButton();
-        lbl_origin = new javax.swing.JLabel();
-        lbl_extent = new javax.swing.JLabel();
-        txt_originx = new javax.swing.JTextField();
-        txt_originy = new javax.swing.JTextField();
-        txt_extentx = new javax.swing.JTextField();
-        txt_extenty = new javax.swing.JTextField();
-        lbl_select_file = new javax.swing.JLabel();
-        comma1 = new javax.swing.JLabel();
-        comma2 = new javax.swing.JLabel();
-        paren_l1 = new javax.swing.JLabel();
-        paren_l2 = new javax.swing.JLabel();
-        paren_r1 = new javax.swing.JLabel();
-        paren_r2 = new javax.swing.JLabel();
-        txt_start_time = new javax.swing.JTextField();
-        txt_end_time = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        lst_products = new javax.swing.JList();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        lst_watershed = new javax.swing.JList();
-        isCwmsName = new javax.swing.JCheckBox();
+        btn_submit = new JButton();
+        lbl_start_date = new JLabel();
+        lbl_end_date = new JLabel();
+        self.txt_select_file = new JTextField();
+        btn_select_file = new JButton();
+        lbl_select_file = new JLabel();
+        self.txt_start_time = new JTextField();
+        self.txt_end_time = new JTextField();
+        jScrollPane1 = new JScrollPane();
+        self.lst_products = new JList();
+        jScrollPane2 = new JScrollPane();
+        self.lst_watershed = new JList();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Cumulus CAVI UI");
         setLocation(new java.awt.Point(10, 10));
         setLocationByPlatform(true);
         setName("CumulusCaviUi"); // NOI18N
-        setResizable(false);
+        setResizable(False);
 
         btn_submit.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         btn_submit.setText("Submit");
@@ -68,162 +55,72 @@ public class CumulusRtsUI extends javax.swing.JFrame {
 
         lbl_end_date.setText("End Date/Time");
 
-        txt_select_file.setText("C:\\projects\\CWMS\\database\\grid.dss");
-        txt_select_file.setToolTipText("FQPN to output file (.dss)");
+        self.txt_select_file.setToolTipText("FQPN to output file (.dss)");
 
         btn_select_file.setText("...");
         btn_select_file.setToolTipText("Select File...");
 
-        lbl_origin.setText("Origin (x,y):");
-
-        lbl_extent.setText("Extents (x,y):");
-
-        txt_originx.setToolTipText("Origin X");
-
-        txt_originy.setToolTipText("Origin Y");
-
-        txt_extentx.setToolTipText("Extent X");
-
-        txt_extenty.setToolTipText("Extent Y");
-
         lbl_select_file.setText("Output File Location");
 
-        comma1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        comma1.setText(",");
+        self.txt_start_time.setToolTipText("Start Time (yyyy-mm-ddThh:mm:ss)");
 
-        comma2.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        comma2.setText(",");
-
-        paren_l1.setText("(");
-
-        paren_l2.setText("(");
-
-        paren_r1.setText(")");
-
-        paren_r2.setText(")");
-
-        txt_start_time.setText("2020-12-16 12:00:00");
-        txt_start_time.setToolTipText("Start Time (yyyy-mm-ddThh:mm:ss)");
-
-        txt_end_time.setText("2020-12-16 12:00:00");
         txt_end_time.setToolTipText("End Time");
 
-        lst_products.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Available Products", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.TOP, new java.awt.Font("Tahoma", 0, 14))); // NOI18N
-        lst_products.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        jScrollPane1.setViewportView(lst_products);
+        self.lst_products.setBorder(BorderFactory.createTitledBorder(null, "Available Products", border.TitledBorder.CENTER, border.TitledBorder.TOP, new java.awt.Font("Tahoma", 0, 14))); // NOI18N
+        self.lst_products.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jScrollPane1.setViewportView(self.lst_products);
 
-        lst_watershed.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Available Watersheds", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.TOP, new java.awt.Font("Tahoma", 0, 14))); // NOI18N
-        lst_watershed.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        lst_watershed.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane2.setViewportView(lst_watershed);
+        self.lst_watershed.setBorder(BorderFactory.createTitledBorder(null, "Available Watersheds", border.TitledBorder.CENTER, border.TitledBorder.TOP, new java.awt.Font("Tahoma", 0, 14))); // NOI18N
+        self.lst_watershed.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        self.lst_watershed.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane2.setViewportView(self.lst_watershed);
 
-        isCwmsName.setText("CWMS DSS file naming");
-        isCwmsName.setToolTipText("Parameter.yyyy.mm.dss");
-        isCwmsName.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                isCwmsNameActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbl_select_file)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(isCwmsName))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, False)
+                    .addComponent(lbl_select_file)
                     .addComponent(jScrollPane1)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(paren_l1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbl_origin)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(txt_originx, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(comma1, javax.swing.GroupLayout.PREFERRED_SIZE, 5, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txt_originy, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(paren_r1)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(paren_l2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbl_extent)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(txt_extentx, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(comma2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txt_extenty, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(paren_r2))))
                     .addComponent(jScrollPane2)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
                             .addComponent(btn_submit)
-                            .addComponent(txt_select_file, javax.swing.GroupLayout.PREFERRED_SIZE, 377, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, 377, GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btn_select_file))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                             .addComponent(lbl_start_date)
-                            .addComponent(txt_start_time, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lbl_end_date)
-                                .addGap(70, 70, 70))
-                            .addComponent(txt_end_time, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(self.txt_start_time, GroupLayout.PREFERRED_SIZE, 170, GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                            .addComponent(txt_end_time, GroupLayout.PREFERRED_SIZE, 170, GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbl_end_date))))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(lbl_start_date)
                     .addComponent(lbl_end_date))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txt_start_time, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txt_end_time, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(self.txt_start_time, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txt_end_time, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbl_extent)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txt_extentx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txt_extenty, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(comma2)
-                            .addComponent(paren_l2)
-                            .addComponent(paren_r2)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbl_origin)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txt_originx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txt_originy, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(comma1)
-                            .addComponent(paren_l1)
-                            .addComponent(paren_r1))))
-                .addGap(39, 39, 39)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbl_select_file)
-                    .addComponent(isCwmsName))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_select_file, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lbl_select_file)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addComponent(btn_select_file))
                 .addGap(18, 18, 18)
                 .addComponent(btn_submit)
@@ -233,11 +130,6 @@ public class CumulusRtsUI extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void isCwmsNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_isCwmsNameActionPerformed
-        // TODO add your handling code here:
-        System.out.println(this.isCwmsName.isSelected());
-    }//GEN-LAST:event_isCwmsNameActionPerformed
 
     /**
      * @param args the command line arguments
@@ -249,9 +141,9 @@ public class CumulusRtsUI extends javax.swing.JFrame {
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
             }
@@ -261,7 +153,7 @@ public class CumulusRtsUI extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(CumulusRtsUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
             java.util.logging.Logger.getLogger(CumulusRtsUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(CumulusRtsUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
@@ -276,30 +168,17 @@ public class CumulusRtsUI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btn_select_file;
-    private javax.swing.JButton btn_submit;
-    private javax.swing.JLabel comma1;
-    private javax.swing.JLabel comma2;
-    private javax.swing.JCheckBox isCwmsName;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JLabel lbl_end_date;
-    private javax.swing.JLabel lbl_extent;
-    private javax.swing.JLabel lbl_origin;
-    private javax.swing.JLabel lbl_select_file;
-    private javax.swing.JLabel lbl_start_date;
-    private javax.swing.JList lst_products;
-    private javax.swing.JList lst_watershed;
-    private javax.swing.JLabel paren_l1;
-    private javax.swing.JLabel paren_l2;
-    private javax.swing.JLabel paren_r1;
-    private javax.swing.JLabel paren_r2;
-    private javax.swing.JTextField txt_end_time;
-    private javax.swing.JTextField txt_extentx;
-    private javax.swing.JTextField txt_extenty;
-    private javax.swing.JTextField txt_originx;
-    private javax.swing.JTextField txt_originy;
-    private javax.swing.JTextField txt_select_file;
-    private javax.swing.JTextField txt_start_time;
+    private JButton btn_select_file;
+    private JButton btn_submit;
+    private JScrollPane jScrollPane1;
+    private JScrollPane jScrollPane2;
+    private JLabel lbl_end_date;
+    private JLabel lbl_select_file;
+    private JLabel lbl_start_date;
+    private JList self.lst_products;
+    private JList self.lst_watershed;
+    private JTextField txt_end_time;
+    private JTextField self.txt_select_file;
+    private JTextField self.txt_start_time;
     // End of variables declaration//GEN-END:variables
 }
