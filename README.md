@@ -16,7 +16,7 @@ ___Read instructions before executing.___
 
 1. Copy code to your clipboard (Ctrl + C)
 
-1. Create a new script from the CAVI Script Editor
+1. Create a new script from the CAVI Script Editor and name it `script_downloader`
 
 1. Paste code (Ctrl + V) into the new CAVI script
 
