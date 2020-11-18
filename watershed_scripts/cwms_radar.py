@@ -21,7 +21,7 @@ cwmsdat.begintime = cwmsdat.format_datetime(HecTime(st))
 cwmsdat.endtime = cwmsdat.format_datetime(HecTime(et))
 cwmsdat.dssfile = os.path.join(
     cavistatus.get_database_directory(),
-    '{}-grids.dss'.format(cavistatus.get_watershed().getName())
+    '{}.dss'.format(cavistatus.get_watershed().getName())
     )
 cwmsdat.read_config(os.path.join(
         cavistatus.get_shared_directory(),
