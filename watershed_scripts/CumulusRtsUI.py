@@ -827,8 +827,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # DELETE THIS LIST.  ONLY FOR TESTING
-    sys.argv[1:] = ["30NOV2020, 1500", "01DEC2020, 0500", "D:/WS_CWMS/lrn-m3000-v32-dev/database/grid.dss", "C:/app/CWMS/CWMS-v3.2.1.132/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
-    # DELETE THIS LIST.  ONLY FOR TESTING
-
     main()
