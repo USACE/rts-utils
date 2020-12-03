@@ -328,14 +328,14 @@ def merge_dss(src_dss, dest_dss, cwms_name=False, *coords):
             if dssout:
                 dssout.done()
                 dssout.close()
-            try:
-                Files.deleteIfExists(src_dss)
-                cumulus_logger.debug(
-                    "Deleteing the source DSS file: {}".format(src_dss))
-            except FileSystemException as ex:
-                # MessageBox.showError(str(ex), "Exception")
-                cumulus_logger.error(str(ex))
-                raise
+            # try:
+            #     Files.deleteIfExists(src_dss)
+            #     cumulus_logger.debug(
+            #         "Deleteing the source DSS file: {}".format(src_dss))
+            # except FileSystemException as ex:
+            #     # MessageBox.showError(str(ex), "Exception")
+            #     cumulus_logger.error(str(ex))
+            #     raise
     
     end_timer = System.currentTimeMillis()
     cumulus_logger.debug(
@@ -721,7 +721,7 @@ Unit: {u}
                     stat = json_get_result['status']                                #SUCCESS
                     fname = json_get_result['file']                                 # not null
 
-                    cumulus_logger.info("Status: {:>10} Filename: {} Progress: {:>3}% Timeout: {:>4}".format(stat, fname, progress, timeout))
+                    cumulus_logger.info("Status: {:>10} Filename: {} Progress: {:>4.1f}% Timeout: {:>4}".format(stat, fname, progress, timeout))
 
                     if stat == 'FAILED':
                         cumulus_logger.error("Failed to load grid products.")
@@ -762,7 +762,7 @@ Unit: {u}
                                 )
                         break
                     else:
-                        Thread.sleep(1000)
+                        Thread.sleep(2000)
                     timeout += 1
 
             cumulus_logger. info(
@@ -827,4 +827,8 @@ def main():
 
 
 if __name__ == "__main__":
+    # DELETE THIS LIST.  ONLY FOR TESTING
+    sys.argv[1:] = ["30NOV2020, 1500", "01DEC2020, 0500", "D:/WS_CWMS/lrn-m3000-v32-dev/database/grid.dss", "C:/app/CWMS/CWMS-v3.2.1.132/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
+    # DELETE THIS LIST.  ONLY FOR TESTING
+
     main()
