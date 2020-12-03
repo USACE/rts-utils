@@ -20,12 +20,13 @@ from javax.swing.filechooser import FileNameExtensionFilter
 from hec.script import Constants, MessageBox
 from hec.heclib.util import Heclib, HecTime
 from hec.heclib.dss import HecDss, DSSPathname
-from hec.heclib.grid import GridUtilities
+from hec.heclib.grid import GridUtilities, GriddedData, GridInfo, SpecifiedGridInfo
 from hec.hecmath import DSSFileException
 # Python
 import os
 import sys
 import json
+import math
 import tempfile
 import subprocess
 import logging
@@ -258,7 +259,7 @@ def download_dss(dss_url):
 
     return result
 
-def merge_dss(src_dss, dest_dss, cwms_name=False):
+def merge_dss(src_dss, dest_dss, cwms_name=False, *coords):
     '''
     Return list containing FQPN of DSS files
 
@@ -283,22 +284,34 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
         
         return new_filename
 
-    dssin = None
+    dssin = dssout = None
+    oi, oj, ei, ej = coords
+    origin_factor = lambda x, y: int(math.floor(x / y))
     merged_paths = list()
     # Process the DSS file
     if Files.exists(src_dss):
         try:
-            dssin = HecDss.open(src_dss.toString())
-            if cwms_name:
-                for pathname in dssin.getCatalogedPathnames(True):
+            dssin = HecDss.open(src_dss.toString(), False, False, 7)
+            dssout = HecDss.open(dest_dss, False, False, 6)
+            for pathname in dssin.getCatalogedPathnames(True):
+                if cwms_name:
                     dest_dss = os.path.join(os.path.dirname(dest_dss), cwms_dssname(pathname))
-                    grid_container = dssin.get(pathname)
-                    grid_data = grid_container.getGridData()
-                    GridUtilities.storeGridToDss(dest_dss, pathname, grid_data)
-                    if dest_dss not in merged_paths: merged_paths.append(dest_dss)
-            else:
-                dssin.copyRecordsFrom(dest_dss, dssin.getCatalogedPathnames(True))
-                merged_paths.append(dest_dss)
+                grid_container = dssin.get(pathname)
+                grid_info = grid_container.getGridInfo()
+                grid_info.setCellInfo(
+                    origin_factor(oi, grid_info.getCellSize()),
+                    origin_factor(oj, grid_info.getCellSize()),
+                    grid_info.getNumberOfCellsX(),
+                    grid_info.getNumberOfCellsY(),
+                    grid_info.getCellSize()
+                )
+                dssout.put(grid_container)
+                # GridUtilities.storeGridToDss(dest_dss, pathname, grid_data)
+                if dest_dss not in merged_paths: merged_paths.append(dest_dss)
+
+            # else:
+                # dssin.copyRecordsFrom(dest_dss, dssin.getCatalogedPathnames(True))
+                # merged_paths.append(dest_dss)
 
         except DSSFileException as ex:
             # MessageBox.showError(str(ex), "Exception")
@@ -312,6 +325,9 @@ def merge_dss(src_dss, dest_dss, cwms_name=False):
             if dssin:
                 dssin.done()
                 dssin.close()
+            if dssout:
+                dssout.done()
+                dssout.close()
             try:
                 Files.deleteIfExists(src_dss)
                 cumulus_logger.debug(
@@ -680,6 +696,15 @@ Unit: {u}
         json_string = self.json_build()
         cumulus_logger.debug("JSON String Builder: {}".format(json_string))
 
+        # Get the watershed's coordinates
+        selected_watershed = self.lst_watershed.getSelectedValue()
+        coords = list()
+        if selected_watershed is not None:
+            coords.append(self.basin_meta[selected_watershed]['x_min'])
+            coords.append(self.basin_meta[selected_watershed]['y_min'])
+            coords.append(self.basin_meta[selected_watershed]['x_max'])
+            coords.append(self.basin_meta[selected_watershed]['y_max'])
+
         if json_string is not None:
             cumulus_logger.info("*" * 50)
             cumulus_logger.info("Initiated Cumulus Product Request")
@@ -712,7 +737,7 @@ Unit: {u}
                         downloaded_dssfile = download_dss(fname)
                         if downloaded_dssfile is not None:
                             cumulus_logger.info("DSS file downloaded.")
-                            merged_dssfiles = merge_dss(downloaded_dssfile, dest_dssfile, cwmsdss_naming)
+                            merged_dssfiles = merge_dss(downloaded_dssfile, dest_dssfile, cwmsdss_naming, *coords)
                             if len(merged_dssfiles) > 0:
                                 end_timer = System.currentTimeMillis()
 
@@ -802,4 +827,8 @@ def main():
 
 
 if __name__ == "__main__":
+    # DELETE THIS LIST.  ONLY FOR TESTING
+    sys.argv[1:] = ["26NOV2020, 00:00", "26NOV2020, 23:00", "D:/WS_CWMS/lrn-m3000-v32-dev/database/grid.dss", "C:/app/CWMS/CWMS-v3.2.1.132/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
+    # DELETE THIS LIST.  ONLY FOR TESTING
+
     main()
