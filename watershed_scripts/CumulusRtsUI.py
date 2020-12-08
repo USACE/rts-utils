@@ -782,7 +782,10 @@ def main():
         if tw == None:
             msg = "No forecast open on Modeling tab to get a timewindow."
             cumulus_logger.warning(msg)
-            raise Exception(msg)
+            MessageBox.showWarning(msg,
+                "No Forecast Open"
+            )
+            sys.exit()
         db = os.path.join(cavistatus.get_database_directory(), "grid.dss")
         cwms_home = cavistatus.get_working_dir()
         common_exe = os.path.join(os.path.split(cwms_home)[0], "common", "exe")
