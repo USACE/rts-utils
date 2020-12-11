@@ -1,12 +1,12 @@
 # Java
-from java.lang import String, Short, Thread, System
+from java.lang import Short, Thread, System
 from java.net import URL, MalformedURLException
 from java.time import ZoneId, LocalDateTime, ZonedDateTime
 from java.time.format import DateTimeFormatterBuilder, DateTimeFormatter, DateTimeParseException
 from java.io import BufferedReader, BufferedWriter
 from java.io import InputStreamReader, OutputStreamWriter
 from java.io import File, IOException
-from java.nio.file import Files, StandardCopyOption, FileSystemException
+from java.nio.file import Files, StandardCopyOption
 from java.awt import Font, Point
 
 from javax.swing import UIManager
@@ -18,15 +18,12 @@ from javax.swing.border import TitledBorder
 from javax.swing.filechooser import FileNameExtensionFilter
 # HEC
 from hec.script import Constants, MessageBox
-from hec.heclib.util import Heclib, HecTime
-from hec.heclib.dss import HecDss, DSSPathname
-from hec.heclib.grid import GridUtilities, GriddedData, GridInfo, SpecifiedGridInfo
-from hec.hecmath import DSSFileException
+from hec.heclib.dss import HecDSSUtilities
+from hec.heclib.util import Heclib
 # Python
 import os
 import sys
 import json
-import math
 import tempfile
 import subprocess
 import logging
@@ -34,13 +31,16 @@ import logging.handlers
 #
 True = Constants.TRUE
 False = Constants.FALSE
+Heclib.zset("MLVL", "", 1)
+
 APPDATA = os.getenv("APPDATA")
 # Max timeout for downloading dss files in seconds.
-max_timeout = 600
+max_timeout = 180                                                               # seconds
 # List of URLs used in the script
-url_basins = "https://api.rsgis.dev/development/cumulus/basins"
-url_products = "https://api.rsgis.dev/development/cumulus/products"
-url_downloads = "https://api.rsgis.dev/development/cumulus/downloads"
+url_root = "https://cumulus-api.rsgis.dev/cumulus/v1"
+url_basins = url_root + "/basins"
+url_products = url_root + "/products"
+url_downloads = url_root + "/downloads"
 #
 
 # Add some logging but check to see if it already exists because we are running in the CAVI
@@ -230,7 +230,6 @@ def download_dss(dss_url):
     DSS file and all records written to DSS OUT Path.
     '''
     start_timer = System.currentTimeMillis()
-    # Heclib.zset('DSSV', '', 7)
     result = None
     try:
         # Create input stream reader to read the file
@@ -239,13 +238,13 @@ def download_dss(dss_url):
         response_code = urlconnect.getResponseCode()
         if response_code == 200:
             input_stream = urlconnect.getInputStream()
-            tempfile = Files.createTempFile("", ".dss")
+            temp7dss = Files.createTempFile("dss7_", ".dss")
             Files.copy(input_stream,
-                tempfile,
+                temp7dss,
                 StandardCopyOption.REPLACE_EXISTING
                 )
             input_stream.close()
-            result = tempfile
+            result = temp7dss
     except IOException as ex:
         # MessageBox.showError(str(ex), "Exception")
         raise
@@ -259,7 +258,7 @@ def download_dss(dss_url):
 
     return result
 
-def merge_dss(src_dss, dest_dss, cwms_name=False, *coords):
+def merge_dss(src_dss, dest_dss):
     '''
     Return list containing FQPN of DSS files
 
@@ -267,76 +266,22 @@ def merge_dss(src_dss, dest_dss, cwms_name=False, *coords):
     Merge all grid paths in the source dss file into the destination dss file
     '''
     start_timer = System.currentTimeMillis()
-    def cwms_dssname(pn):
-        '''Return FQPN to CWMS naming dss file
-        Input: java.lang.String source_directory java.lang.String DSSPathname
-        '''
-        dsspn = DSSPathname(pn)
-        dpart = dsspn.dPart()
-        dpart_date, dpart_time = dpart.split(":")
-        cpart = String(dsspn.cPart().split("-")[0]).toLowerCase()
-        # dt = TimeFormatter().parse_local_date_time(dpart)
-        dt = HecTime(dpart_date, dpart_time, HecTime.MINUTE_GRANULARITY)
-        new_filename = "{p}.{y}.{m:02}.dss".format(
-            p=cpart,
-            y=dt.year(),
-            m=dt.month())
-        
-        return new_filename
-
-    dssin = dssout = None
-    oi, oj, ei, ej = coords
-    origin_factor = lambda x, y: int(math.floor(x / y))
+    dss7 = HecDSSUtilities()
+    dss6 = HecDSSUtilities()
     merged_paths = list()
     # Process the DSS file
     if Files.exists(src_dss):
-        try:
-            dssin = HecDss.open(src_dss.toString(), False, False, 7)
-            dssout = HecDss.open(dest_dss, False, False, 6)
-            for pathname in dssin.getCatalogedPathnames(True):
-                if cwms_name:
-                    dest_dss = os.path.join(os.path.dirname(dest_dss), cwms_dssname(pathname))
-                grid_container = dssin.get(pathname)
-                grid_info = grid_container.getGridInfo()
-                grid_info.setCellInfo(
-                    origin_factor(oi, grid_info.getCellSize()),
-                    origin_factor(oj, grid_info.getCellSize()),
-                    grid_info.getNumberOfCellsX(),
-                    grid_info.getNumberOfCellsY(),
-                    grid_info.getCellSize()
-                )
-                dssout.put(grid_container)
-                # GridUtilities.storeGridToDss(dest_dss, pathname, grid_data)
-                if dest_dss not in merged_paths: merged_paths.append(dest_dss)
+        # try:
+        dss6path = src_dss.toString().replace("dss7", "dss6")
+        dss7.setDSSFileName(src_dss.toString())
+        dss7.convertVersion(dss6path)
+        dss6.setDSSFileName(dss6path)
+        dss6.copyFile(dest_dss)
+        dss7.copyFile(dest_dss)
+        dss7.close()
+        dss6.close()
+        if dest_dss not in merged_paths: merged_paths.append(dest_dss)
 
-            # else:
-                # dssin.copyRecordsFrom(dest_dss, dssin.getCatalogedPathnames(True))
-                # merged_paths.append(dest_dss)
-
-        except DSSFileException as ex:
-            # MessageBox.showError(str(ex), "Exception")
-            cumulus_logger.error(str(ex))
-            raise
-        except Exception as ex:
-            cumulus_logger.error(str(ex))
-            # MessageBox.showError(str(ex), "Exception")
-            raise
-        finally:
-            if dssin:
-                dssin.done()
-                dssin.close()
-            if dssout:
-                dssout.done()
-                dssout.close()
-            # try:
-            #     Files.deleteIfExists(src_dss)
-            #     cumulus_logger.debug(
-            #         "Deleteing the source DSS file: {}".format(src_dss))
-            # except FileSystemException as ex:
-            #     # MessageBox.showError(str(ex), "Exception")
-            #     cumulus_logger.error(str(ex))
-            #     raise
-    
     end_timer = System.currentTimeMillis()
     cumulus_logger.debug(
         "Merging DSS records (milliseconds): {}".format(
@@ -696,15 +641,6 @@ Unit: {u}
         json_string = self.json_build()
         cumulus_logger.debug("JSON String Builder: {}".format(json_string))
 
-        # Get the watershed's coordinates
-        selected_watershed = self.lst_watershed.getSelectedValue()
-        coords = list()
-        if selected_watershed is not None:
-            coords.append(self.basin_meta[selected_watershed]['x_min'])
-            coords.append(self.basin_meta[selected_watershed]['y_min'])
-            coords.append(self.basin_meta[selected_watershed]['x_max'])
-            coords.append(self.basin_meta[selected_watershed]['y_max'])
-
         if json_string is not None:
             cumulus_logger.info("*" * 50)
             cumulus_logger.info("Initiated Cumulus Product Request")
@@ -733,11 +669,10 @@ Unit: {u}
 
                     if int(progress) == 100 and stat == 'SUCCESS' and fname is not None:
                         dest_dssfile = self.txt_select_file.getText()
-                        cwmsdss_naming = self.cwms_dssname.isSelected()
                         downloaded_dssfile = download_dss(fname)
                         if downloaded_dssfile is not None:
                             cumulus_logger.info("DSS file downloaded.")
-                            merged_dssfiles = merge_dss(downloaded_dssfile, dest_dssfile, cwmsdss_naming, *coords)
+                            merged_dssfiles = merge_dss(downloaded_dssfile, dest_dssfile)
                             if len(merged_dssfiles) > 0:
                                 end_timer = System.currentTimeMillis()
 
@@ -770,7 +705,15 @@ Unit: {u}
                     (end_timer - start_timer)
                 )
             )
-                                
+        # Try to clean up any dss6 and dss7 files in the temp
+        try:
+            tempdir = tempfile.gettempdir()
+            dss_temp_files = os.listdir(tempdir)
+            for f in dss_temp_files:
+                if (f.endswith(".dss") or f.endswith(".dss")):
+                    os.remove(os.path.join(tempdir, f))
+        except OSError as ex:
+            cumulus_logger.warning(str(ex))
 
 def main():
     ''' The main section to determine is the script is executed within or
@@ -826,8 +769,6 @@ def main():
 
         cui = CumulusUI(ordered_dict)
         cui.setVisible(True)
-
-
 
 if __name__ == "__main__":
     main()
