@@ -38,7 +38,7 @@ APPDATA = os.getenv("APPDATA")
 max_timeout = 180                                                               # seconds
 # List of URLs used in the script
 url_root = "https://cumulus-api.rsgis.dev/cumulus/v1"
-url_basins = url_root + "/basins"
+url_basins = url_root + "/watersheds"
 url_products = url_root + "/products"
 url_downloads = url_root + "/downloads"
 #
@@ -47,7 +47,7 @@ url_downloads = url_root + "/downloads"
 # if not "cumulus_logger" in dir():
 log_filename = os.path.join(APPDATA, "cumulus_rts_ui.log")
 cumulus_logger = logging.Logger("Cumulus UI Log")
-cumulus_logger.setLevel(logging.INFO)
+cumulus_logger.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter('%(asctime)s.%(msecs)03d - ' +
     '%(name)s:%(funcName)15s - %(levelname)-5s - %(message)s',
@@ -541,7 +541,7 @@ class CumulusUI(JFrame):
         conf = {
             'datetime_start': None,
             'datetime_end': None,
-            'basin_id': None,
+            'watershed_id': None,
             'product_id': None,
             }
 
@@ -562,7 +562,7 @@ class CumulusUI(JFrame):
 
         if selected_watershed is not None:
             watershed_id = self.basin_meta[selected_watershed]['id']
-            conf['basin_id'] = watershed_id
+            conf['watershed_id'] = watershed_id
         else:
             MessageBox.showWarning(
                 "No Watershed Selected",
@@ -771,4 +771,7 @@ def main():
         cui.setVisible(True)
 
 if __name__ == "__main__":
+    # DELETE THIS LIST.  ONLY FOR TESTING
+    sys.argv[1:] = ["30NOV2020, 0200", "01DEC2020, 2400", "D:/WS_CWMS/lrn-m3000-v32-dev/database/grid.dss", "C:/app/CWMS/CWMS-v3.2.1.132/CAVI", "C:/Users/h3ecxjsg/AppData/Roaming/cumulus.config"]
+    # DELETE THIS LIST.  ONLY FOR TESTING
     main()
