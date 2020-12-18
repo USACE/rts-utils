@@ -47,7 +47,7 @@ url_downloads = url_root + "/downloads"
 # if not "cumulus_logger" in dir():
 log_filename = os.path.join(APPDATA, "cumulus_rts_ui.log")
 cumulus_logger = logging.Logger("Cumulus UI Log")
-cumulus_logger.setLevel(logging.DEBUG)
+cumulus_logger.setLevel(logging.INFO)
 
 formatter = logging.Formatter('%(asctime)s.%(msecs)03d - ' +
     '%(name)s:%(funcName)15s - %(levelname)-5s - %(message)s',
