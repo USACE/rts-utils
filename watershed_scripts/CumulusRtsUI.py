@@ -38,7 +38,7 @@ APPDATA = os.getenv("APPDATA")
 max_timeout = 180                                                               # seconds
 # List of URLs used in the script
 url_root = "https://cumulus-api.rsgis.dev/cumulus/v1"
-url_basins = url_root + "/basins"
+url_basins = url_root + "/watersheds"
 url_products = url_root + "/products"
 url_downloads = url_root + "/downloads"
 #
@@ -541,7 +541,7 @@ class CumulusUI(JFrame):
         conf = {
             'datetime_start': None,
             'datetime_end': None,
-            'basin_id': None,
+            'watershed_id': None,
             'product_id': None,
             }
 
@@ -562,7 +562,7 @@ class CumulusUI(JFrame):
 
         if selected_watershed is not None:
             watershed_id = self.basin_meta[selected_watershed]['id']
-            conf['basin_id'] = watershed_id
+            conf['watershed_id'] = watershed_id
         else:
             MessageBox.showWarning(
                 "No Watershed Selected",
