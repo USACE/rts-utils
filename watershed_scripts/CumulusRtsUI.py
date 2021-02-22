@@ -740,7 +740,7 @@ def main():
         cumulus_config = os.path.join(APPDATA, "cumulus.config")
         this_script = os.path.join(cavistatus.get_project_directory(), "scripts", script_name)
         cmd = "@PUSHD {pushd}\n"
-        cmd += "Jython.bat {script} "
+        cmd += 'Jython.bat "{script}" '
         cmd += '"{start}" "{end}" "{dss}" "{home}" "{config}"'
         cmd = cmd.format(pushd=common_exe, script=this_script, start=tw[0],
             end=tw[1], dss=db, home=cwms_home, config=cumulus_config
