@@ -36,7 +36,7 @@ Heclib.zset("MLVL", "", 1)
 APPDATA = os.getenv("APPDATA")
 
 # List of URLs used in the script
-url_root = "https://cumulus-api.rsgis.dev/cumulus/v1"
+url_root = "https://cumulus.rsgis.dev/"
 url_basins = url_root + "/watersheds"
 url_products = url_root + "/products"
 url_downloads = url_root + "/downloads"
