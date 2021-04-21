@@ -34,8 +34,7 @@ False = Constants.FALSE
 Heclib.zset("MLVL", "", 1)
 
 APPDATA = os.getenv("APPDATA")
-# Max timeout for downloading dss files in seconds.
-max_timeout = 180                                                               # seconds
+
 # List of URLs used in the script
 url_root = "https://cumulus-api.rsgis.dev/cumulus/v1"
 url_basins = url_root + "/watersheds"
@@ -46,11 +45,11 @@ url_downloads = url_root + "/downloads"
 # Add some logging but check to see if it already exists because we are running in the CAVI
 # if not "cumulus_logger" in dir():
 log_filename = os.path.join(APPDATA, "cumulus_rts_ui.log")
-cumulus_logger = logging.Logger("Cumulus UI Log")
+cumulus_logger = logging.Logger("")
 cumulus_logger.setLevel(logging.INFO)
 
-formatter = logging.Formatter('%(asctime)s.%(msecs)03d - ' +
-    '%(name)s:%(funcName)15s - %(levelname)-5s - %(message)s',
+formatter = logging.Formatter('%(asctime)s.%(msecs)03d: ' +
+    '%(funcName)15s - %(levelname)-5s - %(message)s',
     '%Y-%m-%dT%H:%M:%S')
 # Console Handler
 ch = logging.StreamHandler()
@@ -78,8 +77,10 @@ from this script because we will call it again outsid the CAVI environment.
 '''
 try:
     # Add rtsutils package to sys.path before importing
-    sys.path.append(os.path.join(os.environ['APPDATA'], "rsgis"))
-    from rtsutils import cavistatus
+    rsgis_syspath = os.path.join(os.environ['APPDATA'], "rsgis")
+    if os.path.isdir(rsgis_syspath) and (rsgis_syspath not in sys.path):
+            sys.path.append(rsgis_syspath)
+            from rtsutils import cavistatus
     cavi_env = True
 except ImportError as ex:
     cumulus_logger.warning(str(ex) + ", which means running outside of CAVI")
@@ -648,8 +649,8 @@ Unit: {u}
             post_result = self.http_post(json_string, url_downloads)
             json_post_result = json.loads(post_result)
             id = json_post_result['id']
-            timeout = 0
-            while timeout < max_timeout:
+            max_timeout = 180
+            while max_timeout > 0:
                 get_result = self.http_get("/".join([url_downloads, id]))
                 if get_result is not None:
                     json_get_result = json.loads(get_result)
@@ -657,7 +658,7 @@ Unit: {u}
                     stat = json_get_result['status']                                #SUCCESS
                     fname = json_get_result['file']                                 # not null
 
-                    cumulus_logger.info("Status: {:>10} Filename: {} Progress: {:>4.1f}% Timeout: {:>4}".format(stat, fname, progress, timeout))
+                    cumulus_logger.info("Status: {:>10}; Progress: {:>4.1f}%; Timeout: {:>4}".format(stat, progress, max_timeout))
 
                     if stat == 'FAILED':
                         cumulus_logger.error("Failed to load grid products.")
@@ -698,7 +699,7 @@ Unit: {u}
                         break
                     else:
                         Thread.sleep(2000)
-                    timeout += 1
+                    max_timeout -= 1
 
             cumulus_logger. info(
                 "Submit time duration (milliseconds): {}".format(
@@ -740,7 +741,7 @@ def main():
         cumulus_config = os.path.join(APPDATA, "cumulus.config")
         this_script = os.path.join(cavistatus.get_project_directory(), "scripts", script_name)
         cmd = "@PUSHD {pushd}\n"
-        cmd += 'Jython.bat "{script}" '
+        cmd += '@Jython.bat "{script}" '
         cmd += '"{start}" "{end}" "{dss}" "{home}" "{config}"'
         cmd = cmd.format(pushd=common_exe, script=this_script, start=tw[0],
             end=tw[1], dss=db, home=cwms_home, config=cumulus_config
