@@ -4,7 +4,6 @@ import sys
 import urllib
 import glob
 from shutil import copyfile
-from usace.cavi.script import CAVI
 import hec2
 from com.rma.model import Project
 from javax.swing    import JButton, JDialog, JOptionPane, JEditorPane, UIManager
@@ -239,7 +238,7 @@ def isScriptButtonAdded(filename):
 ################################################################################
 def main():
 
-	code_version = '20Oct2020'
+	code_version = '24Aug2021'
 	# Get the config file stored on Github.
 	# This allows new scripts to be added without this script needing to be replaced on every PC/Server Watershed
 
