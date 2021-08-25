@@ -1,38 +1,34 @@
 {
-	"scripts":{
-		"Cumulus":{
-			"remote_dir":"watershed_scripts",
-			"filename":"CumulusRtsUI.py",
-			"update_libs":true,
-			"help_url": null,
-			"config_files":[]
-		},
-		"CWMS Radar":{
-			"remote_dir":"watershed_scripts",
-			"filename":"cwms_radar.py",
-			"update_libs":true,
-			"help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/CWMSRADAR.md",
-			"config_files":[
-				"cwms_radar.config"
-			]
-		},
-		"Get USGS Data":{
-			"remote_dir":"watershed_scripts",
-			"filename":"get_usgs.py",
-			"update_libs":true,
-			"help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/GETUSGS.md",
-			"config_files":[
-				"usgs_locations.csv"
-			]
-		},
-		"Script Downloader":{
-			"remote_dir":"watershed_scripts",
-			"filename":"script_downloader.py",
-			"update_libs": false,
-			"help_url": null,
-			"config_files":[]
-		}
-	},
-	"third_party_libs":{},
-	"version":"20Oct2020"
+  "scripts": {
+    "Cumulus": {
+      "remote_dir": "watershed_scripts",
+      "filename": "CumulusRtsUI.py",
+      "update_libs": true,
+      "help_url": null,
+      "config_files": []
+    },
+    "CWMS Radar": {
+      "remote_dir": "watershed_scripts",
+      "filename": "cwms_radar.py",
+      "update_libs": true,
+      "help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/CWMSRADAR.md",
+      "config_files": ["cwms_radar.config"]
+    },
+    "Get USGS Data": {
+      "remote_dir": "watershed_scripts",
+      "filename": "get_usgs.py",
+      "update_libs": true,
+      "help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/GETUSGS.md",
+      "config_files": ["usgs_locations.csv"]
+    },
+    "Script Downloader": {
+      "remote_dir": "watershed_scripts",
+      "filename": "script_downloader.py",
+      "update_libs": false,
+      "help_url": null,
+      "config_files": []
+    }
+  },
+  "third_party_libs": {},
+  "version": "24Aug2021"
 }
