@@ -20,7 +20,7 @@ True = Constants.TRUE
 False = Constants.FALSE
 APPDATA = os.getenv('APPDATA')
 RSGIS = os.path.join(APPDATA, "rsgis")
-CMD = os.path.join(RSGIS, 'rtsutils', 'CaviTools ')
+CaviTools = os.path.join(RSGIS, 'rtsutils', 'CaviTools ')
 
 DSSVERSION = 6
 Heclib.zset('MLVL', '', 1)
@@ -136,24 +136,28 @@ if cavi_env:
     script_name = "{}.py".format(arg2)
 
     # Get the watershed name for the slug
-    ws_name = cavistatus.getWatershed().getName()
+    ws_name = cavistatus.get_watershed().getName()
     ws_name_slug = re.sub(r'\s+|_', '-', ws_name).lower()
 
     tw = cavistatus.get_timewindow()
-    if tw == None:
-        msg = "No forecast open on Modeling tab to get a timewindow."
-        MessageBox.showWarning(msg,
-            "No Forecast Open"
-        )
-        sys.exit()
-
+    if tw != None:
+        st, et = tw
+        print("Time window: {}".format(tw))
+    else:
+        raise Exception('No forecast open on Modeling tab to get a timewindow.')
+    st = HecTime(st, HecTime.MINUTE_GRANULARITY)
+    st.showTimeAsBeginningOfDay(True)
+    et = HecTime(et, HecTime.MINUTE_GRANULARITY)
+    et.showTimeAsBeginningOfDay(True)
+    after = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(st.year(), st.month(), st.day(), st.hour(), st.minute())
+    before = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(et.year(), et.month(), et.day(), et.hour(), et.minute())
+    
     # DSS save location
     if not dssfilename.endswith('.dss'): dssfilename += dssfilename + '.dss'
     dbdss = os.path.join(cavistatus.get_database_directory(), dssfilename)
+    print('DSS: {}'.format(dbdss))
     
-    endpoint = re.sub(r':\w+', ws_name_slug, endpoint)
-    query = '?after=' + tw[0] + '&before=' + tw[1]
-    endpoint += query
+    endpoint = re.sub(r':\w+', 'kanawha-river', endpoint)
 
 else:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -164,10 +168,20 @@ else:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 # Subprocess to Go EXE and get the stdout
-CMD += '-host=' + host +' -endpoint=' + endpoint +' -scheme=' + scheme + ' -stdout'
-print(CMD)
+CMD = ' '.join([
+    CaviTools,
+    '-host=' + host,
+    '-endpoint=' + endpoint,
+    '-after=' + after,
+    '-before=' + before,
+    '-scheme=' + scheme,
+    '-stdout'
+])
+print('Subprocess Command: {}'.format(CMD))
 sp = subprocess.Popen(
     CMD,
+    shell=True,
+    cwd=os.path.join(RSGIS, 'rtsutils'),
     stdout=subprocess.PIPE,
     stderr=subprocess.STDOUT,
 )
@@ -176,9 +190,11 @@ byte_array = bytearray()
 for b in iter(partial(sp.stdout.read, 1), b''):
     byte_array.append(b)
     if b == '}':
+        print(byte_array)
         obj = json.loads(str(byte_array))
         byte_array = bytearray()
         if 'message' in obj.keys(): raise Exception(obj['message'])
-        put_to_dss(obj, dss)
+        msg = put_to_dss(obj, dss)
+        if msg: print(msg)
 
 if dss: dss.close()
