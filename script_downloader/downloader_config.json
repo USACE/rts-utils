@@ -23,10 +23,10 @@
     },
     "Access 2 Water Extract": {
       "remote_dir": "watershed_scripts",
-      "filename": "get_usgs.py",
+      "filename": "access_water_extract.py",
       "update_libs": true,
       "help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/A2WEXTRACT.md",
-      "config_files": ["usgs_locations.csv"]
+      "config_files": []
     },
     "Script Downloader": {
       "remote_dir": "watershed_scripts",
