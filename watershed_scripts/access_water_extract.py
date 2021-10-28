@@ -202,3 +202,5 @@ for b in iter(partial(sp.stdout.read, 1), b''):
         if msg: print(msg)
 
 if dss: dss.close()
+print('Script Done!')
+MessageBox.showInformation('Download to: {}'.format(dbdss), 'Script Done!')
