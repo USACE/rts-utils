@@ -28,8 +28,8 @@ Heclib.zset('MLVL', '', 1)
 #
 ws_name = None
 dssfilename = 'grid.dss'
-scheme = 'http'
-host = '192.168.2.104'
+scheme = 'https'
+host = 'develop-water-api.corps.cloud'
 endpoint = 'watersheds/:slug/extract'
 
 # Parameter, Unit, Data Type, DSS Fpart (Version)
@@ -194,7 +194,6 @@ byte_array = bytearray()
 for b in iter(partial(sp.stdout.read, 1), b''):
     byte_array.append(b)
     if b == '}':
-        print(byte_array)
         obj = json.loads(str(byte_array))
         byte_array = bytearray()
         if 'message' in obj.keys(): raise Exception(obj['message'])
