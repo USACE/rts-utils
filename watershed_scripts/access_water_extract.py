@@ -163,10 +163,12 @@ if cavi_env:
 
 else:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-    # TESTING SECTION TO BE REMOVED OR COMMENT-OUT
+    # TESTING SECTION WHEN NOT RUNNING IN CAVI
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     endpoint = re.sub(r':\w+', 'kanawha-river', endpoint)
     dbdss = os.getenv('USERPROFILE') + r'\Desktop\data.dss'
+    after = '2021-10-15T12:00:00Z'
+    before = '2021-10-20T12:00:00Z'
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 # Subprocess to Go EXE and get the stdout
@@ -174,8 +176,8 @@ CMD = ' '.join([
     CaviTools,
     '-host=' + host,
     '-endpoint=' + endpoint,
-    # '-after=' + after,
-    # '-before=' + before,
+    '-after=' + after,
+    '-before=' + before,
     '-scheme=' + scheme,
     '-stdout'
 ])
