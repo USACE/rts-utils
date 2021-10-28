@@ -26,6 +26,7 @@ DSSVERSION = 6
 Heclib.zset('MLVL', '', 1)
 
 #
+ws_name = None
 dssfilename = 'grid.dss'
 scheme = 'http'
 host = '192.168.2.104'
@@ -136,7 +137,8 @@ if cavi_env:
     script_name = "{}.py".format(arg2)
 
     # Get the watershed name for the slug
-    ws_name = cavistatus.get_watershed().getName()
+    if ws_name is None:
+        ws_name = cavistatus.get_watershed().getName()
     ws_name_slug = re.sub(r'\s+|_', '-', ws_name).lower()
 
     tw = cavistatus.get_timewindow()
@@ -157,7 +159,7 @@ if cavi_env:
     dbdss = os.path.join(cavistatus.get_database_directory(), dssfilename)
     print('DSS: {}'.format(dbdss))
     
-    endpoint = re.sub(r':\w+', 'kanawha-river', endpoint)
+    endpoint = re.sub(r':\w+', ws_name, endpoint)
 
 else:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -172,8 +174,8 @@ CMD = ' '.join([
     CaviTools,
     '-host=' + host,
     '-endpoint=' + endpoint,
-    '-after=' + after,
-    '-before=' + before,
+    # '-after=' + after,
+    # '-before=' + before,
     '-scheme=' + scheme,
     '-stdout'
 ])
