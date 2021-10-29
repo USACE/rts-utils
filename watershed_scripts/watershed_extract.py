@@ -1,5 +1,13 @@
 """Extract timeseries data from Access2Water"""
 
+# Script Setup
+# Watershed slug name defined in A2W
+ws_name = None
+# Path where to save the DSS file; environment variables accepted
+dsspath = None
+# Name of the DSS file, w/ or w/out extenstion
+dssfilename = None
+
 import os
 import re
 import subprocess
@@ -22,15 +30,13 @@ APPDATA = os.getenv('APPDATA')
 RSGIS = os.path.join(APPDATA, "rsgis")
 CaviTools = os.path.join(RSGIS, 'rtsutils', 'CaviTools ')
 
-DSSVERSION = 6
-Heclib.zset('MLVL', '', 1)
 
-#
-ws_name = None
-dssfilename = 'grid.dss'
 scheme = 'https'
 host = 'develop-water-api.corps.cloud'
 endpoint = 'watersheds/:slug/extract'
+
+Heclib.zset('MLVL', '', 1)
+DSSVERSION = 6
 
 # Parameter, Unit, Data Type, DSS Fpart (Version)
 usgs_code = {
@@ -154,12 +160,15 @@ if cavi_env:
     after = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(st.year(), st.month(), st.day(), st.hour(), st.minute())
     before = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(et.year(), et.month(), et.day(), et.hour(), et.minute())
     
-    # DSS save location
+    # DSS filename and path
+    if dssfilename is None: dssfilename = 'data.dss'
     if not dssfilename.endswith('.dss'): dssfilename += dssfilename + '.dss'
-    dbdss = os.path.join(cavistatus.get_database_directory(), dssfilename)
+    if dsspath is None: dsspath = cavistatus.get_database_directory()
+    dsspath = os.path.expandvars(dsspath)
+    dbdss = os.path.join(dsspath, dssfilename)
     print('DSS: {}'.format(dbdss))
     
-    endpoint = re.sub(r':\w+', ws_name, endpoint)
+    endpoint = re.sub(r':\w+', ws_name_slug, endpoint)
 
 else:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
