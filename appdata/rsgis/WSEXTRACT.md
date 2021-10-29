@@ -1,11 +1,11 @@
 [README](../../README.md)
 # Watershed Extract
 
-Watershed Extract is a `Jython` script written for use in HEC's CWMS/RTS CAVI.  The script uses a `Go` program as a subproccess to fetch the result of an `Access 2 Water` endpoint (`watersheds/:watershed_slug/extract`).  The standard output from the `Go` program is parsed and records written to a DSS file.  The timewindow is determined by the CAVI and active tab.  If the activer tab is `Modeling` and no forecast open, an exception is raised and the program stops.
+Watershed Extract is a `Jython` script written for use in HEC's CWMS/RTS CAVI.  The script uses a `Go` program as a subproccess to fetch the result of an `Access 2 Water` endpoint (`watersheds/:watershed_slug/extract`).  The standard output from the `Go` program is parsed and records written to a DSS file.  The timewindow is determined by the CAVI and active tab.  If the active tab is `Modeling` and no forecast open, an exception is raised and the program stops.
 
 ## Script Setup
 
-At the top of the `Jython` script (`watershed_extract.py`) there is a section to modify the watershed's slug ID, default DSS filename, default and path.  The watershed's slug ID is the watershed name with all lower case with spaces and underscore ("_") replaced with dash ("-").  The default DSS filename is `data.dss`.  The default path is defined by the active watershed's `database` directory.  Paths can be defined using environment variables.
+At the top of the `Jython` script (`watershed_extract.py`) there is a section to modify the watershed's slug ID, default DSS filename, and default path.  The watershed's slug ID is the watershed name with all lower case with spaces and underscore(s) ("_") replaced with a dash ("-"); see A2W endpoint `watersheds` for defined watershed slug IDs.  The default DSS filename is `data.dss`.  The default path is defined by the active watershed's `database` directory.  Paths can be defined using environment variables.
 
 ```python
 # Script Setup

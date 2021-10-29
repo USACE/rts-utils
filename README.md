@@ -5,7 +5,7 @@
 - [CAVI Status](appdata/rsgis/CAVISTATUS.md)
 - [CWMS RADAR](appdata/rsgis/CWMSRADAR.md)
 - [Get USGS](appdata/rsgis/GETUSGS.md)
-- [Watershed Extract] (appdata/rsgis/WSEXTRACT.md)
+- [Watershed Extract](appdata/rsgis/WSEXTRACT.md)
 
 ## Package Installation
 
