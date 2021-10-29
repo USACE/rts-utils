@@ -5,7 +5,7 @@ Watershed Extract is a `Jython` script written for use in HEC's CWMS/RTS CAVI.  
 
 ## Script Setup
 
-At the top of the `Jython` script (`watershed_extract.py`) there is a section to modify the watershed's slug ID, default DSS filename, default and path.  The watershed's slug ID is the watershed name with all lower case with spaces and underscore ("_") replaced with dash ("-").  The default DSS filename is `data.dss`.  The default path is defined by the active watershed's `database` directory.  Paths can be defined using environment variables.
+At the top of the `Jython` script (`watershed_extract.py`) there is a section to modify the watershed's slug ID, default DSS filename, and default path.  The watershed's slug ID is the watershed name with all lower case with spaces and underscore(s) ("_") replaced with a dash ("-"); see A2W endpoint `watersheds` for defined watershed slug IDs.  The default DSS filename is `data.dss`.  The default path is defined by the active watershed's `database` directory.  Paths can be defined using environment variables.
 
 ```python
 # Script Setup
