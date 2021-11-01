@@ -40,9 +40,9 @@ DSSVERSION = 6
 
 # Parameter, Unit, Data Type, DSS Fpart (Version)
 usgs_code = {
-    '00065': ('Stage', 'feet', 'inst-val', 'a2w'),
-    '00061': ('Flow', 'cfs', 'per-aver', 'a2w'),
-    '00060': ('Flow', 'cfs', 'inst-val', 'a2w'),
+    '00065': ('Stage', 'feet', 'inst-val', 'water-usgs'),
+    '00061': ('Flow', 'cfs', 'per-aver', 'water-usgs'),
+    '00060': ('Flow', 'cfs', 'inst-val', 'water-usgs'),
 }
 
 '''Try importing rtsutils, which imports hec2, package.  An exception is thrown
@@ -102,7 +102,7 @@ def put_to_dss(site, dss):
     epart = TimeStep().getEPartFromIntervalMinutes(timestep_min)
 
     # Set the pathname
-    pathname = '//{0}/{1}//{2}/{3}/'.format(Site.site_number, parameter, epart, version).upper()
+    pathname = '/{0}/{1}/{2}//{3}/{4}/'.format(ws_name, Site.site_number, parameter, epart, version).upper()
     apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
     
     tsc = TimeSeriesContainer()
@@ -118,7 +118,8 @@ def put_to_dss(site, dss):
     tsc.numberValues = len(Site.times)
     tsc.startTime    = times[0]
     tsc.endTime      = times[-1]
-    tsc.makeAscending()
+    tsc.timeZoneID   = "UTC"
+    # tsc.makeAscending()
 
     # Snap to regular is iregular
     if TimeSeriesFunctions.isIregular(tsc):
