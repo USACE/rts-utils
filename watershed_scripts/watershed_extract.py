@@ -126,18 +126,7 @@ def put_to_dss(site, dss):
     if not TimeSeriesMath.checkTimeSeries(container):
         return 'Site: "{}" not saved to DSS'.format(Site.site_number)
 
-    tsm = TimeSeriesMath(container)
-
-    st = HecTime(container.startTime, HecTime.MINUTE_GRANULARITY)
-    et = HecTime(container.endTime, HecTime.MINUTE_GRANULARITY)
-    # Generate a regular interval timeseries of missings to merge with the above container
-    hec_math_missing = TimeSeriesMath().generateRegularIntervalTimeSeries(
-        st.toString(),
-        et.toString(),
-        epart,
-        -901
-    )
-    tsc = tsm.mergeTimeSeries(hec_math_missing).getContainer()
+    tsc = TimeSeriesFunctions.snapToRegularInterval(container, epart, "0MIN", "0MIN", "0MIN")
 
     # Put the data to DSS
     try:
@@ -190,7 +179,7 @@ else:
     endpoint = re.sub(r':\w+', 'savannah-river-basin', endpoint)
     dbdss = os.getenv('USERPROFILE') + r'\Desktop\data.dss'
     after = '2021-10-30T12:00:00Z'
-    before = '2021-10-30T23:00:00Z'
+    before = '2021-10-31T23:00:00Z'
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 # Subprocess to Go EXE and get the stdout
