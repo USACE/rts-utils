@@ -120,7 +120,7 @@ def put_to_dss(site, dss):
     container.numberValues = len(Site.times)
     container.startTime    = times[0]
     container.endTime      = times[-1]
-    container.timeZoneID   = tz if tz else 'UTC'
+    container.timeZoneID   = tz
     # container.makeAscending()
 
     if not TimeSeriesMath.checkTimeSeries(container):
