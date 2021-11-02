@@ -17,6 +17,7 @@ import sys
 import json
 from collections import namedtuple
 from functools import partial
+from java.util import TimeZone
 
 from hec.io import TimeSeriesContainer
 from hec.lang import TimeStep
@@ -153,13 +154,21 @@ if cavi_env:
         st, et = tw
         print("Time window: {}".format(tw))
     else:
-        raise Exception('No forecast open on Modeling tab to get a timewindow.')
+        err = 'No forecast open on Modeling tab to get a timewindow.'
+        MessageBox.showInformation(err)
+        raise Exception(err)
     st = HecTime(st, HecTime.MINUTE_GRANULARITY)
     st.showTimeAsBeginningOfDay(True)
+    # Convert start to UTC
+    print('Converting time window to UTC for API request.')
+    ws_tz = cavistatus.get_timezone()
+    HecTime.convertTimeZone(st, ws_tz, TimeZone.getTimeZone('UTC'))    
     et = HecTime(et, HecTime.MINUTE_GRANULARITY)
     et.showTimeAsBeginningOfDay(True)
+    # Convert end to UTC
+    HecTime.convertTimeZone(et, ws_tz, TimeZone.getTimeZone('UTC'))    
     after = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(st.year(), st.month(), st.day(), st.hour(), st.minute())
-    before = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(et.year(), et.month(), et.day(), et.hour(), et.minute())
+    before = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(et.year(), et.month(), et.day(), et.hour(), et.minute())    
     
     # DSS filename and path
     if dssfilename is None: dssfilename = 'data.dss'

@@ -5,10 +5,11 @@ import os
 from hec2.rts.script import RTS as ScriptRts, Forecast
 from hec2.rts.client import RTS as ClientRts
 from hec2.rts.ui import DataAcqTab, DataVisTab, ForecastTab, RtsProjectTab
+from java.util import TimeZone
 
 __all__ = ['get_working_dir', 'get_watershed',
     'get_project_directory', 'get_database_directory', 'get_shared_directory',
-    'get_data_timewindow', 'get_current_module', 'get_timewindow',
+    'get_data_timewindow', 'get_current_module', 'get_timezone', 'get_timewindow',
     'get_selected_forecast', 'get_extract_timewindow', 'get_forecast_dss']
 
 def get_working_dir():
@@ -94,6 +95,14 @@ def get_selected_forecast():
     Returns hec2.rts.model.Forecast
     '''
     return Forecast.getSelectedForecast()
+
+def get_timezone():
+    '''
+    Returns java.util.Timezone
+
+    Get the watershed timezone
+    '''
+    return ScriptRts.getWatershed().getTimeZone()
 
 def get_extract_timewindow():
     '''
