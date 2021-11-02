@@ -7,6 +7,8 @@ ws_name = None
 dsspath = None
 # Name of the DSS file, w/ or w/out extenstion
 dssfilename = None
+# Timezone
+tz = 'UTC'
 
 import os
 import re
@@ -15,6 +17,7 @@ import sys
 import json
 from collections import namedtuple
 from functools import partial
+from java.util import TimeZone
 
 from hec.io import TimeSeriesContainer
 from hec.lang import TimeStep
@@ -22,7 +25,7 @@ from hec.script import Constants, MessageBox
 from hec.heclib.dss import HecDss
 from hec.heclib.util import Heclib, HecTime
 from hec.hecmath.functions import TimeSeriesFunctions
-from hec.hecmath import HecMath
+from hec.hecmath import HecMath, TimeSeriesMath
 
 True = Constants.TRUE
 False = Constants.FALSE
@@ -105,27 +108,26 @@ def put_to_dss(site, dss):
     pathname = '/{0}/{1}/{2}//{3}/{4}/'.format(ws_name, Site.site_number, parameter, epart, version).upper()
     apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
     
-    tsc = TimeSeriesContainer()
-    tsc.fullName     = pathname
-    tsc.location     = apart
-    tsc.parameter    = parameter
-    tsc.type         = data_type
-    tsc.version      = version
-    tsc.interval     = timestep_min
-    tsc.units        = unit
-    tsc.times        = times
-    tsc.values       = Site.values
-    tsc.numberValues = len(Site.times)
-    tsc.startTime    = times[0]
-    tsc.endTime      = times[-1]
-    tsc.timeZoneID   = "UTC"
-    # tsc.makeAscending()
+    container = TimeSeriesContainer()
+    container.fullName     = pathname
+    container.location     = apart
+    container.parameter    = parameter
+    container.type         = data_type
+    container.version      = version
+    container.interval     = timestep_min
+    container.units        = unit
+    container.times        = times
+    container.values       = Site.values
+    container.numberValues = len(Site.times)
+    container.startTime    = times[0]
+    container.endTime      = times[-1]
+    container.timeZoneID   = tz
+    # container.makeAscending()
 
-    # Snap to regular is iregular
-    if TimeSeriesFunctions.isIregular(tsc):
-        # Irregular to Regular TS
-        tsm = HecMath.createInstance(tsc)
-        tsc = tsm.snapToRegularTimeSeries(epart, '0MIN', '0MIN', '0MIN')
+    if not TimeSeriesMath.checkTimeSeries(container):
+        return 'Site: "{}" not saved to DSS'.format(Site.site_number)
+
+    tsc = TimeSeriesFunctions.snapToRegularInterval(container, epart, "0MIN", "0MIN", "0MIN")
 
     # Put the data to DSS
     try:
@@ -144,8 +146,7 @@ if cavi_env:
     script_name = "{}.py".format(arg2)
 
     # Get the watershed name for the slug
-    if ws_name is None:
-        ws_name = cavistatus.get_watershed().getName()
+    ws_name = cavistatus.get_watershed().getName() if ws_name is None else ws_name
     ws_name_slug = re.sub(r'\s+|_', '-', ws_name).lower()
 
     tw = cavistatus.get_timewindow()
@@ -153,19 +154,28 @@ if cavi_env:
         st, et = tw
         print("Time window: {}".format(tw))
     else:
-        raise Exception('No forecast open on Modeling tab to get a timewindow.')
+        err = 'No forecast open on Modeling tab to get a timewindow.'
+        MessageBox.showInformation(err)
+        raise Exception(err)
     st = HecTime(st, HecTime.MINUTE_GRANULARITY)
     st.showTimeAsBeginningOfDay(True)
+    # Convert start to UTC
+    print('Converting time window to UTC for API request.')
+    ws_tz = cavistatus.get_timezone()
+    HecTime.convertTimeZone(st, ws_tz, TimeZone.getTimeZone('UTC'))    
     et = HecTime(et, HecTime.MINUTE_GRANULARITY)
     et.showTimeAsBeginningOfDay(True)
+    # Convert end to UTC
+    HecTime.convertTimeZone(et, ws_tz, TimeZone.getTimeZone('UTC'))    
     after = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(st.year(), st.month(), st.day(), st.hour(), st.minute())
-    before = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(et.year(), et.month(), et.day(), et.hour(), et.minute())
+    before = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(et.year(), et.month(), et.day(), et.hour(), et.minute())    
     
     # DSS filename and path
     if dssfilename is None: dssfilename = 'data.dss'
-    if not dssfilename.endswith('.dss'): dssfilename += dssfilename + '.dss'
+    if not dssfilename.endswith('.dss'): dssfilename += '.dss'
     if dsspath is None: dsspath = cavistatus.get_database_directory()
     dsspath = os.path.expandvars(dsspath)
+    # Join the path and
     dbdss = os.path.join(dsspath, dssfilename)
     print('DSS: {}'.format(dbdss))
     
@@ -175,10 +185,10 @@ else:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # TESTING SECTION WHEN NOT RUNNING IN CAVI
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-    endpoint = re.sub(r':\w+', 'kanawha-river', endpoint)
+    endpoint = re.sub(r':\w+', 'savannah-river-basin', endpoint)
     dbdss = os.getenv('USERPROFILE') + r'\Desktop\data.dss'
-    after = '2021-10-15T12:00:00Z'
-    before = '2021-10-20T12:00:00Z'
+    after = '2021-10-30T12:00:00Z'
+    before = '2021-10-31T23:00:00Z'
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
 
 # Subprocess to Go EXE and get the stdout
