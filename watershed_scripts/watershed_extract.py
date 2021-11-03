@@ -154,9 +154,7 @@ if cavi_env:
         st, et = tw
         print("Time window: {}".format(tw))
     else:
-        err = 'No forecast open on Modeling tab to get a timewindow.'
-        MessageBox.showInformation(err)
-        raise Exception(err)
+        raise Exception('No forecast open on Modeling tab to get a timewindow.')
     st = HecTime(st, HecTime.MINUTE_GRANULARITY)
     st.showTimeAsBeginningOfDay(True)
     # Convert start to UTC
