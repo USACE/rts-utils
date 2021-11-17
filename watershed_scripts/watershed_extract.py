@@ -1,7 +1,7 @@
-"""Extract timeseries data from Access2Water"""
+"""Extract timeseries data from Water API"""
 
 # Script Setup
-# Watershed slug name defined in A2W
+# Watershed slug name defined in Water API
 ws_name = None
 # Path where to save the DSS file; environment variables accepted
 dsspath = None
