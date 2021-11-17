@@ -670,6 +670,7 @@ Unit: {u}
 
                     if int(progress) == 100 and stat == 'SUCCESS' and fname is not None:
                         dest_dssfile = self.txt_select_file.getText()
+                        cumulus_logger.debug("DSS Download Filname: {}".format(fname))
                         downloaded_dssfile = download_dss(fname)
                         if downloaded_dssfile is not None:
                             cumulus_logger.info("DSS file downloaded.")
