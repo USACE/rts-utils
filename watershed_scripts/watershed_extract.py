@@ -1,4 +1,5 @@
 """Extract timeseries data from Water API"""
+
 # Script Setup
 # Watershed slug name defined in Water API
 ws_name = None

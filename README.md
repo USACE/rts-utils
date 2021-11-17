@@ -1,4 +1,4 @@
-# RTS Data Aquisition Utilities
+# RTS Data Acquisition Utilities
 
 ## Available Utilities
 
