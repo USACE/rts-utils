@@ -9,16 +9,15 @@ dsspath = None
 dssfilename = None
 # Timezone
 tz = 'UTC'
-
 import os
 import re
 import subprocess
 import sys
 import json
+from datetime import datetime, timedelta
 from collections import namedtuple
 from functools import partial
 from java.util import TimeZone
-
 from hec.io import TimeSeriesContainer
 from hec.lang import TimeStep
 from hec.script import Constants, MessageBox
@@ -26,33 +25,27 @@ from hec.heclib.dss import HecDss
 from hec.heclib.util import Heclib, HecTime
 from hec.hecmath.functions import TimeSeriesFunctions
 from hec.hecmath import HecMath, TimeSeriesMath
-
+_start = datetime.now()
 True = Constants.TRUE
 False = Constants.FALSE
 APPDATA = os.getenv('APPDATA')
 RSGIS = os.path.join(APPDATA, "rsgis")
 CaviTools = os.path.join(RSGIS, 'rtsutils', 'CaviTools ')
-
-
 scheme = 'https'
 host = 'develop-water-api.corps.cloud'
 endpoint = 'watersheds/:slug/extract'
-
 Heclib.zset('MLVL', '', 1)
 DSSVERSION = 6
-
 # Parameter, Unit, Data Type, DSS Fpart (Version)
 usgs_code = {
     '00065': ('Stage', 'feet', 'inst-val', 'water-usgs'),
     '00061': ('Flow', 'cfs', 'per-aver', 'water-usgs'),
     '00060': ('Flow', 'cfs', 'inst-val', 'water-usgs'),
 }
-
 '''Try importing rtsutils, which imports hec2, package.  An exception is thrown
 if not in CWMS CAVI or RTS CAVI.  This will determine if this script runs in the
 CAVI or outside that environment.  ClientAppCheck.haveClientApp() was tried but
 does not provide expected results.
-
 If we are not in the CAVI environment, then we need to get the provided arguments
 from this script because we will call it again outsid the CAVI environment.
 '''
@@ -64,7 +57,6 @@ try:
     cavi_env = True
 except ImportError as ex:
     cavi_env = False
-
 # put_to_dss(site, dss)
 def put_to_dss(site, dss):
     """Save timeseries to DSS File
@@ -101,9 +93,7 @@ def put_to_dss(site, dss):
         ts = abs(times[t + 1] - times[t])
         if ts < timestep_min or timestep_min is None:
             timestep_min = ts
-
     epart = TimeStep().getEPartFromIntervalMinutes(timestep_min)
-
     # Set the pathname
     pathname = '/{0}/{1}/{2}//{3}/{4}/'.format(ws_name, Site.site_number, parameter, epart, version).upper()
     apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
@@ -123,32 +113,24 @@ def put_to_dss(site, dss):
     container.endTime      = times[-1]
     container.timeZoneID   = tz
     # container.makeAscending()
-
     if not TimeSeriesMath.checkTimeSeries(container):
         return 'Site: "{}" not saved to DSS'.format(Site.site_number)
-
     tsc = TimeSeriesFunctions.snapToRegularInterval(container, epart, "0MIN", "0MIN", "0MIN")
-
     # Put the data to DSS
     try:
         dss.put(tsc)
     except Exception as ex:
         print(ex)
         return 'Site: "{}" not saved to DSS'.format(Site.site_number)
-
-
-
 ''' The main section to determine is the script is executed within or
 outside of the CAVI environment
 '''
 # Decide to execute within the CAVI environment
 if cavi_env:
     script_name = "{}.py".format(arg2)
-
     # Get the watershed name for the slug
     ws_name = cavistatus.get_watershed().getName() if ws_name is None else ws_name
     ws_name_slug = re.sub(r'\s+|_', '-', ws_name).lower()
-
     tw = cavistatus.get_timewindow()
     if tw != None:
         st, et = tw
@@ -178,7 +160,6 @@ if cavi_env:
     print('DSS: {}'.format(dbdss))
     
     endpoint = re.sub(r':\w+', ws_name_slug, endpoint)
-
 else:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     # TESTING SECTION WHEN NOT RUNNING IN CAVI
@@ -188,7 +169,6 @@ else:
     after = '2021-10-30T12:00:00Z'
     before = '2021-10-31T23:00:00Z'
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-
 # Subprocess to Go EXE and get the stdout
 CMD = ' '.join([
     CaviTools,
@@ -217,7 +197,8 @@ for b in iter(partial(sp.stdout.read, 1), b''):
         if 'message' in obj.keys(): raise Exception(obj['message'])
         msg = put_to_dss(obj, dss)
         if msg: print(msg)
-
 if dss: dss.close()
 print('Script Done!')
-MessageBox.showInformation('Download to: {}'.format(dbdss), 'Script Done!')
+_end = datetime.now()
+dur = _end - _start
+MessageBox.showInformation('Download to: {}\n\nAfter: {}\n\nBefore: {}\n\nTime Duration: {}'.format(dbdss, after, before, dur), script_name)
