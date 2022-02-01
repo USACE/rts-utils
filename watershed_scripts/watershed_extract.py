@@ -1,32 +1,34 @@
 """Extract timeseries data from Water API"""
 
 # Script Setup
-# Watershed slug name defined in Water API
+# Watershed slug name defined in Water API or leave 'None' to take CAVI watershed name
 ws_name = None
-# Watershed name used in the APART
+# Watershed name used in the APART or leave 'None' to use watershed name
 ws_apart = None
-# Path where to save the DSS file; environment variables accepted
+# Path where to save the DSS file or leave 'None' to default to CAVI database directory; environment variables accepted (e.g., $TMP)
 dsspath = None
-# Name of the DSS file, w/ or w/out extenstion
+# Name of the DSS file (w/ or w/out extenstion) or leave 'None' defaults to 'data.dss'
 dssfilename = None
 # Timezone
 tz = 'UTC'
+import json
 import os
 import re
 import subprocess
 import sys
-import json
-from datetime import datetime, timedelta
 from collections import namedtuple
+from datetime import datetime, timedelta
 from functools import partial
-from java.util import TimeZone
+
+from hec.heclib.dss import HecDss
+from hec.heclib.util import Heclib, HecTime
+from hec.hecmath import HecMath, TimeSeriesMath
+from hec.hecmath.functions import TimeSeriesFunctions
 from hec.io import TimeSeriesContainer
 from hec.lang import TimeStep
 from hec.script import Constants, MessageBox
-from hec.heclib.dss import HecDss
-from hec.heclib.util import Heclib, HecTime
-from hec.hecmath.functions import TimeSeriesFunctions
-from hec.hecmath import HecMath, TimeSeriesMath
+from java.util import TimeZone
+
 _start = datetime.now()
 True = Constants.TRUE
 False = Constants.FALSE
@@ -192,7 +194,7 @@ sp = subprocess.Popen(
 dss = HecDss.open(dbdss, DSSVERSION)
 byte_array = bytearray()
 # set the wastershed (apart) name depending if None or not
-ws_apart = ws_name if ws_apart is None else ws_name
+ws_apart = ws_name if ws_apart is None else ws_apart
 for b in iter(partial(sp.stdout.read, 1), b''):
     byte_array.append(b)
     if b == '}':
