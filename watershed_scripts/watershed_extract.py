@@ -45,6 +45,7 @@ usgs_code = {
     '00065': ('Stage', 'feet', 'inst-val', 'water-usgs'),
     '00061': ('Flow', 'cfs', 'per-aver', 'water-usgs'),
     '00060': ('Flow', 'cfs', 'inst-val', 'water-usgs'),
+    '62614': ('Elev', 'feet', 'inst-val', 'water-usgs'),
 }
 '''Try importing rtsutils, which imports hec2, package.  An exception is thrown
 if not in CWMS CAVI or RTS CAVI.  This will determine if this script runs in the
