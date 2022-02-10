@@ -34,9 +34,9 @@ def get_remote_data(url):
 ################################################################################
 def download_file(url, dest):
 	try:
-		print 'Downloading {} to {}'.format(url, dest)
+		print('Downloading {} to {}'.format(url, dest))
 		urllib.urlretrieve(url, dest)
-		print("Download Complete!")
+		print('Download Complete!')
 	except:
 		raise Exception('Unable to download from: {}'.format(url))
 ################################################################################
@@ -69,7 +69,7 @@ def script_downloader(remote_repo, selection, appConfig):
 	print(scriptSrcURL)
 
 	scriptDstFilePath = os.path.join(ws_script_dir, appConfig['scripts'][selection]['filename'])
-	print scriptDstFilePath
+	print(scriptDstFilePath)
 
 	# Copy the script file
 	if get_remote_data(scriptSrcURL):
@@ -106,26 +106,26 @@ def script_downloader(remote_repo, selection, appConfig):
 				download_file(fileSrcURL, fileDstPath)
 				downloaded_configs.append(fileDstPath)
 			else:
-				print 'Skipping download of config file: {}'.format(fname)
+				print('Skipping download of config file: {}'.format(fname))
 
 
 	try:
 		temp_dir = tempfile.mkdtemp()
-		print 'created temp folder {}'.format(temp_dir)
+		print('created temp folder {}'.format(temp_dir))
 
 		# Download the master repo zip for the library packages
 		repo_url_parts = remote_repo.split('/')
 		repo_url_parts[2] = 'github.com'
 		repo_url_parts[5] = 'archive'
-		repo_url_parts.append('master.zip')
+		repo_url_parts.append('develop.zip')
 		zip_url = '/'.join(repo_url_parts)
 
-		download_file(zip_url, temp_dir+'/master.zip')
+		download_file(zip_url, temp_dir+'/develop.zip')
 
-		with zipfile.ZipFile(os.path.join(temp_dir, 'master.zip'), "r") as z:
+		with zipfile.ZipFile(os.path.join(temp_dir, 'develop.zip'), "r") as z:
 			z.extractall(temp_dir)
 
-			print('--Files in temp folder--')
+			print('--Files in temp folder--{}--'.format(temp_dir))
 			for f in os.listdir(temp_dir):
 				print(f)
 				if os.path.isdir(os.path.join(temp_dir, f)):
@@ -135,8 +135,8 @@ def script_downloader(remote_repo, selection, appConfig):
 
 					print('*'*50)
 					print('Copying repo libraries...')
-					print 'From: {}'.format(pkg_dir_src)
-					print 'To: {}'.format(pkg_dir_dst)
+					print('From: {}'.format(pkg_dir_src))
+					print('To: {}'.format(pkg_dir_dst))
 					print('*'*50)
 
 					# Copy the packages/libs from temp folder to destination
@@ -152,12 +152,12 @@ def script_downloader(remote_repo, selection, appConfig):
 						download_lib = True
 
 						if os.path.isfile(version_file):
-							print 'Loading json file {}'.format(version_file)
+							print('Loading json file {}'.format(version_file))
 							with open(version_file) as json_file:
 								version = json.load(json_file)['version']
 								if version == lib_obj['version']:
 									download_lib = False
-									print 'Will not download lib: {}'.format(lib_name)
+									print('Will not download lib: {}'.format(lib_name))
 
 
 						if download_lib:
@@ -179,11 +179,11 @@ def script_downloader(remote_repo, selection, appConfig):
 
 	except:
 		print('Unable to create temp folder')
-		print "Unexpected error:", sys.exc_info()
+		print('Unexpected error:', sys.exc_info())
 		print(traceback.print_exc())
 	finally:
 		shutil.rmtree(temp_dir)
-		print 'removing {}'.format(temp_dir)
+		print('removing {}'.format(temp_dir))
 
 	try:
 		help_url = appConfig['scripts'][selection]['help_url']
@@ -242,7 +242,7 @@ def main():
 	# Get the config file stored on Github.
 	# This allows new scripts to be added without this script needing to be replaced on every PC/Server Watershed
 
-	remote_repo = "https://raw.githubusercontent.com/usace/rts-utils/master"
+	remote_repo = "https://raw.githubusercontent.com/usace/rts-utils/develop"
 
 	remote_config = get_remote_data(remote_repo+'/script_downloader/downloader_config.json')
 	# Verify remote data was returned, otherwise exit
@@ -281,7 +281,7 @@ def main():
 	if selection is None:
 		return
 
-	script_filename = appConfig['scripts'][selection]['filename']
+	# script_filename = appConfig['scripts'][selection]['filename']
 
 	script_downloader(remote_repo, selection, appConfig)
 
