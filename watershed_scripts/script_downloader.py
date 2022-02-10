@@ -175,6 +175,9 @@ def script_downloader(remote_repo, selection, appConfig):
 
 							if zipfile.is_zipfile(dest_file):
 								with zipfile.ZipFile(dest_file, "r") as z:									
+									# for file in z.namelist():
+									# 	print('--working on {}'.format(file))
+									# 	z.extract(file, lib_dest_dir) # extract the file to current folder if it is a text file
 									z.extractall(lib_dest_dir)
 
 								# Rename the subdir to 'latest' to provide a more predictable library path
