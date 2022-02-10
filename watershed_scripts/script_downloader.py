@@ -151,6 +151,10 @@ def script_downloader(remote_repo, selection, appConfig):
 
 						download_lib = True
 
+						# Ensure 3rd party lib folder exists before checking files/writing to it
+						if not os.path.isdir(lib_dest_dir):
+							os.mkdir(lib_dest_dir)
+
 						if os.path.isfile(version_file):
 							print('Loading json file {}'.format(version_file))
 							with open(version_file) as json_file:
@@ -162,12 +166,21 @@ def script_downloader(remote_repo, selection, appConfig):
 
 						if download_lib:
 
+							ext_lib_message = 'This may take a little longer while supporting libraries are downloaded.\n'
+							ext_lib_message += 'You will receive a confirmation when complete.'
+							JOptionPane.showMessageDialog(None, ext_lib_message, "Working", JOptionPane.INFORMATION_MESSAGE)
+
 							dest_file = os.path.join(lib_dest_dir, filename)
 							download_file(lib_obj['url'], dest_file)
 
 							if zipfile.is_zipfile(dest_file):
-								with zipfile.ZipFile(dest_file, "r") as z:
+								with zipfile.ZipFile(dest_file, "r") as z:									
 									z.extractall(lib_dest_dir)
+
+								# Rename the subdir to 'latest' to provide a more predictable library path
+								extracted_folders = [obj for obj in os.listdir(lib_dest_dir) if os.path.isdir(os.path.join(lib_dest_dir, obj))]	
+								if len(extracted_folders) == 1:
+									os.rename(os.path.join(lib_dest_dir, extracted_folders[0]), os.path.join(lib_dest_dir, 'latest'))
 
 								# Delete the zip file
 								os.remove(dest_file)
