@@ -238,7 +238,7 @@ def isScriptButtonAdded(filename):
 ################################################################################
 def main():
 
-	code_version = '24Aug2021'
+	code_version = '10Feb2022'
 	# Get the config file stored on Github.
 	# This allows new scripts to be added without this script needing to be replaced on every PC/Server Watershed
 
