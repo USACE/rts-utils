@@ -2,11 +2,8 @@ from __future__ import with_statement
 import os
 import sys
 import urllib
-import glob
-from shutil import copyfile
-import hec2
 from com.rma.model import Project
-from javax.swing    import JButton, JDialog, JOptionPane, JEditorPane, UIManager
+from javax.swing import JOptionPane
 import traceback
 import xml.etree.ElementTree as ET
 import datetime
@@ -15,6 +12,7 @@ import json
 import zipfile
 import webbrowser
 import subprocess
+from time import sleep
 
 cwms_home = os.getcwd()
 watershed_path = Project.getCurrentProject().getProjectDirectory()
@@ -58,6 +56,22 @@ def recursive_overwrite(src, dest, ignore=None):
                                     ignore)
     else:
         shutil.copyfile(src, dest)
+#################################################################################
+# Created because a file/folder might be getting scanned and is locked
+def persistent_rename(src, dst):
+
+	sleep_time = 2
+	num_retries = 6
+	for x in range(0, num_retries):  
+		try:
+			print('trying rename attempt: {}'.format(x))
+			os.rename(src, dst)
+			return
+			# str_error = None
+		except Exception as str_error:
+			sleep(sleep_time)
+			pass
+
 #################################################################################
 def script_downloader(remote_repo, selection, appConfig):
 
@@ -116,15 +130,22 @@ def script_downloader(remote_repo, selection, appConfig):
 		print('created temp folder {}'.format(temp_dir))
 
 		# Download the master repo zip for the library packages
+		# https://github.com/usace/rts-utils/archive/{branch}.zip
 		repo_url_parts = remote_repo.split('/')
+		# replace raw.githubusercontent.com with github.com
 		repo_url_parts[2] = 'github.com'
-		repo_url_parts[5] = 'archive'
-		repo_url_parts.append('develop.zip')
+		# get the branch before we change the url part[5]
+		branch = repo_url_parts[-1] # develop, master or stable
+		print('Downloading from the branch: {}'.format(branch))
+		repo_url_parts[5] = 'archive'		
+		
+		repo_branch_filename = branch+'.zip'
+		repo_url_parts.append(repo_branch_filename)
 		zip_url = '/'.join(repo_url_parts)
 
-		download_file(zip_url, temp_dir+'/develop.zip')
+		download_file(zip_url, temp_dir+'/'+repo_branch_filename)
 
-		with zipfile.ZipFile(os.path.join(temp_dir, 'develop.zip'), "r") as z:
+		with zipfile.ZipFile(os.path.join(temp_dir, repo_branch_filename), "r") as z:
 			z.extractall(temp_dir)
 
 			print('--Files in temp folder--{}--'.format(temp_dir))
@@ -143,7 +164,6 @@ def script_downloader(remote_repo, selection, appConfig):
 
 					# Copy the packages/libs from temp folder to destination
 					recursive_overwrite(pkg_dir_src, pkg_dir_dst)
-
 
 					if update_libs:
 						# Check for 3rd party libraries that need to be downloaded
@@ -199,8 +219,14 @@ def script_downloader(remote_repo, selection, appConfig):
 
 									# Rename the subdir to 'latest' to provide a more predictable library path
 									extracted_folders = [obj for obj in os.listdir(lib_dest_dir) if os.path.isdir(os.path.join(lib_dest_dir, obj))]	
-									if len(extracted_folders) == 1:
-										os.rename(os.path.join(lib_dest_dir, extracted_folders[0]), os.path.join(lib_dest_dir, 'latest'))
+									if len(extracted_folders) == 1:										
+										rename_src = os.path.join(lib_dest_dir, extracted_folders[0])
+										rename_dst = os.path.join(lib_dest_dir, 'latest')
+										print('renaming {} to {}'.format(rename_src, rename_dst))
+										try:
+											os.rename(rename_src, rename_dst)
+										except:
+											persistent_rename(rename_src, rename_dst)
 
 									# Delete the zip file
 									os.remove(dest_file)
