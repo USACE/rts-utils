@@ -14,6 +14,7 @@ import tempfile, shutil
 import json
 import zipfile
 import webbrowser
+import subprocess
 
 cwms_home = os.getcwd()
 watershed_path = Project.getCurrentProject().getProjectDirectory()
@@ -61,6 +62,7 @@ def recursive_overwrite(src, dest, ignore=None):
 def script_downloader(remote_repo, selection, appConfig):
 
 	update_libs = bool(appConfig['scripts'][selection]['update_libs'])
+	print('update_libs: {}'.format(update_libs))
 	config_files = appConfig['scripts'][selection]['config_files']
 	watershed_path = Project.getCurrentProject().getProjectDirectory()
 	ws_script_dir = os.path.join(watershed_path, 'scripts')
@@ -142,56 +144,71 @@ def script_downloader(remote_repo, selection, appConfig):
 					# Copy the packages/libs from temp folder to destination
 					recursive_overwrite(pkg_dir_src, pkg_dir_dst)
 
-					# Check for 3rd party libraries that need to be downloaded
-					#------------------------------------------------------------
-					for lib_name, lib_obj in appConfig['third_party_libs'].items():
-						filename = os.path.basename(lib_obj['url'])
-						lib_dest_dir = os.path.join(os.getenv('APPDATA'), 'rsgis', lib_name)
-						version_file = os.path.join(lib_dest_dir, 'version.json')
 
-						download_lib = True
+					if update_libs:
+						# Check for 3rd party libraries that need to be downloaded
+						#------------------------------------------------------------
+						for lib_name, lib_obj in appConfig['third_party_libs'].items():
+							filename = os.path.basename(lib_obj['url'])
+							lib_dest_dir = os.path.join(os.getenv('APPDATA'), 'rsgis', lib_name)
+							version_file = os.path.join(lib_dest_dir, 'version.json')
 
-						# Ensure 3rd party lib folder exists before checking files/writing to it
-						if not os.path.isdir(lib_dest_dir):
-							os.mkdir(lib_dest_dir)
+							download_lib = True
 
-						if os.path.isfile(version_file):
-							print('Loading json file {}'.format(version_file))
-							with open(version_file) as json_file:
-								version = json.load(json_file)['version']
-								if version == lib_obj['version']:
-									download_lib = False
-									print('Will not download lib: {}'.format(lib_name))
+							# Ensure 3rd party lib folder exists before checking files/writing to it
+							if not os.path.isdir(lib_dest_dir):
+								os.mkdir(lib_dest_dir)
+
+							if os.path.isfile(version_file):
+								print('Loading json file {}'.format(version_file))
+								with open(version_file) as json_file:
+									version = json.load(json_file)['version']
+									if version == lib_obj['version']:
+										download_lib = False
+										print('Will not download lib: {}'.format(lib_name))
 
 
-						if download_lib:
+							if download_lib:
 
-							ext_lib_message = 'This may take a little longer while supporting libraries are downloaded.\n'
-							ext_lib_message += 'You will receive a confirmation when complete.'
-							JOptionPane.showMessageDialog(None, ext_lib_message, "Working", JOptionPane.INFORMATION_MESSAGE)
+								ext_lib_message = 'This may take a little longer while supporting libraries are downloaded.\n'
+								ext_lib_message += 'You will receive a confirmation when complete.'
+								JOptionPane.showMessageDialog(None, ext_lib_message, "Working", JOptionPane.INFORMATION_MESSAGE)
 
-							dest_file = os.path.join(lib_dest_dir, filename)
-							download_file(lib_obj['url'], dest_file)
+								dest_file = os.path.join(lib_dest_dir, filename)
+								download_file(lib_obj['url'], dest_file)
 
-							if zipfile.is_zipfile(dest_file):
-								with zipfile.ZipFile(dest_file, "r") as z:									
-									# for file in z.namelist():
-									# 	print('--working on {}'.format(file))
-									# 	z.extract(file, lib_dest_dir) # extract the file to current folder if it is a text file
-									z.extractall(lib_dest_dir)
+								if zipfile.is_zipfile(dest_file):
+									with zipfile.ZipFile(dest_file, "r") as z:									
+										
+										try:
+											z.extractall(lib_dest_dir)
+										except:
+											print('Unable to extract: {}'.format(dest_file))
+											
+											# This is a ridiculous hack/work around because jython 2.7
+											# has a bug with certain unicode file/folder names and will
+											# not extract properly.  Ex: vortex
+											try:
+												print('Trying 7zip extract...')
+												SevenZip = "C:/Program Files/7-Zip/7z.exe"
+												cmd = '"{}" x {} -o{} * -r -aoa'.format(SevenZip, dest_file, lib_dest_dir)
+												print(cmd)
+												subprocess.check_call(cmd)
+											except:
+												print('7zip extract failed')
 
-								# Rename the subdir to 'latest' to provide a more predictable library path
-								extracted_folders = [obj for obj in os.listdir(lib_dest_dir) if os.path.isdir(os.path.join(lib_dest_dir, obj))]	
-								if len(extracted_folders) == 1:
-									os.rename(os.path.join(lib_dest_dir, extracted_folders[0]), os.path.join(lib_dest_dir, 'latest'))
+									# Rename the subdir to 'latest' to provide a more predictable library path
+									extracted_folders = [obj for obj in os.listdir(lib_dest_dir) if os.path.isdir(os.path.join(lib_dest_dir, obj))]	
+									if len(extracted_folders) == 1:
+										os.rename(os.path.join(lib_dest_dir, extracted_folders[0]), os.path.join(lib_dest_dir, 'latest'))
 
-								# Delete the zip file
-								os.remove(dest_file)
+									# Delete the zip file
+									os.remove(dest_file)
 
-							# Write the version to json file for comparison later
-							with open(version_file, 'w') as outfile:
-								json.dump(lib_obj, outfile)
-					#------------------------------------------------------------
+								# Write the version to json file for comparison later
+								with open(version_file, 'w') as outfile:
+									json.dump(lib_obj, outfile)
+						#------------------------------------------------------------
 
 	except:
 		print('Unable to create temp folder')
