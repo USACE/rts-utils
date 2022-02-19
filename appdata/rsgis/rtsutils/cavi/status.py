@@ -79,12 +79,12 @@ def get_timewindow():
     result = None
     _rtstab = get_current_module()
     if isinstance(_rtstab, RtsProjectTab):
-    	result = None
+        result = None
     elif isinstance(_rtstab, ForecastTab):
-    	if _rtstab.getForecast() == None:
+        if _rtstab.getForecast() == None:
             result = None
         else:
-        	result = get_extract_timewindow()
+            result = get_extract_timewindow()
     else:
         result = tuple(_rtstab.getTimeWindowString().split(";"))
 
@@ -113,8 +113,8 @@ def get_extract_timewindow():
     '''
     _forecast = get_selected_forecast()
     if _forecast is not None:
-    	_rtw = _forecast.getRunTimeWindow()
-    	_start = _rtw.getExtractStartDateString() + ", " + _rtw.getExtractStartHrMinString()
+        _rtw = _forecast.getRunTimeWindow()
+        _start = _rtw.getExtractStartDateString() + ", " + _rtw.getExtractStartHrMinString()
         _end = _rtw.getExtractEndDateString() + ", " + _rtw.getExtractEndHrMinString()
         return (_start, _end)
     else:
