@@ -8,9 +8,10 @@ import sys
 # sys.path.append("/Users/rdcrljsg/projects/rts-utils/appdata/rsgis")
 from rtsutils import PACKAGE_PATH
 from rtsutils.cavi import cumulus
+from rtsutils import go
 
 CONFIG_NAME = "cumulus.json"
-CONFIGURE = 0         # 1 = True, 0 = False, and configure = 1 is to view the GUI
+CONFIGURE = 1         # 1 = True, 0 = False, and configure = 1 is to view the GUI
 DEVELOP_API = 1         # 1 = True, 0 = False, and develop = 1 is to use the develop API
 
 SHARED = PACKAGE_PATH   # cavi.status.get_shared_directory()

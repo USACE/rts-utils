@@ -6,7 +6,8 @@ import tempfile
 from java.util import TimeZone
 from hec.heclib.util import HecTime
 from hec.heclib.dss import HecDSSUtilities
-from rtsutils.cavi import cumulus, status, CUMULUS_CONFIG
+from rtsutils.cavi import cumulus, CUMULUS_CONFIG
+from rtsutils.cavi.jython import status
 
 NAME = "cumulus_qpe",  # name corresponding to what configuration is named in the GUI
 CONFIGURE = 0,         # 1 = True, 0 = False, and configure = 1 is to view the GUI
