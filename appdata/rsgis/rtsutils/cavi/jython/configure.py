@@ -7,7 +7,7 @@ from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
 from javax.swing import ListSelectionModel
 from javax.swing import ImageIcon
 
-import util
+import jutil
 
 
 false = 0
@@ -20,7 +20,7 @@ class CumulusUI(JFrame):
         super(CumulusUI, self).__init__()
 
         # self.cfg = cfg
-        self.cfg_in = util.configuration(cfg)
+        self.cfg_in = jutil.configuration(cfg)
         
         self.api_watersheds = cumulus_api.watersheds(api_ws)
         self.api_products = cumulus_api.products(api_ps)
@@ -35,7 +35,7 @@ class CumulusUI(JFrame):
         self.lst_watersheds = JList();
 
         self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        self.setTitle("Cumulus util.configuration");
+        self.setTitle("Cumulus jutil.configuration");
         self.setIconImage(ImageIcon(ICON).getImage());
         self.setLocation(Point(10, 10));
         self.setLocationByPlatform(1);
@@ -43,7 +43,7 @@ class CumulusUI(JFrame):
         self.setResizable(0);
 
         btn_save.setFont(Font("Tahoma", 0, 18));
-        btn_save.setText("Save util.configuration");
+        btn_save.setText("Save jutil.configuration");
         btn_save.setActionCommand("save");
         btn_save.actionPerformed = self.save;
 
@@ -145,11 +145,11 @@ class CumulusUI(JFrame):
         product_ids = [self.api_products[p]["id"] for p in selected_products]
         
         
-        # Get, set and save util.configurations
+        # Get, set and save jutil.configurations
         self.cfg_in["watershed_slug"] = watershed_slug
         self.cfg_in["product_ids"] = product_ids
         self.cfg_in["dss"] = self.txt_select_file
-        util.configuration(self.cfg, self.cfg_in)
+        jutil.configuration(self.cfg, self.cfg_in)
         
 
 
