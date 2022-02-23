@@ -1,7 +1,5 @@
 # Java
-from operator import imod
-import os
-import sys
+
 from java.lang import Short
 from java.awt import Font, Point
 from javax.swing import JFrame, JButton, JLabel, JTextField, JList
@@ -9,6 +7,12 @@ from javax.swing import JScrollPane
 from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
 from javax.swing import ListSelectionModel
 from javax.swing import ImageIcon
+from java.nio.file import Paths
+
+import json
+import sys
+from collections import OrderedDict
+
 
 from rtsutils.cavi.jython import jutil, ICON
 from rtsutils import go
@@ -19,167 +23,247 @@ true = 0
 null = None
 
 
-class CumulusUI(JFrame):
-    def __init__(self, cfg):
-        super(CumulusUI, self).__init__()
+class CumulusUI():
+    go_config = {
+        "Scheme": "https",
+        "Subcommand": "get",
+        "StdOut": "true",
+    }
+    config_path = None
 
-        # self.cfg = cfg
-        self.cfg_in = jutil.read_config(cfg)
-        
-        ep = {
-            "Scheme": "http",
-            "host": "192.168.2.35",
-            "Subcommand": "get",
-            "StdOut": true,
-            "Endpoint": "watersheds"
-        }
-        stdout, stderr = go.get(ep)
-        self.api_watersheds = jutil.watershed_refactor(stdout)
-        print(stdout)
-        print(stderr)
-        ep["Endpoint"] = "products"
-        stdout, stderr = go.get(ep)
-        self.api_products = jutil.product_refactor(stdout)
-        
+    def show(self):
+        self.ui = self.UI()
+        self.ui.setVisible(1)
 
-        btn_save = JButton();
-        self.txt_select_file = JTextField();
-        btn_select = JButton();
-        lbl_select_file = JLabel();
-        jScrollPane1 = JScrollPane();
-        self.lst_products = JList();
-        jScrollPane2 = JScrollPane();
-        self.lst_watersheds = JList();
-
-        self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        self.setTitle("Cumulus jutil.configuration");
-        self.setIconImage(ImageIcon(ICON).getImage());
-        self.setLocation(Point(10, 10));
-        self.setLocationByPlatform(1);
-        self.setName("CumulusCaviUi");
-        self.setResizable(0);
-
-        btn_save.setFont(Font("Tahoma", 0, 18));
-        btn_save.setText("Save jutil.configuration");
-        btn_save.setActionCommand("save");
-        btn_save.actionPerformed = self.save;
+    @classmethod
+    def cumulus_config_path(cls, cfg):
+        """Set the cumulus configuration file"""
+        cls.config_path = cfg
 
 
-        self.txt_select_file.setFont(Font("Tahoma", 0, 18));
-        self.txt_select_file.setToolTipText("FQPN to output file (.dss)");
-        self.txt_select_file.setText(self.cfg_in["dss"])
+    @classmethod
+    def endpoint(cls, d):
+        cls.go_config.update(d)
 
-        btn_select.setFont(Font("Tahoma", 0, 18));
-        btn_select.setText("...");
-        btn_select.setToolTipText("Select File...");
-        btn_select.actionPerformed = self.dssfile;
 
-        lbl_select_file.setText("DSS File Downloads");
+    class UI(JFrame):
+        def __init__(self):
+            super(CumulusUI.UI, self).__init__()
+            self.Outer = CumulusUI()
 
-        self.lst_products = JList(sorted(self.api_products.keys()), valueChanged = self.products)
-        self.lst_products.setBorder(BorderFactory.createTitledBorder(None, "Products", 2, 2, Font("Tahoma", 0, 14)));
-        self.lst_products.setFont(Font("Tahoma", 0, 14));
-        jScrollPane1.setViewportView(self.lst_products);
+            self.config_path = self.Outer.config_path
+            self.go_config = self.Outer.go_config
+            
+            try:
+                self.cumulus_configurations = self.cumulus_config
+            except Exception as ex:
+                print(ex)
+                raise Exception("Cumulus configuration set to '{}'".format(self.config_path))
+            
+            self.go_config["Endpoint"] = "watersheds"
+            ws_out, stderr = go.get(self.go_config)
+            self.go_config["Endpoint"] = "products"
+            ps_out, stderr = go.get(self.go_config)
+            if "error" in stderr:
+                print(stderr)
+                sys.exit(1)
 
-        self.lst_watersheds = JList(sorted(self.api_watersheds.keys()), valueChanged = self.watersheds)
-        self.lst_watersheds.setBorder(BorderFactory.createTitledBorder(None, "Watersheds", 2, 2, Font("Tahoma", 0, 14)));
-        self.lst_watersheds.setFont(Font("Tahoma", 0, 14));
-        self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
+            self.api_products = self.product_refactor(json.loads(ps_out))
 
-        jScrollPane2.setViewportView(self.lst_watersheds);
+            btn_save = JButton();
+            self.txt_select_file = JTextField();
+            btn_select = JButton();
+            lbl_select_file = JLabel();
+            jScrollPane1 = JScrollPane();
+            self.lst_products = JList();
+            jScrollPane2 = JScrollPane();
+            self.lst_watersheds = JList();
 
-        layout = GroupLayout(self.getContentPane());
-        self.getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, 399, GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+            self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            self.setTitle("Cumulus Configuration");
+            self.setIconImage(ImageIcon(ICON).getImage());
+            self.setLocation(Point(10, 10));
+            self.setLocationByPlatform(1);
+            self.setName("CumulusCaviUi");
+            self.setResizable(0);
+
+            btn_save.setFont(Font("Tahoma", 0, 18));
+            btn_save.setText("Save Configuration");
+            btn_save.setActionCommand("save");
+            btn_save.actionPerformed = self.save;
+
+
+            self.txt_select_file.setFont(Font("Tahoma", 0, 18));
+            self.txt_select_file.setToolTipText("FQPN to output file (.dss)");
+            self.txt_select_file.setText(self.cumulus_configurations["dss"])
+
+            btn_select.setFont(Font("Tahoma", 0, 18));
+            btn_select.setText("...");
+            btn_select.setToolTipText("Select File...");
+            btn_select.actionPerformed = self.dssfile;
+
+            lbl_select_file.setText("DSS File Downloads");
+
+            self.lst_products = JList(sorted(self.api_products.keys()), valueChanged = self.products)
+            self.lst_products.setBorder(BorderFactory.createTitledBorder(None, "Products", 2, 2, Font("Tahoma", 0, 14)));
+            self.lst_products.setFont(Font("Tahoma", 0, 14));
+            
+            idxs = self.product_index(self.cumulus_configurations["product_ids"], self.api_products)
+
+            self.lst_products.setSelectedIndices(idxs)
+            jScrollPane1.setViewportView(self.lst_products);
+
+            self.lst_watersheds = JList(sorted(self.api_watersheds.keys()), valueChanged = self.watersheds)
+            self.lst_watersheds.setBorder(BorderFactory.createTitledBorder(None, "Watersheds", 2, 2, Font("Tahoma", 0, 14)));
+            self.lst_watersheds.setFont(Font("Tahoma", 0, 14));
+            self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+            idx = self.watershed_index(self.cumulus_configurations["watershed_slug"], self.api_watersheds)
+            self.lst_watersheds.setSelectedIndex(idx)
+
+            jScrollPane2.setViewportView(self.lst_watersheds);
+
+            layout = GroupLayout(self.getContentPane());
+            self.getContentPane().setLayout(layout);
+            layout.setHorizontalGroup(
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                            .addGap(0, 0, Short.MAX_VALUE)
+                            .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, 399, GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(btn_select))
+                        .addGroup(layout.createSequentialGroup()
+                            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jScrollPane2, GroupLayout.DEFAULT_SIZE, 451, Short.MAX_VALUE)
+                                    .addComponent(jScrollPane1))
+                                .addComponent(lbl_select_file))
+                            .addGap(0, 0, Short.MAX_VALUE)))
+                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btn_save)
+                    .addGap(145, 145, 145))
+            );
+            layout.setVerticalGroup(
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
+                    .addGap(18, 18, 18)
+                    .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
+                    .addGap(18, 18, 18)
+                    .addComponent(lbl_select_file)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addComponent(btn_select))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jScrollPane2, GroupLayout.DEFAULT_SIZE, 451, Short.MAX_VALUE)
-                                .addComponent(jScrollPane1))
-                            .addComponent(lbl_select_file))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btn_save)
-                .addGap(145, 145, 145))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addComponent(lbl_select_file)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_select))
-                .addGap(18, 18, 18)
-                .addComponent(btn_save)
-                .addContainerGap())
-        );
+                    .addGap(18, 18, 18)
+                    .addComponent(btn_save)
+                    .addContainerGap())
+            );
 
-        self.pack()
-        self.setLocationRelativeTo(None)
+            self.pack()
+            self.setLocationRelativeTo(None)
 
-    def watersheds(self, event):
-        index = self.lst_watersheds.selectedIndex
-        if not event.getValueIsAdjusting():
-            pass
-            # print(self.api_watersheds[self.lst_watersheds.getSelectedValue()])
 
-    def products(self, event):
-        index = self.lst_products.selectedIndex
-        if not event.getValueIsAdjusting():
-            pass
-            # print(self.api_products[self.lst_products.getSelectedValue()])
+        @property
+        def cumulus_config(self):
+            with open(self.config_path, "r") as f:
+                return json.load(f)
 
-    def dssfile(self, event):
-        fc = FileChooser(self.txt_select_file)
-        fc.title = "Select Output DSS File"
-        # _dir = os.path.dirname(self.dss_path)
-        # fc.set_current_dir(File(_dir))
-        fc.show()
-        print(fc.selectedFile)
+        @cumulus_config.setter
+        def cumulus_config(self, json_):
+            with open(self.config_path, "w") as f:
+                json.dump(json_, f, indent=4)
 
-    def save(self, event):
-        selected_watershed = self.lst_watersheds.getSelectedValue()
-        selected_products = self.lst_products.getSelectedValues()
+
+        def watersheds(self, event):
+            index = self.lst_watersheds.selectedIndex
+            if not event.getValueIsAdjusting():
+                pass
+                # print(self.api_watersheds[self.lst_watersheds.getSelectedValue()])
+
+        def watershed_refactor(self, json_):
+            return OrderedDict({
+                "{}:{}".format(d['office_symbol'], d['name']): d 
+                for d in json_
+                })
         
-        watershed_slug = self.api_watersheds[selected_watershed]["slug"]
-        product_ids = [self.api_products[p]["id"] for p in selected_products]
-        
-        
-        # Get, set and save jutil.configurations
-        self.cfg_in["watershed_slug"] = watershed_slug
-        self.cfg_in["product_ids"] = product_ids
-        self.cfg_in["dss"] = self.txt_select_file
-        jutil.configuration(self.cfg, self.cfg_in)
-        
+        def watershed_index(self, wss, d):
+            return [
+                i
+                for i, k in enumerate(sorted(d.keys()))
+                if wss == d[k]["slug"]
+            ][0]
+
+
+        def product_refactor(self, json_):
+            return OrderedDict({
+                "{}".format(d['name'].replace("_", " ").title()): d 
+                for d in json_
+                })
+
+
+        def product_index(self, ps, d):
+            return [
+                i
+                for i, k in enumerate(sorted(d.keys()))
+                if d[k]["id"] in ps
+            ]
+
+
+        def products(self, event):
+            index = self.lst_products.selectedIndex
+            if not event.getValueIsAdjusting():
+                pass
+                # print(self.api_products[self.lst_products.getSelectedValue()])
+
+        def dssfile(self, event):
+            fc = jutil.FileChooser(self.txt_select_file)
+            fc.title = "Select Output DSS File"
+            # _dir = os.path.dirname(self.dss_path)
+            # fc.set_current_dir(File(_dir))
+            fc.show()
+            print(fc.selectedFile)
+
+        def save(self, event):
+            selected_watershed = self.lst_watersheds.getSelectedValue()
+            selected_products = self.lst_products.getSelectedValues()
+            
+            
+            watershed_slug = self.api_watersheds[selected_watershed]["slug"]
+            product_ids = [self.api_products[p]["id"] for p in selected_products]
+            
+            # Get, set and save jutil.configurations
+            self.cumulus_configurations["watershed_slug"] = watershed_slug
+            self.cumulus_configurations["product_ids"] = product_ids
+            self.cumulus_configurations["dss"] = self.txt_select_file.getText()
+            self.cumulus_config = self.cumulus_configurations
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
-    # api files are actually temp files from Go download
-    cui = CumulusUI(
-        r"C:\Users\dev\projects\rts-utils\appdata\rsgis\rtsutils\cumulus.json",
-    )
-    cui.setVisible(1)
+    # tesing #
+    cui = CumulusUI()
+    # set the configuration file the UI will read/write too
+    cui.cumulus_config_path(r"C:\Users\dev\projects\rts-utils\test_cumulus.json")
+    # print(cui.config_path)
 
-    # capi = CumulusAPI()
-    # ws_dict = capi.watersheds(r"C:\Users\dev\projects\jython\api_watersheds.json")
-    # ps_dict = capi.products(r"C:\Users\dev\projects\jython\api_products.json")
+
+    # test endpoint updates
+    cui.endpoint({"Host": "192.168.2.35", "Scheme": "http"})
+    # print(cui.go_config)
     
     
-    # print(sorted(ps_dict.keys()))
+    cui.show()
+    

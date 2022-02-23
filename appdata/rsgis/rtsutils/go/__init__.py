@@ -52,4 +52,15 @@ def get(d, sh=True):
 if __name__ == "__main__":
     pass
     # testing
-    # get()
+    d = {
+        "Scheme": "http",
+        "Host": "192.168.2.35",
+        "Subcommand": "get",
+        "StdOut": "true",
+        "Endpoint": "watersheds"
+    }
+    so, se = get(d)
+
+    print(so)
+    print(se)
+    
