@@ -1,0 +1,8 @@
+# ignore jython compiled classes
+*$py.class
+
+# ignore python compiled c
+*.pyc
+
+# ignore any file that is a test
+*test*
