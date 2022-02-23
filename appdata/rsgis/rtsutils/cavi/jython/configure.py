@@ -1,4 +1,7 @@
 # Java
+from operator import imod
+import os
+import sys
 from java.lang import Short
 from java.awt import Font, Point
 from javax.swing import JFrame, JButton, JLabel, JTextField, JList
@@ -7,7 +10,8 @@ from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
 from javax.swing import ListSelectionModel
 from javax.swing import ImageIcon
 
-import jutil
+from rtsutils.cavi.jython import jutil, ICON
+from rtsutils import go
 
 
 false = 0
@@ -20,10 +24,23 @@ class CumulusUI(JFrame):
         super(CumulusUI, self).__init__()
 
         # self.cfg = cfg
-        self.cfg_in = jutil.configuration(cfg)
+        self.cfg_in = jutil.read_config(cfg)
         
-        self.api_watersheds = cumulus_api.watersheds(api_ws)
-        self.api_products = cumulus_api.products(api_ps)
+        ep = {
+            "Scheme": "http",
+            "host": "192.168.2.35",
+            "Subcommand": "get",
+            "StdOut": true,
+            "Endpoint": "watersheds"
+        }
+        stdout, stderr = go.get(ep)
+        self.api_watersheds = jutil.watershed_refactor(stdout)
+        print(stdout)
+        print(stderr)
+        ep["Endpoint"] = "products"
+        stdout, stderr = go.get(ep)
+        self.api_products = jutil.product_refactor(stdout)
+        
 
         btn_save = JButton();
         self.txt_select_file = JTextField();
@@ -156,9 +173,7 @@ class CumulusUI(JFrame):
 if __name__ == "__main__":
     # api files are actually temp files from Go download
     cui = CumulusUI(
-        r"C:\Users\dev\projects\jython\cumulus.json",
-        r"C:\Users\dev\projects\jython\api_watersheds.json",
-        r"C:\Users\dev\projects\jython\api_products.json"
+        r"C:\Users\dev\projects\rts-utils\appdata\rsgis\rtsutils\cumulus.json",
     )
     cui.setVisible(1)
 

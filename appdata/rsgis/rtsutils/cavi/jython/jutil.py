@@ -16,36 +16,24 @@ from javax.swing import JOptionPane, UIManager, JFileChooser, JTextField
 from javax.swing.filechooser import FileNameExtensionFilter
 
 
-
-class LookAndFeel():
-    '''Set the look and feel of the UI.  Execute before the objects are created.//n
-    Takes one argument for the name of the look and feel class.
-    '''
-    def __init__(self, name="Nimbus"):
-        for info in UIManager.getInstalledLookAndFeels():
-            if info.getName() == name:
-                UIManager.setLookAndFeel(info.getClassName())
-
-@property
-def configuration(cfg):
+def read_config(cfg):
     with open(cfg, "r") as f:
         cfg_in = json.load(f)
     return cfg_in
 
-@configuration.setter
-def configuration(cfg, json_):
+def write_config(cfg, json_):
     with open(cfg, "w") as f:
         json.dump(json_, f, indent=4)
 
 
-def watershed_refactor(self, json_):
+def watershed_refactor(json_):
     return {
         "{}:{}".format(d['office_symbol'], d['name']): d 
         for d in json_
         }
 
 
-def product_refactor(self, json_):
+def product_refactor(json_):
     return {
         "{}".format(d['name'].replace("_", " ").title()): d 
         for d in json_
@@ -71,6 +59,16 @@ Please enter a new token here.
             )
 
     return token
+
+
+class LookAndFeel():
+    '''Set the look and feel of the UI.  Execute before the objects are created.//n
+    Takes one argument for the name of the look and feel class.
+    '''
+    def __init__(self, name="Nimbus"):
+        for info in UIManager.getInstalledLookAndFeels():
+            if info.getName() == name:
+                UIManager.setLookAndFeel(info.getClassName())
 
 
 class TimeFormatter():
@@ -124,10 +122,10 @@ class FileChooser(JFileChooser):
     for output.  Currently, once seleted the result is written to the user's
     APPDATA to be read later.
     '''
-    def __init__(self, output_path):
+    def __init__(self):
         super(FileChooser, self).__init__()
         self.config_filename = "cumulus.config"
-        self.output_path = output_path
+        self.output_path = None
         self.setFileSelectionMode(JFileChooser.FILES_ONLY)
         self.allow = ['dss']
         self.destpath = None
@@ -155,7 +153,7 @@ class FileChooser(JFileChooser):
         self.setDialogTitle(t)
 
     def set_current_dir(self, d):
-        self.setCurrentDirectory(d)
+        self.setCurrentDirectory(File(d))
 
     def set_multi_select(self, b):
         self.setMultiSelectionEnabled(b)

@@ -8,14 +8,20 @@ import os
 import platform
 import sys
 
-platform_sys = platform.system()
-if not platform_sys and not platform_sys == "Java":
+_platform_sys = platform.system().lower()
+if not _platform_sys:
     print("Platform not recognized")
     print("Program exiting")
     sys.exit(1)
 
+_binding = "cavi"
 
-CAVI_GO = "{}/{}/cavi".format(os.path.dirname(__file__), platform_sys.lower())
+# assuming Jython is running on windows
+if platform.python_implementation() == "Jython":
+    _platform_sys = "windows"
+    _binding += ".exe"
+
+CAVI_GO = "{}/{}/{}".format(os.path.dirname(__file__), _platform_sys, _binding)
 
 
 def get(d, sh=True):
