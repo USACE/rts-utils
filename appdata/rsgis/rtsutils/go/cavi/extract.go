@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,7 +32,7 @@ func extract(f *flagOptions, url *url.URL) {
 
 	tAfter := f.After
 	tBefore := f.Before
-	stdOut := f.StdOut
+	stdOut, _ := strconv.ParseBool(f.StdOut)
 	fpOut := f.OutFile
 
 	q := url.Query()

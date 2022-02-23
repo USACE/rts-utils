@@ -1,0 +1,12 @@
+{
+    "dss": "",
+    "auth": {
+        "token": "",
+        "expire": 0
+    },
+    "watershed_slug": "little-sandy-river",
+    "product_ids": [
+        "ncep-mrms-v12-multisensor-qpe-01h-pass1",
+        "ncep-mrms-v12-multisensor-qpe-01h-pass2"
+    ]
+}

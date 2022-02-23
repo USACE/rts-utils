@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -28,10 +29,10 @@ type flagOptions struct {
 	Products
 	After    string
 	Before   string
-	StdOut   bool
+	StdOut   string
 	OutFile  string
 	Endpoint string
-	Timeout  int
+	Timeout  float64
 }
 
 type Products []string
@@ -92,7 +93,7 @@ func main() {
 		extract(&co, &url)
 	case "get":
 		if co.Endpoint == "" {
-			fmt.Fprintf(os.Stderr, "error::No endpoint provided\n")
+			fmt.Fprintf(os.Stderr, "error::no endpoint provided\n")
 			os.Exit(1)
 		}
 		log.Println("Initiating 'endpoint' command")
@@ -101,7 +102,8 @@ func main() {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error::%s\n", err)
 		}
-		if co.StdOut {
+		standard_out, _ := strconv.ParseBool(co.StdOut)
+		if standard_out {
 			os.Stdout.WriteString(string(b))
 		}
 	}
@@ -120,11 +122,11 @@ func (co *flagOptions) addFlagOptions() {
 	flag.StringVar(&co.After, "after", t1.Format(time.RFC3339), "After time (StartTime UTC); default=now-7 days")
 	flag.StringVar(&co.Before, "before", t2.Format(time.RFC3339), "Before time (EndTime UTC); default=now")
 	flag.StringVar(&co.OutFile, "out", "", "Output file and location")
-	flag.BoolVar(&co.StdOut, "stdout", false, "Send output to stdout; default=false")
+	flag.StringVar(&co.StdOut, "stdout", "false", "Send output to stdout; default=false")
 	flag.StringVar(&co.Slug, "slug", "", "Watershed slug")
 	flag.Var(&co.Products, "product", "Product List; --product value --product value --product value...")
 	flag.StringVar(&co.Endpoint, "endpoint", "", "Get response body from endpoint")
-	flag.IntVar(&co.Timeout, "timeout", 300, "Grid download timeout (sec); default=300")
+	flag.Float64Var(&co.Timeout, "timeout", 300, "Grid download timeout (sec); default=300")
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), usage, os.Args[0])
 		flag.PrintDefaults()

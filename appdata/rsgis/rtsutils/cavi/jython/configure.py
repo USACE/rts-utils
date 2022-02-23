@@ -36,7 +36,7 @@ class CumulusUI():
         self.ui.setVisible(1)
 
     @classmethod
-    def cumulus_config_path(cls, cfg):
+    def cumulus_config_file(cls, cfg):
         """Set the cumulus configuration file"""
         cls.config_path = cfg
 
@@ -237,7 +237,7 @@ class CumulusUI():
             
             
             watershed_slug = self.api_watersheds[selected_watershed]["slug"]
-            product_ids = [self.api_products[p]["id"] for p in selected_products]
+            product_ids = [self.api_products[p]["slug"] for p in selected_products]
             
             # Get, set and save jutil.configurations
             self.cumulus_configurations["watershed_slug"] = watershed_slug
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     # tesing #
     cui = CumulusUI()
     # set the configuration file the UI will read/write too
-    cui.cumulus_config_path(r"C:\Users\dev\projects\rts-utils\test_cumulus.json")
+    cui.cumulus_config_file(r"C:\Users\dev\projects\rts-utils\test_cumulus.json")
     # print(cui.config_path)
 
 

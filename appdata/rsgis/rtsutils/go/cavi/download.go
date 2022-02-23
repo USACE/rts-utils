@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -40,9 +39,6 @@ func (us *updateStatus) getStatus(u string) {
 
 func (us *updateStatus) postPayload(u string, p payload, t string) error {
 	timeout := time.Duration(time.Second * 10)
-	if t == "" {
-		return errors.New("missing token")
-	}
 	bearer := "Bearer " + t
 	client := http.Client{
 		Timeout: timeout,

@@ -76,7 +76,7 @@ func grid(f *flagOptions, url *url.URL) (string, error) {
 
 	url.Path = "downloads/" + us.ID
 
-	timeout := time.Duration(int(time.Second) * timeoutSec)
+	timeout := time.Duration(int(time.Second) * int(timeoutSec))
 	var fn filename
 	for start := time.Now(); time.Since(start) < timeout; {
 		us.getStatus(url.String())
