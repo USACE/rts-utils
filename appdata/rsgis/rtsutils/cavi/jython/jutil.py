@@ -122,10 +122,10 @@ class FileChooser(JFileChooser):
     for output.  Currently, once seleted the result is written to the user's
     APPDATA to be read later.
     '''
-    def __init__(self):
+    def __init__(self, output_path):
         super(FileChooser, self).__init__()
         self.config_filename = "cumulus.config"
-        self.output_path = None
+        self.output_path = output_path
         self.setFileSelectionMode(JFileChooser.FILES_ONLY)
         self.allow = ['dss']
         self.destpath = None
@@ -190,12 +190,9 @@ class FileChooser(JFileChooser):
         pass
     
     def approve_option(self):
-        selected_file = self.getSelectedFile().getPath()
-        if not selected_file.endswith(".dss"): selected_file += ".dss"
-        return selected_file
-        # with open(os.path.join(APPDATA, self.config_filename), 'w') as f:
-        #     f.write(selected_file)
-        # self.output_path.setText(selected_file)
+        self.output_path = self.getSelectedFile().getPath()
+        if not self.output_path.endswith(".dss"):
+            self.output_path += ".dss"
 
 
 if __name__ == "__main__":

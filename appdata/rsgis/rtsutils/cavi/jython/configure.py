@@ -1,5 +1,6 @@
 # Java
 
+import os
 from java.lang import Short
 from java.awt import Font, Point
 from javax.swing import JFrame, JButton, JLabel, JTextField, JList
@@ -7,7 +8,7 @@ from javax.swing import JScrollPane
 from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
 from javax.swing import ListSelectionModel
 from javax.swing import ImageIcon
-from java.nio.file import Paths
+from java.io import File
 
 import json
 import sys
@@ -22,6 +23,7 @@ false = 0
 true = 0
 null = None
 
+base_cfg = {"dss": " ","auth": {"token": "","expire": 0},"watershed_slug": "","product_ids": []}
 
 class CumulusUI():
     go_config = {
@@ -54,11 +56,7 @@ class CumulusUI():
             self.config_path = self.Outer.config_path
             self.go_config = self.Outer.go_config
             
-            try:
-                self.cumulus_configurations = self.cumulus_config
-            except Exception as ex:
-                print(ex)
-                raise Exception("Cumulus configuration set to '{}'".format(self.config_path))
+            self.cumulus_configurations = self.cumulus_config
             
             self.go_config["Endpoint"] = "watersheds"
             ws_out, stderr = go.get(self.go_config)
@@ -101,7 +99,7 @@ class CumulusUI():
             btn_select.setFont(Font("Tahoma", 0, 18));
             btn_select.setText("...");
             btn_select.setToolTipText("Select File...");
-            btn_select.actionPerformed = self.dssfile;
+            btn_select.actionPerformed = self.select_file;
 
             lbl_select_file.setText("DSS File Downloads");
 
@@ -173,8 +171,17 @@ class CumulusUI():
 
         @property
         def cumulus_config(self):
-            with open(self.config_path, "r") as f:
-                return json.load(f)
+            try:
+                with open(self.config_path, "r") as f:
+                    json_ = json.load(f)
+                    return json_
+            except :
+                self.cumulus_config = base_cfg
+                print("new file created: {}".format(self.config_path))
+                return self.cumulus_config
+            finally:
+                if not os.path.isfile(self.config_path):
+                    raise FileNotFoundError("{} not found".format(self.config_path))
 
         @cumulus_config.setter
         def cumulus_config(self, json_):
@@ -195,11 +202,18 @@ class CumulusUI():
                 })
         
         def watershed_index(self, wss, d):
-            return [
-                i
-                for i, k in enumerate(sorted(d.keys()))
-                if wss == d[k]["slug"]
-            ][0]
+            try:
+                idx = [
+                    i
+                    for i, k in enumerate(sorted(d.keys()))
+                    if wss == d[k]["slug"]
+                ][0]
+            except IndexError as ex:
+                print(ex)
+                print("setting index to 0")
+                idx = 0
+            finally:
+                return idx
 
 
         def product_refactor(self, json_):
@@ -223,13 +237,16 @@ class CumulusUI():
                 pass
                 # print(self.api_products[self.lst_products.getSelectedValue()])
 
-        def dssfile(self, event):
+        def select_file(self, event):
             fc = jutil.FileChooser(self.txt_select_file)
             fc.title = "Select Output DSS File"
-            # _dir = os.path.dirname(self.dss_path)
-            # fc.set_current_dir(File(_dir))
+            try:
+                _dir = os.path.dirname(self.txt_select_file)
+                fc.set_current_dir(File(_dir))
+            except TypeError as ex:
+                print(ex)
             fc.show()
-            print(fc.selectedFile)
+            self.txt_select_file.setText(fc.output_path)
 
         def save(self, event):
             selected_watershed = self.lst_watersheds.getSelectedValue()
@@ -256,7 +273,7 @@ if __name__ == "__main__":
     # tesing #
     cui = CumulusUI()
     # set the configuration file the UI will read/write too
-    cui.cumulus_config_file(r"C:\Users\dev\projects\rts-utils\test_cumulus.json")
+    cui.cumulus_config_file(r"C:\Users\dev\projects\rts-utils\test_NEWFILE.json")
     # print(cui.config_path)
 
 
