@@ -1,0 +1,8 @@
+{
+    "python.autoComplete.extraPaths": [
+        "./appdata/rsgis"
+    ],
+    "python.analysis.extraPaths": [
+        "./appdata/rsgis"
+    ]
+}
