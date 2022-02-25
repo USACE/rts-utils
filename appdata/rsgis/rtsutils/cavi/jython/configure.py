@@ -15,7 +15,7 @@ import sys
 from collections import OrderedDict
 
 
-from rtsutils.cavi.jython import jutil, ICON
+from rtsutils.cavi.jython import jutil, CLOUD_ICON, EXTRACT_ICON
 from rtsutils.config import DictConfig
 from rtsutils import go
 
@@ -85,7 +85,7 @@ class CumulusUI():
 
             self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
             self.setTitle("Cumulus Configuration");
-            self.setIconImage(ImageIcon(ICON).getImage());
+            self.setIconImage(ImageIcon(CLOUD_ICON).getImage());
             self.setLocation(Point(10, 10));
             self.setLocationByPlatform(1);
             self.setName("CumulusCaviUi");
@@ -118,11 +118,11 @@ class CumulusUI():
             self.lst_watersheds.setFont(Font("Tahoma", 0, 14));
             self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-            
+
             try:
                 self.txt_select_file.setText(self.configurations["dss"])
-                self.lst_products.setSelectedIndices(idxs)
                 idxs = self.product_index(self.configurations["product_ids"], self.api_products)
+                self.lst_products.setSelectedIndices(idxs)
                 idx = self.watershed_index(self.configurations["watershed_slug"], self.api_watersheds)
                 self.lst_watersheds.setSelectedIndex(idx)
             except KeyError as ex:
@@ -280,8 +280,8 @@ class WaterExtractUI():
 
     class UI(JFrame):
         def __init__(self):
-            super(CumulusUI.UI, self).__init__()
-            self.Outer = CumulusUI()
+            super(WaterExtractUI.UI, self).__init__()
+            self.Outer = WaterExtractUI()
 
             if self.Outer.config_path is None:
                 JOptionPane.showMessageDialog(None, "No configuration file path provided\n\nExiting program", "Missing Configuration File", JOptionPane.ERROR_MESSAGE)
@@ -295,8 +295,6 @@ class WaterExtractUI():
 
             self.go_config["Endpoint"] = "watersheds"
             ws_out, stderr = go.get(self.go_config)
-            self.go_config["Endpoint"] = "products"
-            ps_out, stderr = go.get(self.go_config)
             if "error" in stderr:
                 print(stderr)
                 sys.exit(1)
@@ -306,16 +304,23 @@ class WaterExtractUI():
             jScrollPane1 = JScrollPane();
             self.lst_watersheds = JList();
             lbl_select_file = JLabel();
-            txt_select_file = JTextField();
+            self.txt_select_file = JTextField();
             btn_select = JButton();
             btn_save = JButton();
-            cbx_apart = JCheckBox();
-            txt_apart = JTextField();
+            self.cbx_apart = JCheckBox();
+            self.txt_apart = JTextField();
+
 
             self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            self.setTitle("Extract Time Series Configuration");
+            self.setIconImage(ImageIcon(EXTRACT_ICON).getImage());
+            self.setLocation(Point(10, 10));
+            self.setLocationByPlatform(1);
+            self.setName("WaterExtractUI");
             self.setResizable(false);
 
 
+            self.lst_watersheds = JList(sorted(self.api_watersheds.keys()), valueChanged = self.watersheds)
             self.lst_watersheds.setBorder(BorderFactory.createTitledBorder(null, "Watersheds", 2, 2, Font("Tahoma", 0, 14)));
             self.lst_watersheds.setFont(Font("Tahoma", 0, 14));
             self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -324,26 +329,42 @@ class WaterExtractUI():
             lbl_select_file.setFont(Font("Tahoma", 0, 14));
             lbl_select_file.setText("DSS File Downloads");
 
-            txt_select_file.setFont(Font("Tahoma", 0, 18));
-            txt_select_file.setToolTipText("FQPN to output file (.dss)");
+            self.txt_select_file.setFont(Font("Tahoma", 0, 18));
+            self.txt_select_file.setToolTipText("FQPN to output file (.dss)");
 
             btn_select.setFont(Font("Tahoma", 0, 18));
             btn_select.setText("...");
             btn_select.setToolTipText("Select File...");
-            btn_select.setActionCommand("select_file");
+            btn_select.actionPerformed = self.select_file;
 
             btn_save.setFont(Font("Tahoma", 0, 18));
             btn_save.setText("Save Configuration");
             btn_save.setToolTipText("Write configuration to file");
             btn_save.setHorizontalTextPosition(SwingConstants.CENTER);
+            btn_save.actionPerformed = self.save;
 
-            cbx_apart.setFont(Font("Tahoma", 0, 14));
-            cbx_apart.setText("DSS A part");
-            cbx_apart.setToolTipText("DSS A part override");
+            self.cbx_apart.setFont(Font("Tahoma", 0, 14));
+            self.cbx_apart.setText("DSS A part");
+            self.cbx_apart.setToolTipText("DSS A part override");
+            self.cbx_apart.actionPerformed = self.check_apart;
 
-            txt_apart.setEditable(false);
-            txt_apart.setFont(Font("Tahoma", 0, 14));
-            txt_apart.setToolTipText("DSS A part override");
+            self.txt_apart.setEditable(false);
+            self.txt_apart.setFont(Font("Tahoma", 0, 14));
+            self.txt_apart.setToolTipText("DSS A part override");
+
+
+            try:
+                self.txt_apart.setText(self.configurations["apart"])
+                if self.txt_apart != "":
+                    self.cbx_apart.selected = true
+                    self.txt_apart.editable = true
+
+                self.txt_select_file.setText(self.configurations["dss"])
+                idx = self.watershed_index(self.configurations["watershed_slug"], self.api_watersheds)
+                self.lst_watersheds.setSelectedIndex(idx)
+            except KeyError as ex:
+                print("KeyError: missing {}".format(ex))
+
 
             layout = GroupLayout(self.getContentPane());
             self.getContentPane().setLayout(layout);
@@ -358,7 +379,7 @@ class WaterExtractUI():
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
                             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addComponent(txt_select_file)
+                                .addComponent(self.txt_select_file)
                                 .addGroup(layout.createSequentialGroup()
                                     .addComponent(lbl_select_file)
                                     .addGap(0, 0, Short.MAX_VALUE)))
@@ -366,9 +387,9 @@ class WaterExtractUI():
                             .addComponent(btn_select))
                         .addComponent(jScrollPane1)
                         .addGroup(layout.createSequentialGroup()
-                            .addComponent(cbx_apart)
+                            .addComponent(self.cbx_apart)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(txt_apart)))
+                            .addComponent(self.txt_apart)))
                     .addContainerGap())
             );
             layout.setVerticalGroup(
@@ -378,13 +399,13 @@ class WaterExtractUI():
                     .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addGap(18, 18, 18)
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(cbx_apart)
-                        .addComponent(txt_apart, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                        .addComponent(self.cbx_apart)
+                        .addComponent(self.txt_apart, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                     .addGap(18, 18, 18)
                     .addComponent(lbl_select_file)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addComponent(btn_select))
                     .addGap(10, 10, 10)
                     .addComponent(btn_save)
@@ -397,6 +418,10 @@ class WaterExtractUI():
 
         def watersheds(self, event):
             index = self.lst_watersheds.selectedIndex
+            if not self.cbx_apart.selected:
+                selected_watershed = self.lst_watersheds.getSelectedValue()
+                self.txt_apart.setText(self.api_watersheds[selected_watershed]["slug"])
+
             if not event.getValueIsAdjusting():
                 pass
                 # print(self.api_watersheds[self.lst_watersheds.getSelectedValue()])
@@ -422,6 +447,10 @@ class WaterExtractUI():
                 return idx
 
 
+        def check_apart(self, event):
+            self.txt_apart.editable = self.cbx_apart.selected
+
+
         def select_file(self, event):
             fc = jutil.FileChooser(self.txt_select_file)
             fc.title = "Select Output DSS File"
@@ -436,22 +465,15 @@ class WaterExtractUI():
 
         def save(self, event):
             selected_watershed = self.lst_watersheds.getSelectedValue()
-            selected_products = self.lst_products.getSelectedValues()
-            
-            
+
             watershed_slug = self.api_watersheds[selected_watershed]["slug"]
-            product_ids = [self.api_products[p]["slug"] for p in selected_products]
-            
+
+
             # Get, set and save jutil.configurations
             self.configurations["watershed_slug"] = watershed_slug
-            self.configurations["product_ids"] = product_ids
+            self.configurations["apart"] = self.txt_apart.getText()
             self.configurations["dss"] = self.txt_select_file.getText()
             DictConfig(self.config_path).write(self.configurations)
-
-
-
-
-
 
 
 
@@ -459,12 +481,12 @@ if __name__ == "__main__":
     # tesing #
     cui = WaterExtractUI()
     # set the configuration file the UI will read/write too
-    cui.set_config_file(r"C:\Users\dev\projects\rts-utils\test_extract.json")
+    cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
     # print(cui.config_path)
 
 
     # test endpoint updates
-    cui.endpoint({"Host": "192.168.2.35", "Scheme": "http"})
+    cui.endpoint({"Host": "develop-water-api.corps.cloud", "Scheme": "https"})
     # print(cui.go_config)
     
     

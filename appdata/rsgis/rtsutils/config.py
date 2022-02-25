@@ -34,12 +34,11 @@ class DictConfig():
             self.write(self.base_cfg)
             print("creating new file: {}".format(self.cfg))
             return self.read()
-        finally:
-            if not os.path.isfile(self.cfg):
-                raise FileNotFoundError("{} not found".format(self.cfg))
+        # finally:
+        #     if not os.path.isfile(self.cfg):
+        #         raise FileNotFoundError("{} not found".format(self.cfg))
 
 
     def write(self, json_):
         with open(self.cfg, "w") as f:
             json.dump(json_, f, indent=4)
-
