@@ -33,7 +33,7 @@ class DictConfig():
         except :
             self.write(self.base_cfg)
             print("creating new file: {}".format(self.cfg))
-            return self.read(self.base_cfg)
+            return self.read()
         finally:
             if not os.path.isfile(self.cfg):
                 raise FileNotFoundError("{} not found".format(self.cfg))
