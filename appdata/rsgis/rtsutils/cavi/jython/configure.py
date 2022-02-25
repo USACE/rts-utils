@@ -2,8 +2,8 @@
 
 from java.lang import Short
 from java.awt import Font, Point
-from javax.swing import JFrame, JButton, JLabel, JTextField, JList
-from javax.swing import JScrollPane, JOptionPane
+from javax.swing import JFrame, JButton, JLabel, JTextField, JList, JCheckBox
+from javax.swing import JScrollPane, JOptionPane, SwingConstants
 from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
 from javax.swing import ListSelectionModel
 from javax.swing import ImageIcon
@@ -302,101 +302,93 @@ class WaterExtractUI():
                 sys.exit(1)
 
             self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
-            self.api_products = self.product_refactor(json.loads(ps_out))
 
-            btn_save = JButton();
-            self.txt_select_file = JTextField();
-            btn_select = JButton();
-            lbl_select_file = JLabel();
-            self.lst_products = JList();
-            jScrollPane2 = JScrollPane();
+            jScrollPane1 = JScrollPane();
             self.lst_watersheds = JList();
+            lbl_select_file = JLabel();
+            txt_select_file = JTextField();
+            btn_select = JButton();
+            btn_save = JButton();
+            cbx_apart = JCheckBox();
+            txt_apart = JTextField();
 
             self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            self.setTitle("Cumulus Configuration");
-            self.setIconImage(ImageIcon(ICON).getImage());
-            self.setLocation(Point(10, 10));
-            self.setLocationByPlatform(1);
-            self.setName("CumulusCaviUi");
-            self.setResizable(0);
-
-            btn_save.setFont(Font("Tahoma", 0, 18));
-            btn_save.setText("Save Configuration");
-            btn_save.setActionCommand("save");
-            btn_save.actionPerformed = self.save;
+            self.setResizable(false);
 
 
-            self.txt_select_file.setFont(Font("Tahoma", 0, 18));
-            self.txt_select_file.setToolTipText("FQPN to output file (.dss)");
+            self.lst_watersheds.setBorder(BorderFactory.createTitledBorder(null, "Watersheds", 2, 2, Font("Tahoma", 0, 14)));
+            self.lst_watersheds.setFont(Font("Tahoma", 0, 14));
+            self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            jScrollPane1.setViewportView(self.lst_watersheds);
+
+            lbl_select_file.setFont(Font("Tahoma", 0, 14));
+            lbl_select_file.setText("DSS File Downloads");
+
+            txt_select_file.setFont(Font("Tahoma", 0, 18));
+            txt_select_file.setToolTipText("FQPN to output file (.dss)");
 
             btn_select.setFont(Font("Tahoma", 0, 18));
             btn_select.setText("...");
             btn_select.setToolTipText("Select File...");
-            btn_select.actionPerformed = self.select_file;
+            btn_select.setActionCommand("select_file");
 
-            lbl_select_file.setText("DSS File Downloads");
+            btn_save.setFont(Font("Tahoma", 0, 18));
+            btn_save.setText("Save Configuration");
+            btn_save.setToolTipText("Write configuration to file");
+            btn_save.setHorizontalTextPosition(SwingConstants.CENTER);
 
-            self.lst_products = JList(sorted(self.api_products.keys()), valueChanged = self.products)
-            self.lst_products.setBorder(BorderFactory.createTitledBorder(None, "Products", 2, 2, Font("Tahoma", 0, 14)));
-            self.lst_products.setFont(Font("Tahoma", 0, 14));
-            
+            cbx_apart.setFont(Font("Tahoma", 0, 14));
+            cbx_apart.setText("DSS A part");
+            cbx_apart.setToolTipText("DSS A part override");
 
-
-            self.lst_watersheds = JList(sorted(self.api_watersheds.keys()), valueChanged = self.watersheds)
-            self.lst_watersheds.setBorder(BorderFactory.createTitledBorder(None, "Watersheds", 2, 2, Font("Tahoma", 0, 14)));
-            self.lst_watersheds.setFont(Font("Tahoma", 0, 14));
-            self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-            
-            try:
-                self.txt_select_file.setText(self.configurations["dss"])
-                self.lst_products.setSelectedIndices(idxs)
-                idxs = self.product_index(self.configurations["product_ids"], self.api_products)
-                idx = self.watershed_index(self.configurations["watershed_slug"], self.api_watersheds)
-                self.lst_watersheds.setSelectedIndex(idx)
-            except KeyError as ex:
-                print("KeyError: missing {}".format(ex))
-
-
-            jScrollPane2.setViewportView(self.lst_watersheds);
+            txt_apart.setEditable(false);
+            txt_apart.setFont(Font("Tahoma", 0, 14));
+            txt_apart.setToolTipText("DSS A part override");
 
             layout = GroupLayout(self.getContentPane());
             self.getContentPane().setLayout(layout);
             layout.setHorizontalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addGap(0, 156, Short.MAX_VALUE)
+                    .addComponent(btn_save, GroupLayout.PREFERRED_SIZE, 205, GroupLayout.PREFERRED_SIZE)
+                    .addGap(139, 139, 139))
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                            .addGap(0, 0, Short.MAX_VALUE)
-                            .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, 399, GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(btn_select))
                         .addGroup(layout.createSequentialGroup()
                             .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(jScrollPane2, GroupLayout.DEFAULT_SIZE, 451, Short.MAX_VALUE)
-                                .addComponent(lbl_select_file))
-                            .addGap(0, 0, Short.MAX_VALUE)))
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                    .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btn_save)
-                    .addGap(145, 145, 145));
+                                .addComponent(txt_select_file)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(lbl_select_file)
+                                    .addGap(0, 0, Short.MAX_VALUE)))
+                            .addGap(18, 18, 18)
+                            .addComponent(btn_select))
+                        .addComponent(jScrollPane1)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(cbx_apart)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txt_apart)))
+                    .addContainerGap())
+            );
             layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 201, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addGap(18, 18, 18)
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(cbx_apart)
+                        .addComponent(txt_apart, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                     .addGap(18, 18, 18)
                     .addComponent(lbl_select_file)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addComponent(btn_select))
-                    .addGap(18, 18, 18)
+                    .addGap(10, 10, 10)
                     .addComponent(btn_save)
-                    .addContainerGap()
+                    .addContainerGap())
             );
 
             self.pack()
@@ -467,7 +459,7 @@ if __name__ == "__main__":
     # tesing #
     cui = WaterExtractUI()
     # set the configuration file the UI will read/write too
-    cui.set_config_file(r"C:\Users\dev\projects\rts-utils\test_NEWFILE.json")
+    cui.set_config_file(r"C:\Users\dev\projects\rts-utils\test_extract.json")
     # print(cui.config_path)
 
 
@@ -477,4 +469,3 @@ if __name__ == "__main__":
     
     
     cui.show()
-    
