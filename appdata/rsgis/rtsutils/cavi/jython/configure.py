@@ -63,6 +63,7 @@ class CumulusUI():
 
             self.configurations = DictConfig(self.config_path).read()
 
+
             self.go_config["Endpoint"] = "watersheds"
             ws_out, stderr = go.get(self.go_config)
             self.go_config["Endpoint"] = "products"
@@ -214,11 +215,12 @@ class CumulusUI():
 
 
         def product_index(self, ps, d):
-            return [
+            idxs = [
                 i
                 for i, k in enumerate(sorted(d.keys()))
-                if d[k]["id"] in ps
+                if d[k]["slug"] in ps
             ]
+            return idxs
 
 
         def products(self, event):
@@ -355,7 +357,7 @@ class WaterExtractUI():
 
             try:
                 self.txt_apart.setText(self.configurations["apart"])
-                if self.txt_apart != "":
+                if self.configurations["apart"] != "" and self.configurations["watershed_slug"] != self.configurations["apart"]:
                     self.cbx_apart.selected = true
                     self.txt_apart.editable = true
 
@@ -481,7 +483,7 @@ if __name__ == "__main__":
     # tesing #
     cui = WaterExtractUI()
     # set the configuration file the UI will read/write too
-    cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
+    cui.set_config_file(r"C:\Users\dev\projects\rts-utils\test_extract.json")
     # print(cui.config_path)
 
 
