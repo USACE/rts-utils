@@ -18,6 +18,7 @@ usage: %s
 
 Options:
 `
+	authserver = "localhost:90035"
 )
 
 type flagOptions struct {
@@ -55,6 +56,12 @@ func main() {
 		}
 	}
 
+	// need to check the allowable hosts
+	if err := allowableHost(co.Host); err != nil {
+		fmt.Fprintf(os.Stderr, "error::%s\n", err)
+		os.Exit(1)
+	}
+
 	// Basic URL and check service available
 	url := url.URL{
 		Scheme: co.Scheme,
@@ -81,19 +88,19 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error::Please provide a slug for the watershed\n")
 			os.Exit(1)
 		}
-		dss, err := grid(&co, &url)
+		dss, err := grid(co, url)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error::%s\n", err)
 			os.Exit(1)
 		}
 		os.Stdout.WriteString(dss)
 	case "extract":
-		if co.Slug == "" {
+		if co.Endpoint == "" {
 			fmt.Fprintf(os.Stderr, "error::Please provide a slug for the watershed\n")
 			os.Exit(1)
 		}
 		log.Println("Initiating 'extract' command")
-		extract(&co, &url)
+		extract(co, url)
 	case "get":
 		if co.Endpoint == "" {
 			fmt.Fprintf(os.Stderr, "error::no endpoint provided\n")

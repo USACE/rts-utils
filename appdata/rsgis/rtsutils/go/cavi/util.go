@@ -1,5 +1,23 @@
 package main
 
+import "github.com/pkg/errors"
+
+var allowableHosts = map[string]bool{
+	"localhost":                       true,
+	"localhost:90035":                 true,
+	"cumulus-api.corps.cloud":         true,
+	"develop-cumulus-api.corps.cloud": true,
+	"water-api.corps.cloud":           true,
+	"develop-water-api.corps.cloud":   true}
+
+func allowableHost(s string) error {
+	b, ok := allowableHosts[s]
+	if !ok || !b {
+		return errors.New("not an allowable host")
+	}
+	return nil
+}
+
 // func (o *flagOptions) UnmarshalJSON(data []byte) error {
 // 	var m map[string]interface{}
 

@@ -10,13 +10,12 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-const endpoint string = "watersheds/:slug/extract"
+// const endpoint string = "watersheds/:slug/extract"
 
 type Site struct {
 	SiteNumber  string      `json:"site_number"`
@@ -27,17 +26,15 @@ type Site struct {
 	Values      []float64   `json:"values"`
 }
 
-func extract(f *flagOptions, url *url.URL) {
-	url.Path = strings.Replace(endpoint, ":slug", f.Slug, 1)
+func extract(f flagOptions, url url.URL) {
+	url.Path = f.Endpoint
 
-	tAfter := f.After
-	tBefore := f.Before
 	stdOut, _ := strconv.ParseBool(f.StdOut)
 	fpOut := f.OutFile
 
 	q := url.Query()
-	q.Set("after", tAfter)
-	q.Set("before", tBefore)
+	q.Set("after", f.After)
+	q.Set("before", f.Before)
 	url.RawQuery = q.Encode()
 
 	log.Printf("URL: %s", url.String())

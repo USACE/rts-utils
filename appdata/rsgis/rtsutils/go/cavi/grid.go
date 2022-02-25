@@ -8,14 +8,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func grid(f *flagOptions, url *url.URL) (string, error) {
-	slug := f.Slug
-	products := f.Products
-	tAfter := f.After
-	tBefore := f.Before
-	// stdOut := f.StdOut
-	timeoutSec := f.Timeout
-	auth := f.Auth
+func grid(f flagOptions, url url.URL) (string, error) {
+	// get auth token
+	auth, err := getResponseBody(authserver)
+	if err != nil {
+		return "", err
+	}
 
 	var dssfilepath string
 
@@ -29,7 +27,7 @@ func grid(f *flagOptions, url *url.URL) (string, error) {
 	}
 
 	// Get the watershed we asked for
-	ws := wm[slug]
+	ws := wm[f.Slug]
 	if ws.Slug == "" {
 		return dssfilepath, errors.Errorf("Slug '%s' not found\n", ws.Slug)
 	} else {
@@ -46,7 +44,7 @@ func grid(f *flagOptions, url *url.URL) (string, error) {
 	}
 
 	productIDs := []string{}
-	for _, product := range products {
+	for _, product := range f.Products {
 		for k, v := range pm {
 			if k == product {
 				// fmt.Println(v.Name, "exists")
@@ -60,15 +58,15 @@ func grid(f *flagOptions, url *url.URL) (string, error) {
 
 	// Populate the payload struct before sending off
 	p := payload{
-		After:       tAfter,
-		Before:      tBefore,
+		After:       f.After,
+		Before:      f.Before,
 		WatershedID: ws.ID.String(),
 		ProductID:   productIDs,
 	}
 
 	var us updateStatus
 	url.Path = "downloads"
-	if err := us.postPayload(url.String(), p, auth); err != nil {
+	if err := us.postPayload(url.String(), p, string(auth)); err != nil {
 		return dssfilepath, err
 	} else {
 		log.Println("Download ID:", us.ID)
@@ -76,7 +74,7 @@ func grid(f *flagOptions, url *url.URL) (string, error) {
 
 	url.Path = "downloads/" + us.ID
 
-	timeout := time.Duration(int(time.Second) * int(timeoutSec))
+	timeout := time.Duration(int(time.Second) * int(f.Timeout))
 	var fn filename
 	for start := time.Now(); time.Since(start) < timeout; {
 		us.getStatus(url.String())
