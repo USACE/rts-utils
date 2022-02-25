@@ -16,6 +16,8 @@ if not _platform_sys:
 
 _binding = "cavi"
 
+
+
 # assuming Jython is running on windows
 if platform.python_implementation() == "Jython":
     _platform_sys = "windows"
@@ -23,8 +25,35 @@ if platform.python_implementation() == "Jython":
 
 CAVI_GO = "{}/{}/{}".format(os.path.dirname(__file__), _platform_sys, _binding)
 
+GIT_GO = "{}/{}/{}".format(os.path.dirname(__file__), _platform_sys, "git")
 
 def get(d, sh=True):
+    """Method to initiate the Go binding as a subprocess
+
+    Parameters
+    ----------
+    d : dict
+        dictionary defining Go binding flag requirements
+    sh : bool, optional
+        execute through a shell, by default True
+
+    Returns
+    -------
+    tuple[bytes, bytes]
+        returns a tuple (stdout, stderr)
+    """
+    sp = subprocess.Popen(
+        CAVI_GO,
+        shell=sh,
+        cwd=os.path.dirname(__file__),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return sp.communicate(input=json.dumps(d))
+
+
+def git(d, sh=True):
     """Method to initiate the Go binding as a subprocess
 
     Parameters

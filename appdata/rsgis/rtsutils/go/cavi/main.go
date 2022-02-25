@@ -69,6 +69,9 @@ func main() {
 	}
 
 	switch co.Subcommand {
+	case "git":
+		// not do all the git stuff
+		fmt.Println()
 	case "grid":
 		log.Println("Initiating 'grid' command")
 		if len(co.Products) == 0 {

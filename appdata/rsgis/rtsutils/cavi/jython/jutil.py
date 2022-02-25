@@ -15,30 +15,6 @@ from java.time.format import DateTimeFormatterBuilder, DateTimeFormatter
 from javax.swing import JOptionPane, UIManager, JFileChooser, JTextField
 from javax.swing.filechooser import FileNameExtensionFilter
 
-
-# def read_config(cfg):
-#     with open(cfg, "r") as f:
-#         cfg_in = json.load(f)
-#     return cfg_in
-
-# def write_config(cfg, json_):
-#     with open(cfg, "w") as f:
-#         json.dump(json_, f, indent=4)
-
-
-# def watershed_refactor(json_):
-#     return {
-#         "{}:{}".format(d['office_symbol'], d['name']): d 
-#         for d in json_
-#         }
-
-
-# def product_refactor(json_):
-#     return {
-#         "{}".format(d['name'].replace("_", " ").title()): d 
-#         for d in json_
-#         }
-
 def token():
     """Provide the user a dialog to add their bearer token
 

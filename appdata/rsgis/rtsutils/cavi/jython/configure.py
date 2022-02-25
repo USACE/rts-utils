@@ -1,29 +1,29 @@
 # Java
 
-import os
 from java.lang import Short
 from java.awt import Font, Point
 from javax.swing import JFrame, JButton, JLabel, JTextField, JList
-from javax.swing import JScrollPane
+from javax.swing import JScrollPane, JOptionPane
 from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
 from javax.swing import ListSelectionModel
 from javax.swing import ImageIcon
 from java.io import File
 
+import os
 import json
 import sys
 from collections import OrderedDict
 
 
 from rtsutils.cavi.jython import jutil, ICON
+from rtsutils.config import DictConfig
 from rtsutils import go
 
 
 false = 0
-true = 0
+true = 1
 null = None
 
-base_cfg = {"dss": " ","auth": {"token": "","expire": 0},"watershed_slug": "","product_ids": []}
 
 class CumulusUI():
     go_config = {
@@ -53,11 +53,17 @@ class CumulusUI():
             super(CumulusUI.UI, self).__init__()
             self.Outer = CumulusUI()
 
+            if self.Outer.config_path is None:
+                JOptionPane.showMessageDialog(None, "no configuration file path provided\n\nexiting program", JOptionPane.ERROR_MESSAGE)
+                sys.exit(1)
+
+
             self.config_path = self.Outer.config_path
             self.go_config = self.Outer.go_config
-            
-            self.cumulus_configurations = self.cumulus_config
-            
+
+            # self.cumulus_configurations = self.cumulus_config
+            self.cumulus_configurations = DictConfig(self.config_path).read()
+
             self.go_config["Endpoint"] = "watersheds"
             ws_out, stderr = go.get(self.go_config)
             self.go_config["Endpoint"] = "products"
@@ -169,26 +175,6 @@ class CumulusUI():
             self.setLocationRelativeTo(None)
 
 
-        @property
-        def cumulus_config(self):
-            try:
-                with open(self.config_path, "r") as f:
-                    json_ = json.load(f)
-                    return json_
-            except :
-                self.cumulus_config = base_cfg
-                print("new file created: {}".format(self.config_path))
-                return self.cumulus_config
-            finally:
-                if not os.path.isfile(self.config_path):
-                    raise FileNotFoundError("{} not found".format(self.config_path))
-
-        @cumulus_config.setter
-        def cumulus_config(self, json_):
-            with open(self.config_path, "w") as f:
-                json.dump(json_, f, indent=4)
-
-
         def watersheds(self, event):
             index = self.lst_watersheds.selectedIndex
             if not event.getValueIsAdjusting():
@@ -260,7 +246,7 @@ class CumulusUI():
             self.cumulus_configurations["watershed_slug"] = watershed_slug
             self.cumulus_configurations["product_ids"] = product_ids
             self.cumulus_configurations["dss"] = self.txt_select_file.getText()
-            self.cumulus_config = self.cumulus_configurations
+            DictConfig(self.config_path).write(self.cumulus_configurations)
 
 
 
