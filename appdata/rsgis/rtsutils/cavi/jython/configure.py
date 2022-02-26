@@ -111,7 +111,7 @@ class CumulusUI():
             self.lst_products = JList(sorted(self.api_products.keys()), valueChanged = self.products)
             self.lst_products.setBorder(BorderFactory.createTitledBorder(None, "Products", 2, 2, Font("Tahoma", 0, 14)));
             self.lst_products.setFont(Font("Tahoma", 0, 14));
-            
+
 
 
             self.lst_watersheds = JList(sorted(self.api_watersheds.keys()), valueChanged = self.watersheds)
@@ -124,7 +124,7 @@ class CumulusUI():
                 self.txt_select_file.setText(self.configurations["dss"])
                 idxs = self.product_index(self.configurations["product_ids"], self.api_products)
                 self.lst_products.setSelectedIndices(idxs)
-                idx = self.watershed_index(self.configurations["watershed_slug"], self.api_watersheds)
+                idx = self.watershed_index(self.configurations["watershed_id"], self.api_watersheds)
                 self.lst_watersheds.setSelectedIndex(idx)
             except KeyError as ex:
                 print("KeyError: missing {}".format(ex))
@@ -191,13 +191,13 @@ class CumulusUI():
                 "{}:{}".format(d['office_symbol'], d['name']): d 
                 for d in json_
                 })
-        
+
         def watershed_index(self, wss, d):
             try:
                 idx = [
                     i
                     for i, k in enumerate(sorted(d.keys()))
-                    if wss == d[k]["slug"]
+                    if wss == d[k]["id"]
                 ][0]
             except IndexError as ex:
                 print(ex)
@@ -218,7 +218,7 @@ class CumulusUI():
             idxs = [
                 i
                 for i, k in enumerate(sorted(d.keys()))
-                if d[k]["slug"] in ps
+                if d[k]["id"] in ps
             ]
             return idxs
 
@@ -245,11 +245,11 @@ class CumulusUI():
             selected_products = self.lst_products.getSelectedValues()
             
             
-            watershed_slug = self.api_watersheds[selected_watershed]["slug"]
-            product_ids = [self.api_products[p]["slug"] for p in selected_products]
+            watershed_id = self.api_watersheds[selected_watershed]["id"]
+            product_ids = [self.api_products[p]["id"] for p in selected_products]
             
             # Get, set and save jutil.configurations
-            self.configurations["watershed_slug"] = watershed_slug
+            self.configurations["watershed_id"] = watershed_id
             self.configurations["product_ids"] = product_ids
             self.configurations["dss"] = self.txt_select_file.getText()
             DictConfig(self.config_path).write(self.configurations)
@@ -362,7 +362,7 @@ class WaterExtractUI():
                     self.txt_apart.editable = true
 
                 self.txt_select_file.setText(self.configurations["dss"])
-                idx = self.watershed_index(self.configurations["watershed_slug"], self.api_watersheds)
+                idx = self.watershed_index(self.configurations["watershed_id"], self.api_watersheds)
                 self.lst_watersheds.setSelectedIndex(idx)
             except KeyError as ex:
                 print("KeyError: missing {}".format(ex))
@@ -439,7 +439,7 @@ class WaterExtractUI():
                 idx = [
                     i
                     for i, k in enumerate(sorted(d.keys()))
-                    if wss == d[k]["slug"]
+                    if wss == d[k]["id"]
                 ][0]
             except IndexError as ex:
                 print(ex)
@@ -468,10 +468,12 @@ class WaterExtractUI():
         def save(self, event):
             selected_watershed = self.lst_watersheds.getSelectedValue()
 
+            watershed_id = self.api_watersheds[selected_watershed]["id"]
             watershed_slug = self.api_watersheds[selected_watershed]["slug"]
 
 
             # Get, set and save jutil.configurations
+            self.configurations["watershed_id"] = watershed_id
             self.configurations["watershed_slug"] = watershed_slug
             self.configurations["apart"] = self.txt_apart.getText()
             self.configurations["dss"] = self.txt_select_file.getText()
@@ -481,15 +483,12 @@ class WaterExtractUI():
 
 if __name__ == "__main__":
     # tesing #
-    cui = WaterExtractUI()
-    # set the configuration file the UI will read/write too
-    cui.set_config_file(r"C:\Users\dev\projects\rts-utils\test_extract.json")
-    # print(cui.config_path)
-
-
-    # test endpoint updates
-    cui.endpoint({"Host": "develop-water-api.corps.cloud", "Scheme": "https"})
-    # print(cui.go_config)
+    # cui = CumulusUI()
+    # cui.set_config_file(r"")
+    # cui.endpoint({"Host": "develop-cumulus-api.corps.cloud", "Scheme": "https"})
+    # cui.show()
     
-    
-    cui.show()
+    # cui = WaterExtractUI()
+    # cui.set_config_file(r"")
+    # cui.endpoint({"Host": "develop-water-api.corps.cloud", "Scheme": "https"})
+    # cui.show()

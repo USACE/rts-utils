@@ -3,27 +3,40 @@
 import json
 import os
 import tempfile
+
 from java.util import TimeZone
 from hec.heclib.util import HecTime
 from hec.heclib.dss import HecDSSUtilities
-from rtsutils.cavi import cumulus, CUMULUS_CONFIG
-from rtsutils.cavi.jython import status
 
-NAME = "cumulus_qpe",  # name corresponding to what configuration is named in the GUI
+from rtsutils.cavi.jython.status import get_shared_directory, get_timewindow, get_timezone
+from rtsutils import go
+
+# define the configuration file for this script using 'arg2' from CAVI
+# comment out 'arg2' when running in  CAVI
+arg2 = "cumulus_example"
+SCRIPT_NAME = "{}.py".format(arg2)
+SHARED_DIRECTORY = get_shared_directory()
+CONFIG_FILE = os.path.join(SHARED_DIRECTORY, SCRIPT_NAME)
+
+
 CONFIGURE = 0,         # 1 = True, 0 = False, and configure = 1 is to view the GUI
-DEVELOP_API = 0,         # 1 = True, 0 = False, and develop = 1 is to use the develop API
+args = {
+    "Host": "develop-cumulus-api.corps.cloud",
+    "StdOut": "true",
+    
+}
 
-SHARED = status.get_shared_directory()
+
 
 
 # check if user needs to config
 if CONFIGURE:
     # start the GUI to config before reading the config
     print("Open the GUI")
-config = json.load(os.path.join(SHARED, CUMULUS_CONFIG))
-config_name = config[NAME]
-dss = config_name["dss"]
-tw = status.get_timewindow()
+
+
+
+tw = get_timewindow()
 if tw != None:
     st, et = tw
 else:
@@ -31,7 +44,7 @@ else:
 st = HecTime(st, HecTime.MINUTE_GRANULARITY)
 st.showTimeAsBeginningOfDay(True)
 print('Converting time window to UTC for API request.')
-ws_tz = status.get_timezone()
+ws_tz = get_timezone()
 HecTime.convertTimeZone(st, ws_tz, TimeZone.getTimeZone('UTC'))
 et = HecTime(et, HecTime.MINUTE_GRANULARITY)
 et.showTimeAsBeginningOfDay(True)
@@ -45,7 +58,7 @@ args = {
     "before": before,
     "products": config_name["product_ids"]
 }
-stdout, stderr = cumulus.request(**args)
+stdout, stderr = go.get(args)
 _, fp = stdout.split('::')
 if os.path.exists(fp):
     dss7 = HecDSSUtilities()
