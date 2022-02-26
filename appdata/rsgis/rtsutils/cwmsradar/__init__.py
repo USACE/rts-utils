@@ -13,7 +13,6 @@ import sys
 import tempfile
 import string
 import json
-import logging
 import cwms_data2dss
 
 # A few constants
