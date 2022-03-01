@@ -8,7 +8,12 @@ var allowableHosts = map[string]bool{
 	"cumulus-api.corps.cloud":         true,
 	"develop-cumulus-api.corps.cloud": true,
 	"water-api.corps.cloud":           true,
-	"develop-water-api.corps.cloud":   true}
+	"develop-water-api.corps.cloud":   true,
+	"cumulus-api.rsgis.dev":           true,
+	"develop-cumulus-api.rsgis.dev":   true,
+	"water-api.rsgis.dev":             true,
+	"develop-water-api.rsgis.dev":     true,
+}
 
 func allowableHost(s string) error {
 	b, ok := allowableHosts[s]

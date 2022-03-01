@@ -5,17 +5,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"net/url"
 	"os"
-	"path"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 )
-
-// const endpoint string = "watersheds/:slug/extract"
 
 type Site struct {
 	SiteNumber  string      `json:"site_number"`
@@ -26,18 +21,7 @@ type Site struct {
 	Values      []float64   `json:"values"`
 }
 
-func extract(f flagOptions, url url.URL) {
-	url.Path = f.Endpoint
-
-	stdOut, _ := strconv.ParseBool(f.StdOut)
-	fpOut := f.OutFile
-
-	q := url.Query()
-	q.Set("after", f.After)
-	q.Set("before", f.Before)
-	url.RawQuery = q.Encode()
-
-	log.Printf("URL: %s", url.String())
+func extract(url url.URL) {
 
 	resp, err := getResponse(url.String())
 	if err != nil {
@@ -56,19 +40,6 @@ func extract(f flagOptions, url url.URL) {
 		}
 		line = bytes.TrimSpace(line)
 		buffer.Write(line)
-		if stdOut {
-			os.Stdout.WriteString(string(line))
-		}
-
+		os.Stdout.WriteString(string(line))
 	}
-	// Get the output path and check the path
-	if fpOut != "" {
-		fpDir := path.Dir(fpOut)
-		if info, err := os.Stat(fpDir); info.IsDir() {
-			os.WriteFile(fpOut, buffer.Bytes(), 0644)
-		} else {
-			log.Fatalln(err)
-		}
-	}
-
 }
