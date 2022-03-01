@@ -3,6 +3,8 @@
 Java classes used to render dialogs to the user within the
 CAVI environmnet
 """
+from hec.heclib.dss import HecDss
+
 
 import json
 import os
@@ -12,8 +14,10 @@ from textwrap import dedent
 from java.io import File
 from java.time import ZoneId, LocalDateTime, ZonedDateTime
 from java.time.format import DateTimeFormatterBuilder, DateTimeFormatter
-from javax.swing import JOptionPane, UIManager, JFileChooser, JTextField
+from javax.swing import JOptionPane, UIManager, JFileChooser, JFrame
 from javax.swing.filechooser import FileNameExtensionFilter
+
+from rtsutils import TRUE, FALSE, null
 
 def token():
     """Provide the user a dialog to add their bearer token
@@ -98,10 +102,10 @@ class FileChooser(JFileChooser):
     for output.  Currently, once seleted the result is written to the user's
     APPDATA to be read later.
     '''
-    def __init__(self, output_path):
+    def __init__(self):
         super(FileChooser, self).__init__()
         self.config_filename = "cumulus.config"
-        self.output_path = output_path
+        self.output_path = None
         self.setFileSelectionMode(JFileChooser.FILES_ONLY)
         self.allow = ['dss']
         self.destpath = None
@@ -188,5 +192,9 @@ if __name__ == "__main__":
     # testing FileChooser()
     fc = FileChooser()
     fc.title = "Select Output DSS File"
-    fc.set_current_dir(os.getcwd())
+    fc.set_current_dir(os.getenv("HOME"))
+
     fc.show()
+    print(type(fc.output_path))
+    dss = HecDss.open(fc.output_path)
+    if dss: dss.close()

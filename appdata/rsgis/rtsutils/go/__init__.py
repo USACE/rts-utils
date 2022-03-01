@@ -8,6 +8,9 @@ import os
 import platform
 import sys
 
+from rtsutils import TRUE, FALSE, null
+
+
 _platform_sys = platform.system().lower()
 if not _platform_sys:
     print("Platform not recognized")
@@ -27,7 +30,7 @@ CAVI_GO = "{}/{}/{}".format(os.path.dirname(__file__), _platform_sys, _binding)
 
 GIT_GO = "{}/{}/{}".format(os.path.dirname(__file__), _platform_sys, "git")
 
-def get(d, subprocess_=True, sh=True):
+def get(d, subprocess_=FALSE, sh=TRUE):
     """Method to initiate the Go binding as a subprocess
 
     Parameters

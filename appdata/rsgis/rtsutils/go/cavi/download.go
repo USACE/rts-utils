@@ -37,9 +37,9 @@ func (us *updateStatus) getStatus(u string) {
 
 }
 
-func (us *updateStatus) postPayload(u string, p payload, t string) error {
+func (us *updateStatus) postPayload(u string, p payload) error {
 	timeout := time.Duration(time.Second * 10)
-	bearer := "Bearer " + t
+	// bearer := "Bearer " + t
 	client := http.Client{
 		Timeout: timeout,
 	}
@@ -52,7 +52,7 @@ func (us *updateStatus) postPayload(u string, p payload, t string) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", bearer)
+	// req.Header.Set("Authorization", bearer)
 
 	resp, err := client.Do(req)
 	if err != nil {

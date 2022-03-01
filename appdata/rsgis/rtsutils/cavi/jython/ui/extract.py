@@ -12,6 +12,7 @@ from java.io import File
 
 from hec.io import TimeSeriesContainer
 from hec.lang import TimeStep
+from hec.heclib.dss import HecDss
 from hec.heclib.util import HecTime
 from hec.hecmath import TimeSeriesMath
 from hec.hecmath.functions import TimeSeriesFunctions
@@ -22,16 +23,14 @@ import json
 import sys
 from collections import OrderedDict, namedtuple
 
-
-from rtsutils.cavi.jython import jutil, EXTRACT_ICON
+from rtsutils import TRUE, FALSE, null
+from rtsutils.cavi.jython import jutil
 from rtsutils.usgs import USGS_EXTRACT_CODES
+from rtsutils.utils import EXTRACT_ICON
 from rtsutils.utils.config import DictConfig
 from rtsutils import go
 
-
-false = 0
-true = 1
-null = None
+DSSVERSION = 6
 
 
 def put_ts(site, dss, apart):
@@ -72,7 +71,7 @@ def put_ts(site, dss, apart):
     epart = TimeStep().getEPartFromIntervalMinutes(timestep_min)
     # Set the pathname
     pathname = '/{0}/{1}/{2}//{3}/{4}/'.format(apart, Site.site_number, parameter, epart, version).upper()
-    apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
+    # apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
     
     container = TimeSeriesContainer()
     container.fullName     = pathname
@@ -87,7 +86,7 @@ def put_ts(site, dss, apart):
     container.numberValues = len(Site.times)
     container.startTime    = times[0]
     container.endTime      = times[-1]
-    container.timeZoneID   = tz
+    container.timeZoneID   = "UTC"
     # container.makeAscending()
     if not TimeSeriesMath.checkTimeSeries(container):
         return 'Site: "{}" not saved to DSS'.format(Site.site_number)
@@ -110,13 +109,15 @@ class WaterExtractUI():
 
     def show(self):
         self.ui = self.UI()
-        self.ui.setVisible(true)
+        self.ui.setVisible(TRUE)
 
     @classmethod
-    def execute(cls):
-        d = DictConfig(cls.config_path).read()
-        sub = go.get(d)
-        sub.stdin.write(json.dumps(d))
+    def execute(cls, go_cfg, extract_cfg):
+        sub = go.get(go_cfg, subprocess_= TRUE)
+        sub.stdin.write(json.dumps(go_cfg))
+        sub.stdin.close()
+        dsspath = str(extract_cfg["dss"])
+        dss = HecDss.open(dsspath)
         byte_array = bytearray()
         for b in iter(partial(sub.stdout.read, 1), b''):
             byte_array.append(b)
@@ -124,8 +125,9 @@ class WaterExtractUI():
                 obj = json.loads(str(byte_array))
                 byte_array = bytearray()
                 if 'message' in obj.keys(): raise Exception(obj['message'])
-                msg = put_ts(obj, d["dss"], d["apart"])
+                msg = put_ts(obj, dss, extract_cfg["apart"])
                 if msg: print(msg)
+        if dss: dss.close()
 
 
 
@@ -177,14 +179,15 @@ class WaterExtractUI():
             btn_save = JButton();
             btn_close = JButton();
 
-            self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            # self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            self.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
             self.setTitle("Extract Time Series Configuration");
-            self.setAlwaysOnTop(true);
+            self.setAlwaysOnTop(FALSE);
             self.setIconImage(ImageIcon(EXTRACT_ICON).getImage());
             self.setLocation(Point(10, 10));
-            self.setLocationByPlatform(true);
+            self.setLocationByPlatform(TRUE);
             self.setName("WaterExtractUI");
-            self.setResizable(false);
+            self.setResizable(FALSE);
 
 
             self.lst_watersheds = JList(sorted(self.api_watersheds.keys()), valueChanged = self.watersheds)
@@ -228,7 +231,7 @@ class WaterExtractUI():
             self.cbx_apart.setToolTipText("DSS A part override");
             self.cbx_apart.actionPerformed = self.check_apart;
 
-            self.txt_apart.setEditable(false);
+            self.txt_apart.setEditable(FALSE);
             self.txt_apart.setFont(Font("Tahoma", 0, 14));
             self.txt_apart.setToolTipText("DSS A part override");
 
@@ -236,8 +239,8 @@ class WaterExtractUI():
             try:
                 self.txt_apart.setText(self.configurations["apart"])
                 if self.configurations["apart"] != "" and self.configurations["watershed_slug"] != self.configurations["apart"]:
-                    self.cbx_apart.selected = true
-                    self.txt_apart.editable = true
+                    self.cbx_apart.selected = TRUE
+                    self.txt_apart.editable = TRUE
 
                 self.txt_select_file.setText(self.configurations["dss"])
                 idx = self.watershed_index(self.configurations["watershed_id"], self.api_watersheds)
@@ -340,14 +343,16 @@ class WaterExtractUI():
 
 
         def select_file(self, event):
-            fc = jutil.FileChooser(self.txt_select_file)
+            fc = jutil.FileChooser()
             fc.title = "Select Output DSS File"
             try:
-                _dir = os.path.dirname(self.txt_select_file)
-                fc.set_current_dir(File(_dir))
+                _dir = os.path.dirname(self.txt_select_file.getText())
+                fc.set_current_dir(_dir)
             except TypeError as ex:
                 print(ex)
+
             fc.show()
+            print(fc.output_path)
             self.txt_select_file.setText(fc.output_path)
 
 
@@ -365,24 +370,32 @@ class WaterExtractUI():
             self.configurations["dss"] = self.txt_select_file.getText()
             DictConfig(self.config_path).write(self.configurations)
 
-            msg = ["{}: {}".format(k, v) for k, v in sorted(self.configurations.items())]
+            msg = []
+            for k, v in sorted(self.configurations.items()):
+                v = "\n".join(v) if isinstance(v, list) else v
+                msg.append("{}: {}".format(k, v))
 
-            JOptionPane.showMessageDialog(None, "\n".join(msg), "Updated Config", JOptionPane.INFORMATION_MESSAGE)
+            jf = JFrame()
+            jf.setAlwaysOnTop(TRUE)
+            JOptionPane.showMessageDialog(jf, "\n".join(msg), "Updated Config", JOptionPane.INFORMATION_MESSAGE)
 
         def execute(self, event):
             self.save(event)
-            self.Outer.execute()
+            self.Outer.go_config["Subcommand"] = "extract"
+            self.Outer.go_config["Slug"] = self.configurations["watershed_slug"]
+            self.Outer.go_config["Endpoint"] = "watersheds/{}/extract".format(self.configurations["watershed_slug"])
+            self.Outer.execute(self.Outer.go_config, self.configurations)
             self.close(event)
 
         def close(self, event):
-            self.setVisible(false)
             self.dispose()
+            sys.exit()
 
 
 if __name__ == "__main__":
     # tesing #
 
     cui = WaterExtractUI()
-    cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
+    cui.set_config_file(r"C:\Users\dev\projects\rts-utils\test_extract.json")
     cui.parameters({"Host": "develop-water-api.corps.cloud", "Scheme": "https"})
     cui.show()

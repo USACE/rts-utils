@@ -1,10 +1,11 @@
-# Java
+"""Cumulus UI
+"""
 
 from java.lang import Short
 from java.awt import Font, Point
-from javax.swing import JDialog, JFrame, JButton, JLabel, JTextField, JList, JCheckBox
+from javax.swing import JFrame, JButton, JLabel, JTextField, JList
 from javax.swing import JScrollPane, JOptionPane, SwingConstants
-from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
+from javax.swing import GroupLayout, LayoutStyle, BorderFactory, JRootPane
 from javax.swing import ListSelectionModel
 from javax.swing import ImageIcon
 import javax.swing.border as border
@@ -18,17 +19,13 @@ import sys
 from collections import OrderedDict
 
 
-from rtsutils.cavi.jython import jutil, CLOUD_ICON
+from rtsutils import go, TRUE, FALSE, null
+from rtsutils.cavi.jython import jutil
+from rtsutils.utils import CLOUD_ICON
 from rtsutils.utils.config import DictConfig
-from rtsutils import go
 
 
-false = 0
-true = 1
-null = None
-
-
-class CumulusUI(JDialog):
+class CumulusUI():
     go_config = {
         "Scheme": "https",
         "Subcommand": "get",
@@ -38,12 +35,11 @@ class CumulusUI(JDialog):
 
     def show(self):
         self.ui = self.UI()
-        self.ui.setVisible(true)
+        self.ui.setVisible(TRUE)
 
     @classmethod
-    def execute(cls):
-        d = DictConfig(cls.config_path).read()
-        stdout, stderr = go.get(d, false)
+    def execute(cls, cfg):
+        stdout, stderr = go.get(cfg, subprocess_=FALSE)
         if "error" in stderr:
             print(stderr)
             sys.exit(1)
@@ -60,33 +56,6 @@ class CumulusUI(JDialog):
     @classmethod
     def parameters(cls, d):
         cls.go_config.update(d)
-
-    @classmethod
-    def process(cls):
-        d = DictConfig(cls.config_path).read()
-        print(d)
-        # stdout, stderr = go.get(d)
-        # if "error" in stderr:
-        #     print(stderr)
-        #     sys.exit()
-        # else:
-        #     print(stdout)
-            # _, fp = stdout.split('::')
-            # if os.path.exists(fp):
-            #     dss7 = HecDSSUtilities()
-            #     dss7.setDSSFileName(fp)
-            #     dss6_temp = os.path.join(tempfile.gettempdir(), 'dss6.dss')
-            #     dss7.convertVersion(dss6_temp)
-            #     dss6 = HecDSSUtilities()
-            #     dss6.setDSSFileName(dss6_temp)
-            #     dss6.copyFile(d["dss"])
-            #     dss7.close()
-            #     dss6.close()
-            #     try:
-            #         os.remove(fp)
-            #         os.remove(dss6_temp)
-            #     except Exception as err:
-            #         print(err)
 
 
 
@@ -129,27 +98,28 @@ class CumulusUI(JDialog):
             btn_save = JButton();
             btn_close = JButton();
 
-            self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            # self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            self.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
             self.setTitle("Cumulus Configuration");
-            self.setAlwaysOnTop(true);
+            self.setAlwaysOnTop(TRUE);
             self.setIconImage(ImageIcon(CLOUD_ICON).getImage());
             self.setLocation(Point(10, 10));
-            self.setLocationByPlatform(true);
+            self.setLocationByPlatform(TRUE);
             self.setName("CumulusCaviUI"); # NOI18N
-            self.setResizable(false);
+            self.setResizable(FALSE);
 
             self.lst_products = JList(sorted(self.api_products.keys()), valueChanged = self.products)
             self.lst_products.setBorder(BorderFactory.createTitledBorder(null, "Products", border.TitledBorder.CENTER, border.TitledBorder.TOP, Font("Tahoma", 0, 14))); # NOI18N
             self.lst_products.setFont(Font("Tahoma", 0, 14)); # NOI18N
             self.lst_products.setToolTipText("List of products");
-            # jScrollPane1.setViewportView(self.lst_products);
+            jScrollPane1.setViewportView(self.lst_products);
 
             self.lst_watersheds = JList(sorted(self.api_watersheds.keys()), valueChanged = self.watersheds)
             self.lst_watersheds.setBorder(BorderFactory.createTitledBorder(null, "Watersheds", border.TitledBorder.CENTER, border.TitledBorder.TOP, Font("Tahoma", 0, 14))); # NOI18N
             self.lst_watersheds.setFont(Font("Tahoma", 0, 14)); # NOI18N
             self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             self.lst_watersheds.setToolTipText("List of watersheds");
-            # jScrollPane2.setViewportView(self.lst_watersheds);
+            jScrollPane2.setViewportView(self.lst_watersheds);
 
             lbl_select_file.setFont(Font("Tahoma", 0, 14)); # NOI18N
             lbl_select_file.setText("DSS File Downloads");
@@ -160,22 +130,24 @@ class CumulusUI(JDialog):
             btn_select.setFont(Font("Tahoma", 0, 14)); # NOI18N
             btn_select.setText("...");
             btn_select.setToolTipText("Select File...");
-            btn_select.setActionCommand("");
+            btn_select.actionPerformed = self.select_file;
 
             btn_execute.setFont(Font("Tahoma", 0, 14)); # NOI18N
             btn_execute.setText("Save and Execute Configuration");
             btn_execute.setToolTipText("Save and Execute Configuration");
-            btn_execute.setActionCommand("");
+            btn_execute.actionPerformed = self.execute;
             btn_execute.setHorizontalTextPosition(SwingConstants.CENTER);
 
             btn_save.setFont(Font("Tahoma", 0, 14)); # NOI18N
             btn_save.setText("Save Configuration");
             btn_save.setToolTipText("Save Configuration");
+            btn_save.actionPerformed = self.save;
             btn_save.setHorizontalTextPosition(SwingConstants.CENTER);
 
             btn_close.setFont(Font("Tahoma", 0, 14)); # NOI18N
             btn_close.setText("Close");
             btn_close.setToolTipText("Close GUI");
+            btn_close.actionPerformed = self.close;
             btn_close.setHorizontalTextPosition(SwingConstants.CENTER);
             
             try:
@@ -187,9 +159,6 @@ class CumulusUI(JDialog):
             except KeyError as ex:
                 print("KeyError: missing {}".format(ex))
 
-
-            jScrollPane1.setViewportView(self.lst_products);
-            jScrollPane2.setViewportView(self.lst_watersheds);
 
             layout = GroupLayout(self.getContentPane());
             self.getContentPane().setLayout(layout);
@@ -238,7 +207,7 @@ class CumulusUI(JDialog):
             );
 
             self.pack()
-            self.setLocationRelativeTo(None)
+            self.setLocationRelativeTo(null)
 #
 # ~~~~~~~~~~~~ END OF THE JAVA PANE ~~~~~~~~~~~~
 #
@@ -310,33 +279,43 @@ class CumulusUI(JDialog):
             
             
             watershed_id = self.api_watersheds[selected_watershed]["id"]
+            watershed_slug = self.api_watersheds[selected_watershed]["slug"]
             product_ids = [self.api_products[p]["id"] for p in selected_products]
             
             # Get, set and save jutil.configurations
             self.configurations["watershed_id"] = watershed_id
+            self.configurations["watershed_slug"] = watershed_slug
             self.configurations["product_ids"] = product_ids
             self.configurations["dss"] = self.txt_select_file.getText()
             DictConfig(self.config_path).write(self.configurations)
 
-            msg = ["{}: {}".format(k, v) for k, v in sorted(self.configurations.items())]
+            msg = []
+            for k, v in sorted(self.configurations.items()):
+                v = "\n".join(v) if isinstance(v, list) else v
+                msg.append("{}: {}".format(k, v))
 
-            JOptionPane.showMessageDialog(None, "\n".join(msg), "Updated Config", JOptionPane.INFORMATION_MESSAGE)
+
+            jf = JFrame()
+            jf.setAlwaysOnTop(TRUE)
+            JOptionPane.showMessageDialog(jf, "\n\n".join(msg), "Updated Config", JOptionPane.INFORMATION_MESSAGE)
+
 
         def execute(self, event):
             self.save(event)
-            self.Outer.execute()
+            self.Outer.go_config["Subcommand"] = "grid"
+            self.Outer.go_config["Slug"] = self.configurations["watershed_slug"]
+            self.Outer.go_config["Products"] = self.configurations["product_ids"]
+            self.Outer.execute(self.Outer.go_config)
             self.close(event)
 
         def close(self, event):
-            self.setVisible(false)
             self.dispose()
-
-
+            sys.exit()
 
 
 if __name__ == "__main__":
     # tesing #
     cui = CumulusUI()
-    cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_cumulus.json")
+    cui.set_config_file(r"C:\Users\dev\projects\rts-utils\test_cumulus.json")
     cui.parameters({"Host": "develop-cumulus-api.corps.cloud", "Scheme": "https"})
     cui.show()

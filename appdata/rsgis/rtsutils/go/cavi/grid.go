@@ -10,10 +10,10 @@ import (
 
 func grid(f flagOptions, url url.URL) (string, error) {
 	// get auth token
-	auth, err := getResponseBody(authserver)
-	if err != nil {
-		return "", err
-	}
+	// auth, err := getResponseBody(authserver)
+	// if err != nil {
+	// 	return "", err
+	// }
 
 	var dssfilepath string
 
@@ -66,7 +66,7 @@ func grid(f flagOptions, url url.URL) (string, error) {
 
 	var us updateStatus
 	url.Path = "downloads"
-	if err := us.postPayload(url.String(), p, string(auth)); err != nil {
+	if err := us.postPayload(url.String(), p); err != nil {
 		return dssfilepath, err
 	} else {
 		log.Println("Download ID:", us.ID)
