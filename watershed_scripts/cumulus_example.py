@@ -11,7 +11,7 @@ from hec.heclib.dss import HecDSSUtilities
 
 # from rtsutils.cavi.jython.status import get_timewindow, get_timezone
 from rtsutils import go
-from rtsutils.cavi.jython import extract
+from rtsutils.cavi.jython.ui import extract
 
 true = 1
 false = 0

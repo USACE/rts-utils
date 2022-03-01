@@ -1,6 +1,5 @@
 # Java
 
-import tempfile
 from java.lang import Short
 from java.awt import Font, Point
 from javax.swing import JDialog, JFrame, JButton, JLabel, JTextField, JList, JCheckBox
@@ -12,8 +11,6 @@ import javax.swing.border as border
 
 from java.io import File
 
-from hec.heclib.dss import HecDSSUtilities
-
 
 import os
 import json
@@ -21,8 +18,8 @@ import sys
 from collections import OrderedDict
 
 
-from rtsutils.cavi.jython import jutil, CLOUD_ICON, EXTRACT_ICON
-from rtsutils.config import DictConfig
+from rtsutils.cavi.jython import jutil, CLOUD_ICON
+from rtsutils.utils.config import DictConfig
 from rtsutils import go
 
 

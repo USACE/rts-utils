@@ -1,27 +1,31 @@
 # Java
 
 from functools import partial
-import tempfile
 from java.lang import Short
 from java.awt import Font, Point
-from javax.swing import JDialog, JFrame, JButton, JLabel, JTextField, JList, JCheckBox
+from javax.swing import JFrame, JButton, JLabel, JTextField, JList, JCheckBox
 from javax.swing import JScrollPane, JOptionPane, SwingConstants
 from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
 from javax.swing import ListSelectionModel
 from javax.swing import ImageIcon
 from java.io import File
 
-from hec.heclib.dss import HecDSSUtilities
+from hec.io import TimeSeriesContainer
+from hec.lang import TimeStep
+from hec.heclib.util import HecTime
+from hec.hecmath import TimeSeriesMath
+from hec.hecmath.functions import TimeSeriesFunctions
 
 
 import os
 import json
 import sys
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 
-from rtsutils.cavi.jython import jutil, CLOUD_ICON, EXTRACT_ICON
-from rtsutils.config import DictConfig
+from rtsutils.cavi.jython import jutil, EXTRACT_ICON
+from rtsutils.usgs import USGS_EXTRACT_CODES
+from rtsutils.utils.config import DictConfig
 from rtsutils import go
 
 
@@ -54,7 +58,7 @@ def put_ts(site, dss, apart):
         'Site',
         site.keys()
     )(**site)
-    parameter, unit, data_type, version = usgs_code[Site.code]
+    parameter, unit, data_type, version = USGS_EXTRACT_CODES[Site.code]
     times = [
         HecTime(t, HecTime.MINUTE_GRANULARITY).value()
         for t in Site.times
