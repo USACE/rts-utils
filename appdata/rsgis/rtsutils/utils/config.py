@@ -1,44 +1,48 @@
-
+"""Dictionary utility to read/write configuration file
+"""
 
 import json
-import os
 
 
-"""
-Go flag options struct used in stdin json string
-Scheme     string
-Host       string
-Subcommand string
-Slug       string
-Products
-After    string
-Before   string
-StdOut   string
-OutFile  string
-Endpoint string
-Timeout  float64
-"""
+class DictConfig:
+    """Read/Write configuration file
 
-class DictConfig():
+    Returns
+    -------
+    None
+    """
+
     base_cfg = {}
-    
+
     def __init__(self, cfg):
         self.cfg = cfg
 
+    def __repr__(self):
+        return "{self.__class__.__name__}({self.cfg})".format(self=self)
+
     def read(self):
+        """Read configuration file
+
+        Returns
+        -------
+        None
+        """
         try:
-            with open(self.cfg, "r") as f:
-                json_ = json.load(f)
+            with open(self.cfg, "r") as cfg_file:
+                json_ = json.load(cfg_file)
                 return json_
-        except :
+        except IOError:
             self.write(self.base_cfg)
             print("creating new file: {}".format(self.cfg))
             return self.read()
-        # finally:
-        #     if not os.path.isfile(self.cfg):
-        #         raise FileNotFoundError("{} not found".format(self.cfg))
-
 
     def write(self, json_):
-        with open(self.cfg, "w") as f:
-            json.dump(json_, f, indent=4)
+        """Write configuration file
+
+        Parameters
+        ----------
+        json_ : Dict
+            JSON configuration
+        """
+        with open(self.cfg, "w") as cfg_file:
+            json.dump(json_, cfg_file, indent=4)

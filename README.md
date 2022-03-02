@@ -2,10 +2,10 @@
 
 ## Available Utilities
 
-- [CAVI Status](appdata/rsgis/CAVISTATUS.md)
-- [CWMS RADAR](appdata/rsgis/CWMSRADAR.md)
-- [Get USGS](appdata/rsgis/GETUSGS.md)
-- [Watershed Extract](appdata/rsgis/WSEXTRACT.md)
+- [CAVI Status](doc/CAVISTATUS.md)
+- [CWMS RADAR](doc/CWMSRADAR.md)
+- [Get USGS](doc/GETUSGS.md)
+- [Watershed Extract](doc/WSEXTRACT.md)
 
 ## Package Installation
 

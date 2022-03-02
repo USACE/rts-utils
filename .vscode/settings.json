@@ -4,5 +4,7 @@
     ],
     "python.analysis.extraPaths": [
         "./appdata/rsgis"
-    ]
+    ],
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }

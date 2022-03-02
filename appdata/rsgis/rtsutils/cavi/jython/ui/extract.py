@@ -1,41 +1,53 @@
-# Java
+"""Java Swing UI for Water API extracting time series
+"""
 
+import json
+import os
+import sys
+from collections import OrderedDict, namedtuple
 from functools import partial
-from java.lang import Short
-from java.awt import Font, Point
-from javax.swing import JFrame, JButton, JLabel, JTextField, JList, JCheckBox
-from javax.swing import JScrollPane, JOptionPane, SwingConstants
-from javax.swing import GroupLayout, LayoutStyle, BorderFactory, WindowConstants
-from javax.swing import ListSelectionModel
-from javax.swing import ImageIcon
-from java.io import File
 
-from hec.io import TimeSeriesContainer
-from hec.lang import TimeStep
 from hec.heclib.dss import HecDss
 from hec.heclib.util import HecTime
 from hec.hecmath import TimeSeriesMath
 from hec.hecmath.functions import TimeSeriesFunctions
-
-
-import os
-import json
-import sys
-from collections import OrderedDict, namedtuple
-
-from rtsutils import TRUE, FALSE, null
+from hec.io import TimeSeriesContainer
+from hec.lang import TimeStep
+from java.awt import Font, Point
+from java.io import File
+from java.lang import Short
+from javax.swing import (
+    BorderFactory,
+    GroupLayout,
+    ImageIcon,
+    JButton,
+    JCheckBox,
+    JFrame,
+    JLabel,
+    JList,
+    JOptionPane,
+    JScrollPane,
+    JTextField,
+    LayoutStyle,
+    ListSelectionModel,
+    SwingConstants,
+    WindowConstants,
+)
+from rtsutils import FALSE, TRUE, go, null
 from rtsutils.cavi.jython import jutil
 from rtsutils.usgs import USGS_EXTRACT_CODES
 from rtsutils.utils import EXTRACT_ICON
 from rtsutils.utils.config import DictConfig
-from rtsutils import go
 
 DSSVERSION = 6
 
 
 def put_ts(site, dss, apart):
     """Save timeseries to DSS File
-    
+
+    exception handled with a message output saying site not saved, but
+    continues on trying additional site/parameter combinations
+
     Parameters
     ----------
     site: json
@@ -46,60 +58,65 @@ def put_ts(site, dss, apart):
     Returns
     -------
     None
-    
+
     Raises
     ------
-    Put to DSS exception handled with a message output saying site not saved, but
-    continues on trying additional site/parameter combinations
+    HEC DSS exception
     """
-    
-    Site = namedtuple(
-        'Site',
-        site.keys()
-    )(**site)
-    parameter, unit, data_type, version = USGS_EXTRACT_CODES[Site.code]
+
+    site_parameters = namedtuple("site_parameters", site.keys())(**site)
+    parameter, unit, data_type, version = USGS_EXTRACT_CODES[site_parameters.code]
     times = [
-        HecTime(t, HecTime.MINUTE_GRANULARITY).value()
-        for t in Site.times
+        HecTime(t, HecTime.MINUTE_GRANULARITY).value() for t in site_parameters.times
     ]
-    
+
     timestep_min = None
-    for i, t in enumerate(range(len(times) - 1)):
-        ts = abs(times[t + 1] - times[t])
-        if ts < timestep_min or timestep_min is None:
-            timestep_min = ts
+    for t_time in range(len(times) - 1):
+        time_step = abs(times[t_time + 1] - times[t_time])
+        if time_step < timestep_min or timestep_min is None:
+            timestep_min = time_step
     epart = TimeStep().getEPartFromIntervalMinutes(timestep_min)
     # Set the pathname
-    pathname = '/{0}/{1}/{2}//{3}/{4}/'.format(apart, Site.site_number, parameter, epart, version).upper()
+    pathname = "/{0}/{1}/{2}//{3}/{4}/".format(
+        apart, site_parameters.site_number, parameter, epart, version
+    ).upper()
     # apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
-    
+
     container = TimeSeriesContainer()
-    container.fullName     = pathname
-    container.location     = apart
-    container.parameter    = parameter
-    container.type         = data_type
-    container.version      = version
-    container.interval     = timestep_min
-    container.units        = unit
-    container.times        = times
-    container.values       = Site.values
-    container.numberValues = len(Site.times)
-    container.startTime    = times[0]
-    container.endTime      = times[-1]
-    container.timeZoneID   = "UTC"
+    container.fullName = pathname
+    container.location = apart
+    container.parameter = parameter
+    container.type = data_type
+    container.version = version
+    container.interval = timestep_min
+    container.units = unit
+    container.times = times
+    container.values = site_parameters.values
+    container.numberValues = len(site_parameters.times)
+    container.startTime = times[0]
+    container.endTime = times[-1]
+    container.timeZoneID = "UTC"
     # container.makeAscending()
     if not TimeSeriesMath.checkTimeSeries(container):
-        return 'Site: "{}" not saved to DSS'.format(Site.site_number)
-    tsc = TimeSeriesFunctions.snapToRegularInterval(container, epart, "0MIN", "0MIN", "0MIN")
+        return 'site_parameters: "{}" not saved to DSS'.format(
+            site_parameters.site_number
+        )
+    tsc = TimeSeriesFunctions.snapToRegularInterval(
+        container, epart, "0MIN", "0MIN", "0MIN"
+    )
     # Put the data to DSS
     try:
         dss.put(tsc)
     except Exception as ex:
         print(ex)
-        return 'Site: "{}" not saved to DSS'.format(Site.site_number)
+        return "site_parameters: '{}' not saved to DSS".format(
+            site_parameters.site_number
+        )
 
 
-class WaterExtractUI():
+class WaterExtractUI:
+    """Java Swing for Water Extract configurations"""
+
     go_config = {
         "Scheme": "https",
         "Subcommand": "get",
@@ -107,53 +124,82 @@ class WaterExtractUI():
     }
     config_path = None
 
-    def show(self):
-        self.ui = self.UI()
-        self.ui.setVisible(TRUE)
+    @classmethod
+    def show(cls):
+        """set UI visible true"""
+        cls.user_interface = cls.UI()
+        cls.user_interface.setVisible(TRUE)
 
     @classmethod
     def execute(cls, go_cfg, extract_cfg):
-        sub = go.get(go_cfg, subprocess_= TRUE)
+        """executing the Go binding as a subprocess
+
+        Parameters
+        ----------
+        go_cfg : dict
+            configurations for the Go binding
+        extract_cfg : dict
+            user defined configurations
+        """
+        sub = go.get(go_cfg, subprocess_=TRUE)
         sub.stdin.write(json.dumps(go_cfg))
         sub.stdin.close()
         dsspath = str(extract_cfg["dss"])
         dss = HecDss.open(dsspath)
         byte_array = bytearray()
-        for b in iter(partial(sub.stdout.read, 1), b''):
-            byte_array.append(b)
-            if b == '}':
+        for iter_byte in iter(partial(sub.stdout.read, 1), b""):
+            byte_array.append(iter_byte)
+            if iter_byte == "}":
                 obj = json.loads(str(byte_array))
                 byte_array = bytearray()
-                if 'message' in obj.keys(): raise Exception(obj['message'])
+                if "message" in obj.keys():
+                    raise Exception(obj["message"])
                 msg = put_ts(obj, dss, extract_cfg["apart"])
-                if msg: print(msg)
-        if dss: dss.close()
-
-
+                if msg:
+                    print(msg)
+        if dss:
+            dss.close()
 
     @classmethod
     def set_config_file(cls, cfg):
         """Set the cumulus configuration file"""
         cls.config_path = cfg
 
-
     @classmethod
-    def parameters(cls, d):
-        cls.go_config.update(d)
+    def parameters(cls, dict_):
+        """update Go parameters
 
+        Parameters
+        ----------
+        dict_ : dict
+            Go parameters to update class defined configurations
+        """
+        cls.go_config.update(dict_)
 
     class UI(JFrame):
+        """Java Swing JFrame
+
+        Parameters
+        ----------
+        JFrame : Java Swing JFrame
+            JFrame used to define the GUI
+        """
+
         def __init__(self):
             super(WaterExtractUI.UI, self).__init__()
-            self.Outer = WaterExtractUI()
+            self.outer_class = WaterExtractUI()
 
-            if self.Outer.config_path is None:
-                JOptionPane.showMessageDialog(None, "No configuration file path provided\n\nExiting program", "Missing Configuration File", JOptionPane.ERROR_MESSAGE)
+            if self.outer_class.config_path is None:
+                JOptionPane.showMessageDialog(
+                    None,
+                    "No configuration file path provided\n\nExiting program",
+                    "Missing Configuration File",
+                    JOptionPane.ERROR_MESSAGE,
+                )
                 sys.exit(1)
 
-
-            self.config_path = self.Outer.config_path
-            self.go_config = self.Outer.go_config
+            self.config_path = self.outer_class.config_path
+            self.go_config = self.outer_class.go_config
 
             self.configurations = DictConfig(self.config_path).read()
 
@@ -165,149 +211,213 @@ class WaterExtractUI():
 
             self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
 
-#
-# ~~~~~~~~~~~~ START OF THE JAVA PANE ~~~~~~~~~~~~
-#
-            jScrollPane1 = JScrollPane();
-            self.lst_watersheds = JList();
-            lbl_select_file = JLabel();
-            self.txt_select_file = JTextField();
-            btn_select = JButton();
-            btn_execute = JButton();
-            self.cbx_apart = JCheckBox();
-            self.txt_apart = JTextField();
-            btn_save = JButton();
-            btn_close = JButton();
+            #
+            # ~~~~~~~~~~~~ START OF THE JAVA PANE ~~~~~~~~~~~~
+            #
+            jScrollPane1 = JScrollPane()
+            self.lst_watersheds = JList()
+            lbl_select_file = JLabel()
+            self.txt_select_file = JTextField()
+            btn_select = JButton()
+            btn_execute = JButton()
+            self.cbx_apart = JCheckBox()
+            self.txt_apart = JTextField()
+            btn_save = JButton()
+            btn_close = JButton()
 
             # self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            self.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
-            self.setTitle("Extract Time Series Configuration");
-            self.setAlwaysOnTop(FALSE);
-            self.setIconImage(ImageIcon(EXTRACT_ICON).getImage());
-            self.setLocation(Point(10, 10));
-            self.setLocationByPlatform(TRUE);
-            self.setName("WaterExtractUI");
-            self.setResizable(FALSE);
+            self.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
+            self.setTitle("Extract Time Series Configuration")
+            self.setAlwaysOnTop(FALSE)
+            self.setIconImage(ImageIcon(EXTRACT_ICON).getImage())
+            self.setLocation(Point(10, 10))
+            self.setLocationByPlatform(TRUE)
+            self.setName("WaterExtractUI")
+            self.setResizable(FALSE)
 
+            self.lst_watersheds = JList(
+                sorted(self.api_watersheds.keys()), valueChanged=self.watersheds
+            )
+            self.lst_watersheds.setBorder(
+                BorderFactory.createTitledBorder(
+                    null, "Watersheds", 2, 2, Font("Tahoma", 0, 14)
+                )
+            )
+            self.lst_watersheds.setFont(Font("Tahoma", 0, 14))
+            self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+            jScrollPane1.setViewportView(self.lst_watersheds)
 
-            self.lst_watersheds = JList(sorted(self.api_watersheds.keys()), valueChanged = self.watersheds)
-            self.lst_watersheds.setBorder(BorderFactory.createTitledBorder(null, "Watersheds", 2, 2, Font("Tahoma", 0, 14)));
-            self.lst_watersheds.setFont(Font("Tahoma", 0, 14));
-            self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            jScrollPane1.setViewportView(self.lst_watersheds);
+            lbl_select_file.setFont(Font("Tahoma", 0, 14))
+            lbl_select_file.setText("DSS File Downloads")
 
-            lbl_select_file.setFont(Font("Tahoma", 0, 14));
-            lbl_select_file.setText("DSS File Downloads");
+            self.txt_select_file.setFont(Font("Tahoma", 0, 18))
+            self.txt_select_file.setToolTipText("FQPN to output file (.dss)")
 
-            self.txt_select_file.setFont(Font("Tahoma", 0, 18));
-            self.txt_select_file.setToolTipText("FQPN to output file (.dss)");
+            btn_select.setFont(Font("Tahoma", 0, 18))
+            btn_select.setText("...")
+            btn_select.setToolTipText("Select File...")
+            btn_select.actionPerformed = self.select_file
 
-            btn_select.setFont(Font("Tahoma", 0, 18));
-            btn_select.setText("...");
-            btn_select.setToolTipText("Select File...");
-            btn_select.actionPerformed = self.select_file;
+            btn_execute.setFont(Font("Tahoma", 0, 14))
+            # NOI18N
+            btn_execute.setText("Save and Execute Configuration")
+            btn_execute.setToolTipText("Save and Execute Configuration")
+            btn_execute.setHorizontalTextPosition(SwingConstants.CENTER)
+            btn_execute.actionPerformed = self.execute
 
-            btn_execute.setFont(Font("Tahoma", 0, 14)); # NOI18N
-            btn_execute.setText("Save and Execute Configuration");
-            btn_execute.setToolTipText("Save and Execute Configuration");
-            btn_execute.setHorizontalTextPosition(SwingConstants.CENTER);
-            btn_execute.actionPerformed = self.execute;
+            btn_save.setFont(Font("Tahoma", 0, 14))
+            # NOI18N
+            btn_save.setText("Save Configuration")
+            btn_save.setToolTipText("Save Configuration")
+            btn_save.setHorizontalTextPosition(SwingConstants.CENTER)
+            btn_save.actionPerformed = self.save
 
-            btn_save.setFont(Font("Tahoma", 0, 14)); # NOI18N
-            btn_save.setText("Save Configuration");
-            btn_save.setToolTipText("Save Configuration");
-            btn_save.setHorizontalTextPosition(SwingConstants.CENTER);
-            btn_save.actionPerformed = self.save;
+            btn_close.setFont(Font("Tahoma", 0, 14))
+            btn_close.setText("Close")
+            btn_close.setToolTipText("Close GUI")
+            btn_close.setHorizontalTextPosition(SwingConstants.CENTER)
+            btn_close.actionPerformed = self.close
 
-            btn_close.setFont(Font("Tahoma", 0, 14));
-            btn_close.setText("Close");
-            btn_close.setToolTipText("Close GUI");
-            btn_close.setHorizontalTextPosition(SwingConstants.CENTER);
-            btn_close.actionPerformed = self.close;
+            self.cbx_apart.setFont(Font("Tahoma", 0, 14))
+            self.cbx_apart.setText("DSS A part")
+            self.cbx_apart.setToolTipText("DSS A part override")
+            self.cbx_apart.actionPerformed = self.check_apart
 
+            self.txt_apart.setEditable(FALSE)
+            self.txt_apart.setFont(Font("Tahoma", 0, 14))
+            self.txt_apart.setToolTipText("DSS A part override")
 
-            self.cbx_apart.setFont(Font("Tahoma", 0, 14));
-            self.cbx_apart.setText("DSS A part");
-            self.cbx_apart.setToolTipText("DSS A part override");
-            self.cbx_apart.actionPerformed = self.check_apart;
-
-            self.txt_apart.setEditable(FALSE);
-            self.txt_apart.setFont(Font("Tahoma", 0, 14));
-            self.txt_apart.setToolTipText("DSS A part override");
-
-# set the checkbox and checkbox input text field
+            # set the checkbox and checkbox input text field
             try:
                 self.txt_apart.setText(self.configurations["apart"])
-                if self.configurations["apart"] != "" and self.configurations["watershed_slug"] != self.configurations["apart"]:
+                if (
+                    self.configurations["apart"] != ""
+                    and self.configurations["watershed_slug"]
+                    != self.configurations["apart"]
+                ):
                     self.cbx_apart.selected = TRUE
                     self.txt_apart.editable = TRUE
 
                 self.txt_select_file.setText(self.configurations["dss"])
-                idx = self.watershed_index(self.configurations["watershed_id"], self.api_watersheds)
+                idx = self.watershed_index(
+                    self.configurations["watershed_id"], self.api_watersheds
+                )
                 self.lst_watersheds.setSelectedIndex(idx)
             except KeyError as ex:
                 print("KeyError: missing {}".format(ex))
-            
-            layout = GroupLayout(self.getContentPane());
-            self.getContentPane().setLayout(layout);
+
+            layout = GroupLayout(self.getContentPane())
+            self.getContentPane().setLayout(layout)
             layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
+                    layout.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addGroup(
+                        layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(
+                            layout.createSequentialGroup()
+                            .addGroup(
+                                layout.createParallelGroup(
+                                    GroupLayout.Alignment.LEADING
+                                )
                                 .addComponent(self.txt_select_file)
-                                .addGroup(layout.createSequentialGroup()
+                                .addGroup(
+                                    layout.createSequentialGroup()
                                     .addComponent(lbl_select_file)
-                                    .addGap(0, 0, Short.MAX_VALUE)))
+                                    .addGap(0, 0, Short.MAX_VALUE)
+                                )
+                            )
                             .addGap(18, 18, 18)
-                            .addComponent(btn_select))
-                        .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 480, Short.MAX_VALUE)
-                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(btn_select)
+                        )
+                        .addComponent(
+                            jScrollPane1, GroupLayout.DEFAULT_SIZE, 480, Short.MAX_VALUE
+                        )
+                        .addGroup(
+                            layout.createSequentialGroup()
                             .addComponent(self.cbx_apart)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(self.txt_apart))
-                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(self.txt_apart)
+                        )
+                        .addGroup(
+                            layout.createSequentialGroup()
                             .addComponent(btn_execute)
                             .addGap(18, 18, 18)
                             .addComponent(btn_save)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(btn_close)))
-                    .addContainerGap())
-            );
-            layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
+                            .addPreferredGap(
+                                LayoutStyle.ComponentPlacement.RELATED,
+                                GroupLayout.DEFAULT_SIZE,
+                                Short.MAX_VALUE,
+                            )
+                            .addComponent(btn_close)
+                        )
+                    )
                     .addContainerGap()
-                    .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                )
+            )
+            layout.setVerticalGroup(
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
+                    layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(
+                        jScrollPane1,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.DEFAULT_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
                     .addGap(18, 18, 18)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addGroup(
+                        layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(self.cbx_apart)
-                        .addComponent(self.txt_apart, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                        .addComponent(
+                            self.txt_apart,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.DEFAULT_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                    )
                     .addGap(18, 18, 18)
                     .addComponent(lbl_select_file)
                     .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(btn_select))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addGroup(
+                        layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(
+                            self.txt_select_file,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.DEFAULT_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(btn_select)
+                    )
+                    .addPreferredGap(
+                        LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE
+                    )
+                    .addGroup(
+                        layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(btn_execute)
                         .addComponent(btn_save)
-                        .addComponent(btn_close))
-                    .addContainerGap())
-            );
+                        .addComponent(btn_close)
+                    )
+                    .addContainerGap()
+                )
+            )
 
             self.pack()
             self.setLocationRelativeTo(None)
-#
-# ~~~~~~~~~~~~ END OF THE JAVA PANE ~~~~~~~~~~~~
-#
 
+        #
+        # ~~~~~~~~~~~~ END OF THE JAVA PANE ~~~~~~~~~~~~
+        #
 
         def watersheds(self, event):
-            index = self.lst_watersheds.selectedIndex
+            """event handler selecting a watershed from the list
+
+            Parameters
+            ----------
+            event : ActionEvent
+                component-defined action
+            """
+            # index = self.lst_watersheds.selectedIndex
             if not self.cbx_apart.selected:
                 selected_watershed = self.lst_watersheds.getSelectedValue()
                 self.txt_apart.setText(self.api_watersheds[selected_watershed]["slug"])
@@ -317,51 +427,92 @@ class WaterExtractUI():
                 # print(self.api_watersheds[self.lst_watersheds.getSelectedValue()])
 
         def watershed_refactor(self, json_):
-            return OrderedDict({
-                "{}:{}".format(d['office_symbol'], d['name']): d 
-                for d in json_
-                })
-        
-        def watershed_index(self, wss, d):
-            idx = None
+            """refactor the input list to a dictionary
+
+            Parameters
+            ----------
+            json_ : dict
+                JSON object
+
+            Returns
+            -------
+            OrderedDict
+                ordered dictionary
+            """
+            return OrderedDict(
+                {"{}:{}".format(d["office_symbol"], d["name"]): d for d in json_}
+            )
+
+        def watershed_index(self, ws_id, ws_dict):
+            """define the JList index from selection
+
+            Parameters
+            ----------
+            ws_id : string
+                watershed selected
+            ws_dict : dict
+                dictionary of watersheds
+
+            Returns
+            -------
+            int
+                JList index from selected watershed
+            """
             try:
                 idx = [
                     i
-                    for i, k in enumerate(sorted(d.keys()))
-                    if wss == d[k]["id"]
+                    for i, k in enumerate(sorted(ws_dict.keys()))
+                    if ws_id == ws_dict[k]["id"]
                 ][0]
             except IndexError as ex:
                 print(ex)
                 print("setting index to 0")
                 idx = 0
-            finally:
-                return idx
 
+            return idx
 
         def check_apart(self, event):
+            """check box activating DSS Apart editing
+
+            Parameters
+            ----------
+            event : ActionEvent
+                component-defined action
+            """
             self.txt_apart.editable = self.cbx_apart.selected
 
-
         def select_file(self, event):
-            fc = jutil.FileChooser()
-            fc.title = "Select Output DSS File"
+            """initiate Java Swing JFileChooser
+
+            Parameters
+            ----------
+            event : ActionEvent
+                component-defined action
+            """
+            file_chooser = jutil.FileChooser()
+            file_chooser.title = "Select Output DSS File"
             try:
                 _dir = os.path.dirname(self.txt_select_file.getText())
-                fc.set_current_dir(_dir)
+                file_chooser.set_current_dir(_dir)
             except TypeError as ex:
                 print(ex)
 
-            fc.show()
-            print(fc.output_path)
-            self.txt_select_file.setText(fc.output_path)
-
+            file_chooser.show()
+            print(file_chooser.output_path)
+            self.txt_select_file.setText(file_chooser.output_path)
 
         def save(self, event):
+            """save the selected configurations to file
+
+            Parameters
+            ----------
+            event : ActionEvent
+                component-defined action
+            """
             selected_watershed = self.lst_watersheds.getSelectedValue()
 
             watershed_id = self.api_watersheds[selected_watershed]["id"]
             watershed_slug = self.api_watersheds[selected_watershed]["slug"]
-
 
             # Get, set and save jutil.configurations
             self.configurations["watershed_id"] = watershed_id
@@ -375,19 +526,40 @@ class WaterExtractUI():
                 v = "\n".join(v) if isinstance(v, list) else v
                 msg.append("{}: {}".format(k, v))
 
-            jf = JFrame()
-            jf.setAlwaysOnTop(TRUE)
-            JOptionPane.showMessageDialog(jf, "\n".join(msg), "Updated Config", JOptionPane.INFORMATION_MESSAGE)
+            j_frame = JFrame()
+            j_frame.setAlwaysOnTop(TRUE)
+            JOptionPane.showMessageDialog(
+                j_frame,
+                "\n".join(msg),
+                "Updated Config",
+                JOptionPane.INFORMATION_MESSAGE,
+            )
 
         def execute(self, event):
+            """set configurations to execute Go binding
+
+            Parameters
+            ----------
+            event : ActionEvent
+                component-defined action
+            """
             self.save(event)
-            self.Outer.go_config["Subcommand"] = "extract"
-            self.Outer.go_config["Slug"] = self.configurations["watershed_slug"]
-            self.Outer.go_config["Endpoint"] = "watersheds/{}/extract".format(self.configurations["watershed_slug"])
-            self.Outer.execute(self.Outer.go_config, self.configurations)
+            self.outer_class.go_config["Subcommand"] = "extract"
+            self.outer_class.go_config["Slug"] = self.configurations["watershed_slug"]
+            self.outer_class.go_config["Endpoint"] = "watersheds/{}/extract".format(
+                self.configurations["watershed_slug"]
+            )
+            self.outer_class.execute(self.outer_class.go_config, self.configurations)
             self.close(event)
 
         def close(self, event):
+            """close the UI
+
+            Parameters
+            ----------
+            event : ActionEvent
+                component-defined action
+            """
             self.dispose()
             sys.exit()
 
@@ -396,6 +568,6 @@ if __name__ == "__main__":
     # tesing #
 
     cui = WaterExtractUI()
-    cui.set_config_file(r"C:\Users\dev\projects\rts-utils\test_extract.json")
-    cui.parameters({"Host": "develop-water-api.corps.cloud", "Scheme": "https"})
+    cui.set_config_file(r"")
+    cui.parameters({"Host": "", "Scheme": "https"})
     cui.show()

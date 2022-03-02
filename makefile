@@ -1,4 +1,3 @@
-
 # PROJECT_NAME defaults to name of the current directory.
 PROJECT_NAME = $(notdir $(PWD))
 export PROJECT_NAME

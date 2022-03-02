@@ -1,16 +1,16 @@
-[README](../../README.md)
+[README](../README.md)
 # CWMS RADAR
 
-|Method|Modifier and Type|Description|
-|------|-----------------|-----------|
-|CwmsRADAR()|Class|Set inputs that are used to build the sys.argv for cwms_data2dss.py|
-|CwmsRADAR().begintime|String|Assign time format 'yyyy-MM-ddTHH:mm:00'|
-|CwmsRADAR().endtime|String|Assign time format 'yyyy-MM-ddTHH:mm:00'|
-|CwmsRADAR().format_datetime(HecTime dt)|String|Input HecTime object returning time format 'yyyy-MM-ddTHH:mm:00'|
-|CwmsRADAR().dssfile|String|Assign path and dss pathname|
-|CwmsRADAR().set_tsids(tsid[], [dssid[]])|String[]|Assign list of TSIDs and/or list of DSS IDs|
-|CwmsRADAR().set_timezone(String tz)|String|Assign timezone; checked against available IDs|
-|CwmsRADAR().run()|void|Build arguments for cwms_data2dss.py and call its main() method|
+| Method                                   | Modifier and Type | Description                                                         |
+| ---------------------------------------- | ----------------- | ------------------------------------------------------------------- |
+| CwmsRADAR()                              | Class             | Set inputs that are used to build the sys.argv for cwms_data2dss.py |
+| CwmsRADAR().begintime                    | String            | Assign time format 'yyyy-MM-ddTHH:mm:00'                            |
+| CwmsRADAR().endtime                      | String            | Assign time format 'yyyy-MM-ddTHH:mm:00'                            |
+| CwmsRADAR().format_datetime(HecTime dt)  | String            | Input HecTime object returning time format 'yyyy-MM-ddTHH:mm:00'    |
+| CwmsRADAR().dssfile                      | String            | Assign path and dss pathname                                        |
+| CwmsRADAR().set_tsids(tsid[], [dssid[]]) | String[]          | Assign list of TSIDs and/or list of DSS IDs                         |
+| CwmsRADAR().set_timezone(String tz)      | String            | Assign timezone; checked against available IDs                      |
+| CwmsRADAR().run()                        | void              | Build arguments for cwms_data2dss.py and call its main() method     |
 
 ---
 

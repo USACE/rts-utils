@@ -1,21 +1,21 @@
-[README](../../README.md)
+[README](../README.md)
 # Get USGS
 
-|Method|Modifier and Type|Description|
-|------|-----------------|-----------|
-|USGSDataRetrieve()|Class|Define parameters for getusgs.py|
-|USGSDataRetrieve().run()|void|Initiates getusgs.py|
-|USGSDataRetrieve().is_forget()|boolean|Is 'forget' option set|
-|USGSDataRetrieve().set_begin_date(String dt)|void|Date or date/time format from HEC library|
-|USGSDataRetrieve().set_end_date(String dt)|void|Date or date/time format from HEC library|
-|USGSDataRetrieve().set_timezone(String tz)|void|Set the timezone for the start and ending dates; checked against available IDs|
-|USGSDataRetrieve().set_dssfilename(String dssfile)|void|Specify the DSS file to use|
-|USGSDataRetrieve().set_tzdss(String tz)|void|Specifies time zone to use for data stored to a HEC-DSS file|
-|USGSDataRetrieve().set_locations(locations[])|void|Specify the locations (locations[]) in json format|
-|USGSDataRetrieve().set_locations_file(locations_file)|void|Specify the locations file (locations_file)|
-|USGSDataRetrieve().set_parameters(String paramters)|void|Specifies parameters input file; Default parameters stored in package|
-|USGSDataRetrieve().set_aliases(String aliases)|void|Specifies parameter aliases input file; Default aliases stored in package|
-|USGSDataRetrieve().set_working_dir(String working_dir)|void|Specifies the working directory for the 'getusgs.py'; default is the package directory|
+| Method                                                 | Modifier and Type | Description                                                                            |
+| ------------------------------------------------------ | ----------------- | -------------------------------------------------------------------------------------- |
+| USGSDataRetrieve()                                     | Class             | Define parameters for getusgs.py                                                       |
+| USGSDataRetrieve().run()                               | void              | Initiates getusgs.py                                                                   |
+| USGSDataRetrieve().is_forget()                         | boolean           | Is 'forget' option set                                                                 |
+| USGSDataRetrieve().set_begin_date(String dt)           | void              | Date or date/time format from HEC library                                              |
+| USGSDataRetrieve().set_end_date(String dt)             | void              | Date or date/time format from HEC library                                              |
+| USGSDataRetrieve().set_timezone(String tz)             | void              | Set the timezone for the start and ending dates; checked against available IDs         |
+| USGSDataRetrieve().set_dssfilename(String dssfile)     | void              | Specify the DSS file to use                                                            |
+| USGSDataRetrieve().set_tzdss(String tz)                | void              | Specifies time zone to use for data stored to a HEC-DSS file                           |
+| USGSDataRetrieve().set_locations(locations[])          | void              | Specify the locations (locations[]) in json format                                     |
+| USGSDataRetrieve().set_locations_file(locations_file)  | void              | Specify the locations file (locations_file)                                            |
+| USGSDataRetrieve().set_parameters(String paramters)    | void              | Specifies parameters input file; Default parameters stored in package                  |
+| USGSDataRetrieve().set_aliases(String aliases)         | void              | Specifies parameter aliases input file; Default aliases stored in package              |
+| USGSDataRetrieve().set_working_dir(String working_dir) | void              | Specifies the working directory for the 'getusgs.py'; default is the package directory |
 
 ---
 

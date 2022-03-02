@@ -1,12 +1,12 @@
 """Setup initial configurations
 """
 
+import os.path
+
 # handle the jython poop
 TRUE = 1
 FALSE = 0
 null = None
-
-import os.path
 
 APPDATA = os.path.expandvars("$APPDATA")
 

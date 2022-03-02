@@ -1,4 +1,4 @@
-[README](../../README.md)
+[README](../README.md)
 # Watershed Extract
 
 Watershed Extract is a `Jython` script written for use in HEC's CWMS/RTS CAVI.  The script uses a `Go` program as a subproccess to fetch the result of an `Access 2 Water` endpoint (`watersheds/:watershed_slug/extract`).  The standard output from the `Go` program is parsed and records written to a DSS file.  The timewindow is determined by the CAVI and active tab.  If the active tab is `Modeling` and no forecast open, an exception is raised and the program stops.
