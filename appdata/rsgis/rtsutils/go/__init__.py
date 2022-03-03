@@ -7,6 +7,7 @@ import subprocess
 import os
 import platform
 import sys
+from time import sleep
 
 from rtsutils import TRUE, FALSE, null
 
@@ -28,9 +29,7 @@ if platform.python_implementation() == "Jython":
 
 CAVI_GO = "{}/{}/{}".format(os.path.dirname(__file__), _PLATFORM_SYS, _BINDING)
 
-GIT_GO = "{}/{}/{}".format(os.path.dirname(__file__), _PLATFORM_SYS, "git")
-
-def get(go_flags, subprocess_=FALSE, is_shell=TRUE):
+def get(go_flags=None, out_err=TRUE, is_shell=TRUE):
     """Method to initiate the Go binding as a subprocess
 
     Parameters
@@ -53,7 +52,8 @@ def get(go_flags, subprocess_=FALSE, is_shell=TRUE):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    if subprocess_:
-        return subprocess_popen
+    if out_err:
+        std_in_out = subprocess_popen.communicate(input=json.dumps(go_flags))
+        return std_in_out
 
-    return subprocess_popen.communicate(input=json.dumps(go_flags))
+    return subprocess_popen

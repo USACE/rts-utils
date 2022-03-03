@@ -1,11 +1,13 @@
 """Java Swing UI for Water API extracting time series
 """
 
+import copy
 import json
 import os
 import sys
 from collections import OrderedDict, namedtuple
 from functools import partial
+from time import sleep
 
 from hec.heclib.dss import HecDss
 from hec.heclib.util import HecTime
@@ -31,7 +33,6 @@ from javax.swing import (
     LayoutStyle,
     ListSelectionModel,
     SwingConstants,
-    WindowConstants,
 )
 from rtsutils import FALSE, TRUE, go, null
 from rtsutils.cavi.jython import jutil
@@ -39,8 +40,10 @@ from rtsutils.usgs import USGS_EXTRACT_CODES
 from rtsutils.utils import EXTRACT_ICON
 from rtsutils.utils.config import DictConfig
 
-DSSVERSION = 6
+# set the look and feel
+jutil.LookAndFeel()
 
+DSSVERSION = 6
 
 def put_ts(site, dss, apart):
     """Save timeseries to DSS File
@@ -131,34 +134,56 @@ class WaterExtractUI:
         cls.user_interface.setVisible(TRUE)
 
     @classmethod
-    def execute(cls, go_cfg, extract_cfg):
-        """executing the Go binding as a subprocess
+    def execute(cls):
+        """executing the Go binding as a subprocess"""
+        
+        configurations = DictConfig(cls.config_path).read()
+        go_config = copy.deepcopy(cls.go_config)
 
-        Parameters
-        ----------
-        go_cfg : dict
-            configurations for the Go binding
-        extract_cfg : dict
-            user defined configurations
-        """
-        sub = go.get(go_cfg, subprocess_=TRUE)
-        sub.stdin.write(json.dumps(go_cfg))
-        sub.stdin.close()
-        dsspath = str(extract_cfg["dss"])
-        dss = HecDss.open(dsspath)
-        byte_array = bytearray()
-        for iter_byte in iter(partial(sub.stdout.read, 1), b""):
-            byte_array.append(iter_byte)
-            if iter_byte == "}":
-                obj = json.loads(str(byte_array))
-                byte_array = bytearray()
-                if "message" in obj.keys():
-                    raise Exception(obj["message"])
-                msg = put_ts(obj, dss, extract_cfg["apart"])
-                if msg:
-                    print(msg)
-        if dss:
-            dss.close()
+        print("Configurations: {}".format(configurations))
+        
+        go_config["Subcommand"] = "extract"
+        go_config["Slug"] = configurations["watershed_slug"]
+        go_config["Endpoint"] = "watersheds/{}/extract".format(
+            configurations["watershed_slug"]
+        )
+        print("Go Configurations: {}".format(go_config))
+
+
+        for i in range(5):
+            print("Sleep {}".format(i))
+            sleep(1)
+
+
+        # stdout, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
+
+        # sub = go.get(subprocess_=TRUE, is_shell=FALSE)
+        # sub.stdin.write(json.dumps(go_cfg))
+        # sub.stdin.close()
+        # dsspath = configurations["dss"]
+        # dss = HecDss.open(dsspath)
+        # with open(stdout, "r") as std_out:
+        #     byte_array = bytearray()
+        #     for iter_byte in iter(partial(std_out.read, 1), b""):
+        #         byte_array.append(iter_byte)
+        #         if iter_byte == "}":
+        #             obj = json.loads(str(byte_array))
+        #             byte_array = bytearray()
+        #             print(obj[:50])
+                    # if "message" in obj.keys():
+                    #     raise Exception(obj["message"])
+                    # msg = put_ts(obj, dss, extract_cfg["apart"])
+                    # if msg:
+                    #     print(msg)
+
+
+        # if "error" in stderr:
+        #     print(stderr)
+        #     sys.exit(1)
+        # for line in stdout.split("\n"):
+        #     print("NEW LINE: {}".format(line))
+        # if dss:
+        #     dss.done()
 
     @classmethod
     def set_config_file(cls, cfg):
@@ -196,18 +221,18 @@ class WaterExtractUI:
                     "Missing Configuration File",
                     JOptionPane.ERROR_MESSAGE,
                 )
-                sys.exit(1)
+                raise Exception()
 
             self.config_path = self.outer_class.config_path
-            self.go_config = self.outer_class.go_config
+            go_config = copy.deepcopy(self.outer_class.go_config)
 
             self.configurations = DictConfig(self.config_path).read()
 
-            self.go_config["Endpoint"] = "watersheds"
-            ws_out, stderr = go.get(self.go_config)
+            go_config["Endpoint"] = "watersheds"
+            ws_out, stderr = go.get(go_config)
             if "error" in stderr:
                 print(stderr)
-                sys.exit(1)
+                raise Exception()
 
             self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
 
@@ -498,7 +523,6 @@ class WaterExtractUI:
                 print(ex)
 
             file_chooser.show()
-            print(file_chooser.output_path)
             self.txt_select_file.setText(file_chooser.output_path)
 
         def save(self, event):
@@ -530,7 +554,7 @@ class WaterExtractUI:
             j_frame.setAlwaysOnTop(TRUE)
             JOptionPane.showMessageDialog(
                 j_frame,
-                "\n".join(msg),
+                "\n\n".join(msg),
                 "Updated Config",
                 JOptionPane.INFORMATION_MESSAGE,
             )
@@ -544,12 +568,7 @@ class WaterExtractUI:
                 component-defined action
             """
             self.save(event)
-            self.outer_class.go_config["Subcommand"] = "extract"
-            self.outer_class.go_config["Slug"] = self.configurations["watershed_slug"]
-            self.outer_class.go_config["Endpoint"] = "watersheds/{}/extract".format(
-                self.configurations["watershed_slug"]
-            )
-            self.outer_class.execute(self.outer_class.go_config, self.configurations)
+            self.outer_class.execute()
             self.close(event)
 
         def close(self, event):
@@ -560,14 +579,19 @@ class WaterExtractUI:
             event : ActionEvent
                 component-defined action
             """
+            self.setVisible(FALSE)
             self.dispose()
-            sys.exit()
 
 
 if __name__ == "__main__":
     # tesing #
 
     cui = WaterExtractUI()
-    cui.set_config_file(r"")
-    cui.parameters({"Host": "", "Scheme": "https"})
+    cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
+    cui.parameters({
+        "Host": "develop-water-api.corps.cloud",
+        "Scheme": "https",
+        "Timeout": 10
+    })
+    # cui.execute()
     cui.show()

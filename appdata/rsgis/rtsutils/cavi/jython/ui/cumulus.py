@@ -1,16 +1,15 @@
 """Cumulus UI
 """
 
+import copy
 import json
 import os
 import sys
 from collections import OrderedDict
 import tempfile
 
-import javax.swing.border as border
 from hec.heclib.dss import HecDSSUtilities
 from java.awt import Font, Point
-from java.io import File
 from java.lang import Short
 from javax.swing import (
     BorderFactory,
@@ -33,6 +32,8 @@ from rtsutils.cavi.jython import jutil
 from rtsutils.utils import CLOUD_ICON
 from rtsutils.utils.config import DictConfig
 
+# set the look and feel
+jutil.LookAndFeel()
 
 def convert_dss(dss_src, dss_dst):
     """convert DSS7 from Cumulus to DSS6 on local machine defined by DSS
@@ -57,6 +58,7 @@ def convert_dss(dss_src, dss_dst):
         dss7.close()
         dss6.close()
         try:
+            print("Try removing tmp DSS files")
             os.remove(dss_src)
             os.remove(dss6_temp)
         except Exception as ex:
@@ -71,7 +73,6 @@ class CumulusUI:
 
     go_config = {
         "Scheme": "https",
-        "Subcommand": "get",
         "StdOut": "true",
     }
     config_path = None
@@ -79,25 +80,26 @@ class CumulusUI:
     @classmethod
     def show(cls):
         """set UI visible true"""
-        cls.ui = cls.UI()
-        cls.ui.setVisible(TRUE)
+        cls.user_interface = cls.UI()
+        cls.user_interface.setVisible(TRUE)
 
     @classmethod
-    def execute(cls, cfg, dss_file):
-        """executing the Go binding as a subprocess
+    def execute(cls):
+        """executing the Go binding as a subprocess"""
+        configurations = DictConfig(cls.config_path).read()
+        go_config = copy.deepcopy(cls.go_config)
 
-        Parameters
-        ----------
-        cfg : dict
-            configurations for the Go binding
-        """
-        stdout, stderr = go.get(cfg, subprocess_=FALSE)
+        go_config["Subcommand"] = "grid"
+        go_config["ID"] = configurations["watershed_id"]
+        go_config["Products"] = configurations["product_ids"]
+
+        stdout, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
         if "error" in stderr:
             print(stderr)
-            sys.exit(1)
+            raise Exception()
         else:
             _, file_path = stdout.split("::")
-            convert_dss(file_path, dss_file)
+            convert_dss(file_path, configurations["dss"])
 
     @classmethod
     def set_config_file(cls, cfg):
@@ -135,20 +137,21 @@ class CumulusUI:
                     "Missing Configuration File",
                     JOptionPane.ERROR_MESSAGE,
                 )
-                sys.exit(1)
+                raise Exception()
 
             self.config_path = self.outer_class.config_path
-            self.go_config = self.outer_class.go_config
+            go_config = copy.deepcopy(self.outer_class.go_config)
 
             self.configurations = DictConfig(self.config_path).read()
 
-            self.go_config["Endpoint"] = "watersheds"
-            ws_out, stderr = go.get(self.go_config)
-            self.go_config["Endpoint"] = "products"
-            ps_out, stderr = go.get(self.go_config)
+            go_config["Subcommand"] = "get"
+            go_config["Endpoint"] = "watersheds"
+            ws_out, stderr = go.get(go_config)
+            go_config["Endpoint"] = "products"
+            ps_out, stderr = go.get(go_config)
             if "error" in stderr:
                 print(stderr)
-                sys.exit(1)
+                raise Exception()
 
             self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
             self.api_products = self.product_refactor(json.loads(ps_out))
@@ -170,7 +173,7 @@ class CumulusUI:
             # self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
             self.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
             self.setTitle("Cumulus Configuration")
-            self.setAlwaysOnTop(TRUE)
+            self.setAlwaysOnTop(FALSE)
             self.setIconImage(ImageIcon(CLOUD_ICON).getImage())
             self.setLocation(Point(10, 10))
             self.setLocationByPlatform(TRUE)
@@ -183,11 +186,7 @@ class CumulusUI:
             )
             self.lst_products.setBorder(
                 BorderFactory.createTitledBorder(
-                    null,
-                    "Products",
-                    border.TitledBorder.CENTER,
-                    border.TitledBorder.TOP,
-                    Font("Tahoma", 0, 14),
+                    null, "Watersheds", 2, 2, Font("Tahoma", 0, 14)
                 )
             )
             # NOI18N
@@ -201,11 +200,7 @@ class CumulusUI:
             )
             self.lst_watersheds.setBorder(
                 BorderFactory.createTitledBorder(
-                    null,
-                    "Watersheds",
-                    border.TitledBorder.CENTER,
-                    border.TitledBorder.TOP,
-                    Font("Tahoma", 0, 14),
+                    null, "Watersheds", 2, 2, Font("Tahoma", 0, 14)
                 )
             )
             # NOI18N
@@ -487,9 +482,10 @@ class CumulusUI:
             file_chooser.title = "Select Output DSS File"
             try:
                 _dir = os.path.dirname(self.txt_select_file.getText())
-                file_chooser.set_current_dir(File(_dir))
+                file_chooser.set_current_dir(_dir)
             except TypeError as ex:
                 print(ex)
+
             file_chooser.show()
             self.txt_select_file.setText(file_chooser.output_path)
 
@@ -538,12 +534,7 @@ class CumulusUI:
                 component-defined action
             """
             self.save(event)
-            self.outer_class.go_config["Subcommand"] = "grid"
-            self.outer_class.go_config["Slug"] = self.configurations["watershed_slug"]
-            self.outer_class.go_config["Products"] = self.configurations["product_ids"]
-            self.outer_class.execute(
-                self.outer_class.go_config, self.configurations["dss"]
-            )
+            self.outer_class.execute()
             self.close(event)
 
         def close(self, event):
@@ -554,13 +545,21 @@ class CumulusUI:
             event : ActionEvent
                 component-defined action
             """
+            self.setVisible(FALSE)
             self.dispose()
-            sys.exit()
+
 
 
 if __name__ == "__main__":
     # tesing #
     cui = CumulusUI()
-    cui.set_config_file(r"C:\Users\dev\projects\rts-utils\test_cumulus.json")
-    cui.parameters({"Host": "develop-cumulus-api.corps.cloud", "Scheme": "https"})
+    cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_cumulus.json")
+    cui.parameters({
+        "Scheme": "https",
+        "Host": "cumulus-api.rsgis.dev",
+        "Endpoint": "downloads",
+        "After": "2022-02-17T12:00:00Z",
+        "Before": "2022-02-18T12:00:00Z",
+        "Timeout": 120
+    })
     cui.show()
