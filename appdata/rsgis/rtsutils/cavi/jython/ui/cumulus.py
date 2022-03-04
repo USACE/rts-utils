@@ -30,10 +30,6 @@ from rtsutils.cavi.jython import jutil
 from rtsutils.utils import CLOUD_ICON
 from rtsutils.utils.config import DictConfig
 
-# set the look and feel
-jutil.LookAndFeel()
-
-
 def convert_dss(dss_src, dss_dst):
     """convert DSS7 from Cumulus to DSS6 on local machine defined by DSS
     destination
@@ -94,20 +90,27 @@ class CumulusUI:
         go_config["Products"] = configurations["product_ids"]
 
         stdout, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
-        if "error" in stderr:
-            print(stderr)
-            raise Exception(stderr.split("::")[-1])
-
         print(stderr)
-        _, file_path = stdout.split("::")
-        convert_dss(file_path, configurations["dss"])
-
-        JOptionPane.showMessageDialog(
+        if "error" in stderr:
+            JOptionPane.showMessageDialog(
             None,
-            "Program Done",
-            "Program Done",
+            stderr.split("::")[-1],
+            "Program Error",
             JOptionPane.INFORMATION_MESSAGE,
         )
+
+        try:
+            _, file_path = stdout.split("::")
+            convert_dss(file_path, configurations["dss"])
+
+            JOptionPane.showMessageDialog(
+                None,
+                "Program Done",
+                "Program Done",
+                JOptionPane.INFORMATION_MESSAGE,
+            )
+        except ValueError as ex:
+            print(ex)
 
     @classmethod
     def set_config_file(cls, cfg):
@@ -145,7 +148,6 @@ class CumulusUI:
                     "Missing Configuration File",
                     JOptionPane.ERROR_MESSAGE,
                 )
-                raise Exception()
 
             self.config_path = self.outer_class.config_path
             go_config = copy.deepcopy(self.outer_class.go_config)
@@ -159,7 +161,12 @@ class CumulusUI:
             ps_out, stderr = go.get(go_config)
             if "error" in stderr:
                 print(stderr)
-                raise Exception(stderr)
+                JOptionPane.showMessageDialog(
+                    None,
+                    "Program Error",
+                    stderr.split("::")[-1],
+                    JOptionPane.INFORMATION_MESSAGE,
+                )
 
             self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
             self.api_products = self.product_refactor(json.loads(ps_out))

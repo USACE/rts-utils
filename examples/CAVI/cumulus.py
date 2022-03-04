@@ -15,7 +15,7 @@ HEADLESS = False
 params_ = {
     "Host": "develop-cumulus-api.corps.cloud",
     "Scheme": "https",
-    "Timeout": 120  # default is 300
+    "Timeout": 150  # default is 300
 }
 
 
@@ -43,8 +43,11 @@ et = HecTime(et, HecTime.MINUTE_GRANULARITY)
 et.showTimeAsBeginningOfDay(True)
 HecTime.convertTimeZone(et, ws_tz, TimeZone.getTimeZone('UTC'))
 
-after = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(st.year(), st.month(), st.day(), st.hour(), st.minute())
-before = '{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z'.format(et.year(), et.month(), et.day(), et.hour(), et.minute())
+after = "{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z".format(st.year(), st.month(), st.day(), st.hour(), st.minute())
+before = "{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z".format(et.year(), et.month(), et.day(), et.hour(), et.minute())
+
+params_["After"] = after
+params_["Before"] = before
 
 #
 cui = cumulus.CumulusUI()

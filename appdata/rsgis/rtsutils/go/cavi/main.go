@@ -107,8 +107,6 @@ func main() {
 			os.Exit(1)
 		}
 		os.Stdout.WriteString(dss)
-		fmt.Println(url.String())
-		fmt.Println(p)
 	case "extract":
 		if co.Endpoint == "" {
 			fmt.Fprintf(os.Stderr, "error::Please provide a slug for the watershed\n")

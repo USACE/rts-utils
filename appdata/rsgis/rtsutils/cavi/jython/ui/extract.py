@@ -37,8 +37,6 @@ from rtsutils.usgs import USGS_EXTRACT_CODES
 from rtsutils.utils import EXTRACT_ICON
 from rtsutils.utils.config import DictConfig
 
-# set the look and feel
-# jutil.LookAndFeel()
 
 DSSVERSION = 6
 
@@ -157,7 +155,13 @@ class WaterExtractUI:
                 obj = json.loads(str(byte_array))
                 byte_array = bytearray()
                 if "message" in obj.keys():
-                    raise Exception(obj["message"])
+                    JOptionPane.showMessageDialog(
+                        None,
+                        obj["message"],
+                        "Missing Configuration File",
+                        JOptionPane.ERROR_MESSAGE,
+                    )
+
                 msg = put_ts(obj, dss, configurations["apart"])
                 if msg:
                     print(msg)
@@ -170,7 +174,12 @@ class WaterExtractUI:
         sub.stdout.close()
         if "error" in std_err:
             print(std_err)
-            raise Exception(std_err.split("::")[-1])
+            JOptionPane.showMessageDialog(
+                None,
+                std_err.split("::")[-1],
+                "Program Error",
+                JOptionPane.INFORMATION_MESSAGE,
+            )
 
         print(std_err)
         JOptionPane.showMessageDialog(
@@ -216,7 +225,6 @@ class WaterExtractUI:
                     "Missing Configuration File",
                     JOptionPane.ERROR_MESSAGE,
                 )
-                raise Exception()
 
             self.config_path = self.outer_class.config_path
             go_config = copy.deepcopy(self.outer_class.go_config)
@@ -227,7 +235,12 @@ class WaterExtractUI:
             ws_out, stderr = go.get(go_config)
             if "error" in stderr:
                 print(stderr)
-                raise Exception()
+                JOptionPane.showMessageDialog(
+                    None,
+                    stderr.split("::")[-1],
+                    "Missing Configuration File",
+                    JOptionPane.ERROR_MESSAGE,
+                )
 
             self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
 

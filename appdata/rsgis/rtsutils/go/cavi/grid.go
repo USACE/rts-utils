@@ -17,7 +17,7 @@ func grid(url url.URL, p payload, t int, tk string) (string, error) {
 		return dssfilepath, err
 	} else {
 		log.Println("Download ID:", us.ID)
-		log.Println("Payload: ", p)
+		log.Printf("Payload: %+v", p)
 	}
 
 	url.Path = url.Path + "/" + us.ID
