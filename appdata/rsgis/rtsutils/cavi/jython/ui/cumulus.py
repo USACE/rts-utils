@@ -4,7 +4,6 @@
 import copy
 import json
 import os
-import sys
 from collections import OrderedDict
 import tempfile
 
@@ -20,7 +19,6 @@ from javax.swing import (
     JLabel,
     JList,
     JOptionPane,
-    JRootPane,
     JScrollPane,
     JTextField,
     LayoutStyle,
@@ -33,7 +31,7 @@ from rtsutils.utils import CLOUD_ICON
 from rtsutils.utils.config import DictConfig
 
 # set the look and feel
-jutil.LookAndFeel()
+# jutil.LookAndFeel()
 
 def convert_dss(dss_src, dss_dst):
     """convert DSS7 from Cumulus to DSS6 on local machine defined by DSS
@@ -90,16 +88,25 @@ class CumulusUI:
         go_config = copy.deepcopy(cls.go_config)
 
         go_config["Subcommand"] = "grid"
+        go_config["Endpoint"] = "downloads"
         go_config["ID"] = configurations["watershed_id"]
         go_config["Products"] = configurations["product_ids"]
 
         stdout, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
         if "error" in stderr:
             print(stderr)
-            raise Exception()
-        else:
-            _, file_path = stdout.split("::")
-            convert_dss(file_path, configurations["dss"])
+            raise Exception(stderr)
+
+        print(stderr)
+        _, file_path = stdout.split("::")
+        convert_dss(file_path, configurations["dss"])
+
+        JOptionPane.showMessageDialog(
+            None,
+            "Program Done",
+            "Program Done",
+            JOptionPane.INFORMATION_MESSAGE,
+        )
 
     @classmethod
     def set_config_file(cls, cfg):
@@ -151,7 +158,7 @@ class CumulusUI:
             ps_out, stderr = go.get(go_config)
             if "error" in stderr:
                 print(stderr)
-                raise Exception()
+                raise Exception(stderr)
 
             self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
             self.api_products = self.product_refactor(json.loads(ps_out))
@@ -516,10 +523,8 @@ class CumulusUI:
                 v = "\n".join(v) if isinstance(v, list) else v
                 msg.append("{}: {}".format(k, v))
 
-            j_frame = JFrame()
-            j_frame.setAlwaysOnTop(TRUE)
             JOptionPane.showMessageDialog(
-                j_frame,
+                None,
                 "\n\n".join(msg),
                 "Updated Config",
                 JOptionPane.INFORMATION_MESSAGE,

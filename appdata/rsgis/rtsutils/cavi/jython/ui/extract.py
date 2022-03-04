@@ -4,10 +4,8 @@
 import copy
 import json
 import os
-import sys
 from collections import OrderedDict, namedtuple
 from functools import partial
-from time import sleep
 
 from hec.heclib.dss import HecDss
 from hec.heclib.util import HecTime
@@ -16,7 +14,6 @@ from hec.hecmath.functions import TimeSeriesFunctions
 from hec.io import TimeSeriesContainer
 from hec.lang import TimeStep
 from java.awt import Font, Point
-from java.io import File
 from java.lang import Short
 from javax.swing import (
     BorderFactory,
@@ -41,7 +38,7 @@ from rtsutils.utils import EXTRACT_ICON
 from rtsutils.utils.config import DictConfig
 
 # set the look and feel
-jutil.LookAndFeel()
+# jutil.LookAndFeel()
 
 DSSVERSION = 6
 
@@ -140,50 +137,43 @@ class WaterExtractUI:
         configurations = DictConfig(cls.config_path).read()
         go_config = copy.deepcopy(cls.go_config)
 
-        print("Configurations: {}".format(configurations))
-        
         go_config["Subcommand"] = "extract"
         go_config["Slug"] = configurations["watershed_slug"]
         go_config["Endpoint"] = "watersheds/{}/extract".format(
             configurations["watershed_slug"]
         )
-        print("Go Configurations: {}".format(go_config))
 
+        sub = go.get(out_err=FALSE, is_shell=FALSE)
+        sub.stdin.write(json.dumps(go_config))
+        sub.stdin.close()
+        dsspath = configurations["dss"]
+        dss = HecDss.open(dsspath)
 
-        for i in range(5):
-            print("Sleep {}".format(i))
-            sleep(1)
+        byte_array = bytearray()
+        for iter_byte in iter(partial(sub.stdout.read, 1), b""):
+            byte_array.append(iter_byte)
+            if iter_byte == "}":
+                obj = json.loads(str(byte_array))
+                byte_array = bytearray()
+                if "message" in obj.keys():
+                    raise Exception(obj["message"])
+                msg = put_ts(obj, dss, configurations["apart"])
+                if msg:
+                    print(msg)
 
+        if dss:
+            dss.done()
 
-        # stdout, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
-
-        # sub = go.get(subprocess_=TRUE, is_shell=FALSE)
-        # sub.stdin.write(json.dumps(go_cfg))
-        # sub.stdin.close()
-        # dsspath = configurations["dss"]
-        # dss = HecDss.open(dsspath)
-        # with open(stdout, "r") as std_out:
-        #     byte_array = bytearray()
-        #     for iter_byte in iter(partial(std_out.read, 1), b""):
-        #         byte_array.append(iter_byte)
-        #         if iter_byte == "}":
-        #             obj = json.loads(str(byte_array))
-        #             byte_array = bytearray()
-        #             print(obj[:50])
-                    # if "message" in obj.keys():
-                    #     raise Exception(obj["message"])
-                    # msg = put_ts(obj, dss, extract_cfg["apart"])
-                    # if msg:
-                    #     print(msg)
-
-
-        # if "error" in stderr:
-        #     print(stderr)
-        #     sys.exit(1)
-        # for line in stdout.split("\n"):
-        #     print("NEW LINE: {}".format(line))
-        # if dss:
-        #     dss.done()
+        std_err = sub.stderr.read()
+        sub.stderr.close()
+        sub.stdout.close()
+        print(std_err)
+        JOptionPane.showMessageDialog(
+            None,
+            "Program Done",
+            "Program Done",
+            JOptionPane.INFORMATION_MESSAGE,
+        )
 
     @classmethod
     def set_config_file(cls, cfg):
@@ -334,52 +324,31 @@ class WaterExtractUI:
             layout = GroupLayout(self.getContentPane())
             self.getContentPane().setLayout(layout)
             layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
-                    layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(
                         layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(
-                            layout.createSequentialGroup()
-                            .addGroup(
-                                layout.createParallelGroup(
-                                    GroupLayout.Alignment.LEADING
-                                )
-                                .addComponent(self.txt_select_file)
-                                .addGroup(
-                                    layout.createSequentialGroup()
-                                    .addComponent(lbl_select_file)
-                                    .addGap(0, 0, Short.MAX_VALUE)
-                                )
-                            )
-                            .addGap(18, 18, 18)
-                            .addComponent(btn_select)
-                        )
-                        .addComponent(
-                            jScrollPane1, GroupLayout.DEFAULT_SIZE, 480, Short.MAX_VALUE
-                        )
-                        .addGroup(
-                            layout.createSequentialGroup()
-                            .addComponent(self.cbx_apart)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(self.txt_apart)
-                        )
-                        .addGroup(
-                            layout.createSequentialGroup()
-                            .addComponent(btn_execute)
-                            .addGap(18, 18, 18)
-                            .addComponent(btn_save)
-                            .addPreferredGap(
-                                LayoutStyle.ComponentPlacement.RELATED,
-                                GroupLayout.DEFAULT_SIZE,
-                                Short.MAX_VALUE,
-                            )
-                            .addComponent(btn_close)
-                        )
+                        .addGroup(layout.createSequentialGroup()
+                            .addContainerGap()
+                            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(lbl_select_file)
+                                            .addGap(0, 0, Short.MAX_VALUE))
+                                        .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, 429, GroupLayout.PREFERRED_SIZE))
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(btn_select))
+                                .addComponent(jScrollPane1)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(self.cbx_apart)
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addComponent(self.txt_apart))
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(btn_execute)
+                                    .addGap(18, 18, 18)
+                                    .addComponent(btn_save)
+                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(btn_close)))
+                            .addContainerGap())
                     )
-                    .addContainerGap()
-                )
-            )
             layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
                     layout.createSequentialGroup()
@@ -550,10 +519,8 @@ class WaterExtractUI:
                 v = "\n".join(v) if isinstance(v, list) else v
                 msg.append("{}: {}".format(k, v))
 
-            j_frame = JFrame()
-            j_frame.setAlwaysOnTop(TRUE)
             JOptionPane.showMessageDialog(
-                j_frame,
+                None,
                 "\n\n".join(msg),
                 "Updated Config",
                 JOptionPane.INFORMATION_MESSAGE,
@@ -591,7 +558,7 @@ if __name__ == "__main__":
     cui.parameters({
         "Host": "develop-water-api.corps.cloud",
         "Scheme": "https",
-        "Timeout": 10
+        "Timeout": 120
     })
     # cui.execute()
     cui.show()
