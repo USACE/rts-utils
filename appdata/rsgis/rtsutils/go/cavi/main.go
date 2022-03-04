@@ -17,7 +17,7 @@ usage: %s
 
 Options:
 `
-	authserver = "localhost:90035"
+	// authserver = "localhost:90035"
 )
 
 type flagOptions struct {

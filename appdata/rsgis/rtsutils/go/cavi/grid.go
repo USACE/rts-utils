@@ -32,6 +32,9 @@ func grid(f flagOptions, url url.URL, p payload) (string, error) {
 	var fn filename
 	for start := time.Now(); time.Since(start) < timeout; {
 		us.getStatus(url.String())
+		if us.Status == "FAILED" {
+			return "", errors.New("Status: FAILED")
+		}
 		log.Printf("ID: %s\tStatus: %s\tProgress: %d\tFile: %s", us.ID, us.Status, us.Progress, us.File)
 		if us.Status == "SUCCESS" && us.Progress >= 100 && us.File != "" {
 			if err := fn.downloadDss(us.File, ""); err != nil {
