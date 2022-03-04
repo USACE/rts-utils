@@ -7,7 +7,7 @@ script_name = arg2
 try:
     sys.path.append(os.path.join(os.environ['APPDATA'], "rsgis"))
     from rtsutils import cavistatus, cwmsradar
-except ImportError, ex:
+except ImportError as ex:
     raise
 #
 tw = cavistatus.get_timewindow()
