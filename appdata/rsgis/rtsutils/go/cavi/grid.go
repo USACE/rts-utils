@@ -8,17 +8,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func grid(f flagOptions, url url.URL, p payload) (string, error) {
-	// get auth token
-	// auth, err := getResponseBody(authserver)
-	// if err != nil {
-	// 	return "", err
-	// }
+func grid(url url.URL, p payload, t int, tk string) (string, error) {
 
 	var dssfilepath string
 
 	var us updateStatus
-	if err := us.postPayload(url.String(), p); err != nil {
+	if err := us.postPayload(url.String(), p, tk); err != nil {
 		return dssfilepath, err
 	} else {
 		log.Println("Download ID:", us.ID)
@@ -28,14 +23,14 @@ func grid(f flagOptions, url url.URL, p payload) (string, error) {
 	url.Path = url.Path + "/" + us.ID
 
 	log.Println("Endpoint/ID: " + url.Path)
-	timeout := time.Duration(int(time.Second) * int(f.Timeout))
+	timeout := time.Duration(int(time.Second) * int(t))
 	var fn filename
 	for start := time.Now(); time.Since(start) < timeout; {
 		us.getStatus(url.String())
 		if us.Status == "FAILED" {
 			return "", errors.New("Status: FAILED")
 		}
-		log.Printf("ID: %s\tStatus: %s\tProgress: %d\tFile: %s", us.ID, us.Status, us.Progress, us.File)
+		log.Printf("ID: %-40s Status: %-12s Progress: %-6d File: %s", us.ID, us.Status, us.Progress, us.File)
 		if us.Status == "SUCCESS" && us.Progress >= 100 && us.File != "" {
 			if err := fn.downloadDss(us.File, ""); err != nil {
 				return dssfilepath, err

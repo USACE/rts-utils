@@ -31,7 +31,8 @@ from rtsutils.utils import CLOUD_ICON
 from rtsutils.utils.config import DictConfig
 
 # set the look and feel
-# jutil.LookAndFeel()
+jutil.LookAndFeel()
+
 
 def convert_dss(dss_src, dss_dst):
     """convert DSS7 from Cumulus to DSS6 on local machine defined by DSS
@@ -95,7 +96,7 @@ class CumulusUI:
         stdout, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
         if "error" in stderr:
             print(stderr)
-            raise Exception(stderr)
+            raise Exception(stderr.split("::")[-1])
 
         print(stderr)
         _, file_path = stdout.split("::")
@@ -554,17 +555,18 @@ class CumulusUI:
             self.dispose()
 
 
-
 if __name__ == "__main__":
     # tesing #
     cui = CumulusUI()
     cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_cumulus.json")
-    cui.parameters({
-        "Scheme": "https",
-        "Host": "cumulus-api.rsgis.dev",
-        "Endpoint": "downloads",
-        "After": "2022-02-17T12:00:00Z",
-        "Before": "2022-02-18T12:00:00Z",
-        "Timeout": 120
-    })
+    cui.parameters(
+        {
+            "Scheme": "https",
+            "Host": "cumulus-api.rsgis.dev",
+            "Endpoint": "downloads",
+            "After": "2022-02-17T12:00:00Z",
+            "Before": "2022-02-18T12:00:00Z",
+            "Timeout": 120,
+        }
+    )
     cui.show()

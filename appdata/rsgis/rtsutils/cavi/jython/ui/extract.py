@@ -42,6 +42,7 @@ from rtsutils.utils.config import DictConfig
 
 DSSVERSION = 6
 
+
 def put_ts(site, dss, apart):
     """Save timeseries to DSS File
 
@@ -133,7 +134,7 @@ class WaterExtractUI:
     @classmethod
     def execute(cls):
         """executing the Go binding as a subprocess"""
-        
+
         configurations = DictConfig(cls.config_path).read()
         go_config = copy.deepcopy(cls.go_config)
 
@@ -167,6 +168,10 @@ class WaterExtractUI:
         std_err = sub.stderr.read()
         sub.stderr.close()
         sub.stdout.close()
+        if "error" in std_err:
+            print(std_err)
+            raise Exception(std_err.split("::")[-1])
+
         print(std_err)
         JOptionPane.showMessageDialog(
             None,
@@ -324,31 +329,55 @@ class WaterExtractUI:
             layout = GroupLayout(self.getContentPane())
             self.getContentPane().setLayout(layout)
             layout.setHorizontalGroup(
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
+                    layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(
                         layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                            .addContainerGap()
-                            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addComponent(lbl_select_file)
-                                            .addGap(0, 0, Short.MAX_VALUE))
-                                        .addComponent(self.txt_select_file, GroupLayout.PREFERRED_SIZE, 429, GroupLayout.PREFERRED_SIZE))
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(btn_select))
-                                .addComponent(jScrollPane1)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(self.cbx_apart)
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(self.txt_apart))
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(btn_execute)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(btn_save)
-                                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(btn_close)))
-                            .addContainerGap())
+                        .addGroup(
+                            layout.createSequentialGroup()
+                            .addGroup(
+                                layout.createParallelGroup(
+                                    GroupLayout.Alignment.LEADING
+                                )
+                                .addGroup(
+                                    layout.createSequentialGroup()
+                                    .addComponent(lbl_select_file)
+                                    .addGap(0, 0, Short.MAX_VALUE)
+                                )
+                                .addComponent(
+                                    self.txt_select_file,
+                                    GroupLayout.PREFERRED_SIZE,
+                                    429,
+                                    GroupLayout.PREFERRED_SIZE,
+                                )
+                            )
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(btn_select)
+                        )
+                        .addComponent(jScrollPane1)
+                        .addGroup(
+                            layout.createSequentialGroup()
+                            .addComponent(self.cbx_apart)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(self.txt_apart)
+                        )
+                        .addGroup(
+                            layout.createSequentialGroup()
+                            .addComponent(btn_execute)
+                            .addGap(18, 18, 18)
+                            .addComponent(btn_save)
+                            .addPreferredGap(
+                                LayoutStyle.ComponentPlacement.RELATED,
+                                GroupLayout.DEFAULT_SIZE,
+                                Short.MAX_VALUE,
+                            )
+                            .addComponent(btn_close)
+                        )
                     )
+                    .addContainerGap()
+                )
+            )
             layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
                     layout.createSequentialGroup()
@@ -555,10 +584,8 @@ if __name__ == "__main__":
 
     cui = WaterExtractUI()
     cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
-    cui.parameters({
-        "Host": "develop-water-api.corps.cloud",
-        "Scheme": "https",
-        "Timeout": 120
-    })
+    cui.parameters(
+        {"Host": "develop-water-api.corps.cloud", "Scheme": "https", "Timeout": 120}
+    )
     # cui.execute()
     cui.show()

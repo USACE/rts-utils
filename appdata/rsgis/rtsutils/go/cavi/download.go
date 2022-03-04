@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -37,9 +38,9 @@ func (us *updateStatus) getStatus(u string) {
 
 }
 
-func (us *updateStatus) postPayload(u string, p payload) error {
+func (us *updateStatus) postPayload(u string, p payload, t string) error {
 	timeout := time.Duration(time.Second * 10)
-	// bearer := "Bearer " + t
+	bearer := "Bearer " + t
 	client := http.Client{
 		Timeout: timeout,
 	}
@@ -52,7 +53,7 @@ func (us *updateStatus) postPayload(u string, p payload) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	// req.Header.Set("Authorization", bearer)
+	req.Header.Set("Authorization", bearer)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -108,6 +109,10 @@ func getResponseBody(u string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if sc := resp.StatusCode; sc != 200 {
+		return nil, fmt.Errorf("response status code %d", sc)
+	}
+
 	defer resp.Body.Close()
 
 	b, err := io.ReadAll(resp.Body)

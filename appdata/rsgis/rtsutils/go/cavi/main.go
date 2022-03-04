@@ -17,7 +17,7 @@ usage: %s
 
 Options:
 `
-	// authserver = "localhost:90035"
+	authserver = "http://localhost:50123"
 )
 
 type flagOptions struct {
@@ -85,20 +85,30 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error::Please provide a UUID for the watershed\n")
 			os.Exit(1)
 		}
+
+		// get auth token
+		auth, err := getResponseBody(authserver)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error::%s\n", err)
+		}
+		co.Auth = string(auth)
+
 		url.Path = co.Endpoint
+
 		p := payload{
 			After:       co.After,
 			Before:      co.Before,
 			WatershedID: co.ID,
 			ProductID:   co.Products,
 		}
-
-		dss, err := grid(co, url, p)
+		dss, err := grid(url, p, int(co.Timeout), co.Auth)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error::%s\n", err)
 			os.Exit(1)
 		}
 		os.Stdout.WriteString(dss)
+		fmt.Println(url.String())
+		fmt.Println(p)
 	case "extract":
 		if co.Endpoint == "" {
 			fmt.Fprintf(os.Stderr, "error::Please provide a slug for the watershed\n")
