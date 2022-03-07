@@ -13,6 +13,7 @@ var allowableHosts = map[string]bool{
 	"develop-cumulus-api.rsgis.dev":   true,
 	"water-api.rsgis.dev":             true,
 	"develop-water-api.rsgis.dev":     true,
+	"github.com":                      true,
 }
 
 func allowableHost(s string) error {

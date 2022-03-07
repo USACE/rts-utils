@@ -9,6 +9,9 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
 const (
@@ -29,6 +32,8 @@ type flagOptions struct {
 	After      string
 	Before     string
 	Endpoint   string
+	Branch     string
+	Path       string
 	Timeout    float64
 	Products
 }
@@ -75,7 +80,19 @@ func main() {
 	switch co.Subcommand {
 	case "git":
 		// not do all the git stuff
-		fmt.Println()
+		log.Println("Initiating 'git' command")
+		url.Path = co.Endpoint
+		ref := plumbing.NewBranchReferenceName(co.Branch)
+		err := goGitRepo(url.String(), "origin", ref, co.Path)
+
+		if err == git.NoErrAlreadyUpToDate {
+			log.Println("Repository " + err.Error())
+			os.Exit(0)
+		}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error::%s\n", err)
+			os.Exit(1)
+		}
 	case "grid":
 		log.Println("Initiating 'grid' command")
 		if len(co.Products) == 0 {
@@ -153,6 +170,8 @@ func (co *flagOptions) addFlagOptions() {
 	flag.StringVar(&co.Before, "before", t2.Format(time.RFC3339), "Before time (EndTime UTC); default=now")
 	flag.Var(&co.Products, "product", "Product List; --product value --product value --product value...")
 	flag.StringVar(&co.Endpoint, "endpoint", "", "Get response body from endpoint")
+	flag.StringVar(&co.Branch, "branch", "", "GitHub repository branch name")
+	flag.StringVar(&co.Path, "path", "", "Path to target repository")
 	flag.Float64Var(&co.Timeout, "timeout", 300, "Grid download timeout (sec); default=300")
 
 	flag.Usage = func() {
