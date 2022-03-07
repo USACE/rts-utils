@@ -232,7 +232,7 @@ class WaterExtractUI:
             self.configurations = DictConfig(self.config_path).read()
 
             go_config["Endpoint"] = "watersheds"
-            ws_out, stderr = go.get(go_config)
+            ws_out, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
             if "error" in stderr:
                 print(stderr)
                 JOptionPane.showMessageDialog(

@@ -30,6 +30,7 @@ from rtsutils.cavi.jython import jutil
 from rtsutils.utils import CLOUD_ICON
 from rtsutils.utils.config import DictConfig
 
+
 def convert_dss(dss_src, dss_dst):
     """convert DSS7 from Cumulus to DSS6 on local machine defined by DSS
     destination
@@ -93,11 +94,11 @@ class CumulusUI:
         print(stderr)
         if "error" in stderr:
             JOptionPane.showMessageDialog(
-            None,
-            stderr.split("::")[-1],
-            "Program Error",
-            JOptionPane.INFORMATION_MESSAGE,
-        )
+                None,
+                stderr.split("::")[-1],
+                "Program Error",
+                JOptionPane.INFORMATION_MESSAGE,
+            )
 
         try:
             _, file_path = stdout.split("::")
@@ -156,9 +157,9 @@ class CumulusUI:
 
             go_config["Subcommand"] = "get"
             go_config["Endpoint"] = "watersheds"
-            ws_out, stderr = go.get(go_config)
+            ws_out, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
             go_config["Endpoint"] = "products"
-            ps_out, stderr = go.get(go_config)
+            ps_out, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
             if "error" in stderr:
                 print(stderr)
                 JOptionPane.showMessageDialog(
