@@ -6,6 +6,7 @@
 - [CWMS RADAR](doc/CWMSRADAR.md)
 - [Get USGS](doc/GETUSGS.md)
 - [Watershed Extract](doc/WSEXTRACT.md)
+- [Go CAVI Tool](doc/GOCAVI.md)
 
 ## Package Installation
 
