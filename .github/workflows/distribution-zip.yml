@@ -1,0 +1,21 @@
+name: Distribution Zip Files
+
+on:
+  workflow_dispatch:
+jobs:
+  windows-zip:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Zip Source
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ${{ github.workspace }}\appdata\rsgis\rtsutils `
+          -DestinationPath ${{ github.workspace }}\dist\${{ github.event.repository.name }}.zip
+
+      - name: Commit Changes
+        uses: EndBug/add-and-commit@v8
+        with:
+          default_author: github_actions
