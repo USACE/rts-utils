@@ -3,9 +3,11 @@
 This update script is Jython running in the CAVI env
 """
 
-from collections import namedtuple
 import os
+import distutils.dir_util
+from collections import namedtuple
 from rtsutils import go, APPDATA, TRUE, FALSE
+from rtsutils.cavi.jython import status
 
 FIELD_NAMES = [
     "user",
@@ -34,6 +36,15 @@ def main(cfg):
     std_out, std_err = go.get(config, out_err=TRUE, is_shell=FALSE)
     print(std_out)
     print(std_err)
+
+    # update the scripts and template config files
+    update_src = os.path.join(cfg.rtsutils_dst, "dist", "scripts")
+    update_dst = os.path.join(status.get_project_directory(), "scripts")
+    distutils.dir_util.copy_tree(update_src, update_dst)
+
+    update_src = os.path.join(cfg.rtsutils_dst, "dist", "shared")
+    update_dst = os.path.join(status.get_project_directory(), "shared")
+    distutils.dir_util.copy_tree(update_src, update_dst)
 
 
 if __name__ == "__main__":
