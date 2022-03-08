@@ -1,0 +1,1 @@
+# Go binding for macOS
