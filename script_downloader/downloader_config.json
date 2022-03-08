@@ -11,21 +11,21 @@
       "remote_dir": "watershed_scripts",
       "filename": "cwms_radar.py",
       "update_libs": true,
-      "help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/CWMSRADAR.md",
+      "help_url": "https://github.com/usace/rts-utils/blob/develop/appdata/rsgis/CWMSRADAR.md",
       "config_files": ["cwms_radar.config"]
     },
     "Get USGS Data": {
       "remote_dir": "watershed_scripts",
       "filename": "get_usgs.py",
       "update_libs": true,
-      "help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/GETUSGS.md",
+      "help_url": "https://github.com/usace/rts-utils/blob/develop/appdata/rsgis/GETUSGS.md",
       "config_files": ["usgs_locations.csv"]
     },
     "Watershed Extract": {
       "remote_dir": "watershed_scripts",
       "filename": "watershed_extract.py",
       "update_libs": true,
-      "help_url": "https://github.com/usace/rts-utils/blob/master/appdata/rsgis/WSEXTRACT.md",
+      "help_url": "https://github.com/usace/rts-utils/blob/develop/appdata/rsgis/WSEXTRACT.md",
       "config_files": []
     },
     "Script Downloader": {
@@ -36,6 +36,11 @@
       "config_files": []
     }
   },
-  "third_party_libs": {},
-  "version": "24Aug2021"
+  "third_party_libs": {
+    "vortex": {
+      "version": "0.10.27-rc.2",
+      "url": "https://github.com/HydrologicEngineeringCenter/Vortex/releases/download/v0.10.27-rc.2/vortex-0.10.27-rc.2-win-x64.zip"
+    }
+  },
+  "version": "10Feb2022"
 }
