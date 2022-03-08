@@ -12,7 +12,7 @@ jobs:
       - name: Zip Source
         shell: pwsh
         run: |
-          Compress-Archive -Path ${{ github.workspace }}\appdata\rsgis\rtsutils `
+          Compress-Archive -Path ${{ github.workspace }}\rtsutils `
           -DestinationPath ${{ github.workspace }}\dist\${{ github.event.repository.name }}.zip
 
       - name: Commit Changes
