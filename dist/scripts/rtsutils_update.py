@@ -9,6 +9,8 @@ from collections import namedtuple
 from rtsutils import go, APPDATA, TRUE, FALSE
 from rtsutils.cavi.jython import status
 
+from javax.swing import JOptionPane
+
 FIELD_NAMES = [
     "user",
     "repo",
@@ -33,9 +35,18 @@ def main(cfg):
         "Branch": cfg.branch,
         "Path": cfg.rtsutils_dst,
     }
-    std_out, std_err = go.get(config, out_err=TRUE, is_shell=FALSE)
-    print(std_out)
+    _, std_err = go.get(config, out_err=TRUE, is_shell=FALSE)
+
     print(std_err)
+    if "error" in std_err:
+        raise Exception(std_err)
+    
+    JOptionPane.showMessageDialog(
+        None,
+        std_err,
+        "Git Repo Update",
+        JOptionPane.INFORMATION_MESSAGE,
+    )
 
     # update the scripts and template config files
     update_src = os.path.join(cfg.rtsutils_dst, "dist", "scripts")
