@@ -20,7 +20,6 @@ FIELD_NAMES = [
     "file_path",
     "personal_config",
     "cavi_config_name",
-    "include",
     "appdata",
     "rtsutils_dst",
     "update_script",
@@ -48,9 +47,6 @@ def main(cfg):
 
     # Extract the zip file from the repo 'dist' directory
     extract_zip(cfg.rtsutils_src, cfg.rtsutils_dst)
-    # add an include to the CAVI.config if it is NOT there
-    with open(cfg.personal_config_path, "w") as fp:
-        fp.write(cfg.include)
     #
     try:
         # add to sys.path to use downloaded package
@@ -67,7 +63,7 @@ def main(cfg):
             if cfg.personal_config not in fc.read():
                 with open(cavi_config_path, "a") as append_cfg:
                     append_cfg.write(
-                        r"include $APPDATA\{}\{}".format(cfg.repo, cfg.personal_config)
+                        r"include $APPDATA\{}\dist\{}".format(cfg.repo, cfg.personal_config)
                     )
                     append_cfg.write("\n\n# Here is the space after the last line\n\n")
             else:
@@ -96,26 +92,36 @@ def main(cfg):
         #
         # copy all scripts from dist/scripts
         update_src = os.path.join(cfg.rtsutils_dst, "dist", "scripts")
-        update_dst = os.path.join(status.get_watershed(), "scripts")
+        update_dst = os.path.join(status.get_project_directory(), "scripts")
         distutils.dir_util.copy_tree(update_src, update_dst)
         # copy all files from dist/shared
         update_src = os.path.join(cfg.rtsutils_dst, "dist", "shared")
-        update_dst = os.path.join(status.get_watershed(), "shared")
+        update_dst = os.path.join(status.get_project_directory(), "shared")
         distutils.dir_util.copy_tree(update_src, update_dst)
+
+        JOptionPane.showMessageDialog(
+            None,
+            "Restart the CAVI to apply changes",
+            "Program Error",
+            JOptionPane.INFORMATION_MESSAGE,
+        )
 
     except ImportError as ex:
         print(ex)
 
 
+
 if __name__ == "__main__":
     Config = namedtuple("Config", FIELD_NAMES)
+#
+# ~~~~~~ Configure Here ~~~~~~ #
+#
     Config.user = "USACE"
     Config.repo = "rts-utils"
     Config.branch = "refactor/rtsutil-package"
     Config.file_path = "dist/rts-utils.zip"
     Config.personal_config = "RTSUTILS-Personal.config"
     Config.cavi_config_name = "CAVI.config"
-    Config.include = "vmparam -Dpython.path=$APPDATA\\{}\\".format(Config.repo)
     Config.appdata = os.getenv("APPDATA")
     Config.rtsutils_dst = os.path.join(Config.appdata, Config.repo)
     Config.personal_config_path = os.path.join(Config.rtsutils_dst, Config.personal_config)
@@ -124,5 +130,8 @@ if __name__ == "__main__":
             USER=Config.user, REPO=Config.repo, BRANCH=Config.branch, FILE_PATH=Config.file_path
         )
     )
+#
+# ~~~~~~ Configure Here ~~~~~~ #
+#
 
     main(Config)
