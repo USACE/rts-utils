@@ -7,7 +7,7 @@ from java.lang       import System
 from java.text       import SimpleDateFormat
 from java.util       import Calendar
 from java.util       import TimeZone
-import getopt, json, os, re, string, sys, traceback, urllib2
+import getopt, json, os, re, string, sys, traceback, urllib, urllib2
 
 progName  = os.path.split(sys.argv[0])[1]
 version   = "1.1"
@@ -336,8 +336,8 @@ def main() :
 		for tsid in sorted(timeseries[office].keys()) :
 			if nameStr and len(nameStr) + len(tsid) > 1500 :
 				output("Retrieving %d time series for office %s" % (count, office))
-				url = urlTemplate % (office, nameStr)
-				session = urllib2.urlopen(url.replace(" ", "%20"))
+				url = urlTemplate % (office, urllib.quote(nameStr))
+				session = urllib2.urlopen(url)
 				names.append((office, nameStr))
 				jsonData.append(session.read())
 				session.close()
@@ -349,8 +349,8 @@ def main() :
 				count += 1
 		if nameStr :
 			output("Retrieving %d time series for office %s" % (count, office))
-			url = urlTemplate % (office, nameStr)
-			session = urllib2.urlopen(url.replace(" ", "%20"))
+			url = urlTemplate % (office, urllib.quote(nameStr))
+			session = urllib2.urlopen(url)
 			names.append((office, nameStr))
 			jsonData.append(session.read())
 			session.close()
