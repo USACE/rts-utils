@@ -177,7 +177,7 @@ class WaterExtractUI:
             JOptionPane.showMessageDialog(
                 None,
                 std_err.split("::")[-1],
-                "Program Error",
+                "Program Done",
                 JOptionPane.INFORMATION_MESSAGE,
             )
 

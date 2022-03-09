@@ -97,7 +97,7 @@ class CumulusUI:
                 None,
                 stderr.split("::")[-1],
                 "Program Error",
-                JOptionPane.INFORMATION_MESSAGE,
+                JOptionPane.ERROR_MESSAGE,
             )
 
         try:
@@ -166,7 +166,7 @@ class CumulusUI:
                     None,
                     "Program Error",
                     stderr.split("::")[-1],
-                    JOptionPane.INFORMATION_MESSAGE,
+                    JOptionPane.ERROR_MESSAGE,
                 )
 
             self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
