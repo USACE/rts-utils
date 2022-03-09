@@ -2,7 +2,6 @@
 """
 
 import os
-import sys
 
 from rtsutils.cavi.jython import status
 from rtsutils.cwmsradar import CwmsRADAR
@@ -25,7 +24,7 @@ cwmsdat.dssfile = os.path.join(
     status.get_database_directory(),
     "{}.dss".format(status.get_watershed().getName()),
 )
-cwmsdat.read_config(os.path.join(status.get_shared_directory(), "cwms_radar.config"))
+cwmsdat.read_config(os.path.join(status.get_shared_directory(), "template_cwms_radar.config"))
 # Reading the configutation file defines the lists but they still need to be set
 cwmsdat.set_tsids()
 cwmsdat.run()
