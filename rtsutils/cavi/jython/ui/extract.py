@@ -177,7 +177,7 @@ class WaterExtractUI:
             JOptionPane.showMessageDialog(
                 None,
                 std_err.split("::")[-1],
-                "Program Error",
+                "Program Done",
                 JOptionPane.INFORMATION_MESSAGE,
             )
 
@@ -283,10 +283,10 @@ class WaterExtractUI:
             lbl_select_file.setFont(Font("Tahoma", 0, 14))
             lbl_select_file.setText("DSS File Downloads")
 
-            self.txt_select_file.setFont(Font("Tahoma", 0, 18))
+            self.txt_select_file.setFont(Font("Tahoma", 0, 14))
             self.txt_select_file.setToolTipText("FQPN to output file (.dss)")
 
-            btn_select.setFont(Font("Tahoma", 0, 18))
+            btn_select.setFont(Font("Tahoma", 0, 14))
             btn_select.setText("...")
             btn_select.setToolTipText("Select File...")
             btn_select.actionPerformed = self.select_file
@@ -594,11 +594,11 @@ class WaterExtractUI:
 
 if __name__ == "__main__":
     # tesing #
-
-    cui = WaterExtractUI()
-    cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
-    cui.parameters(
-        {"Host": "develop-water-api.corps.cloud", "Scheme": "https", "Timeout": 120}
-    )
-    # cui.execute()
-    cui.show()
+    print("Testing")
+    # cui = WaterExtractUI()
+    # cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
+    # cui.parameters(
+    #     {"Host": "develop-water-api.corps.cloud", "Scheme": "https", "Timeout": 120}
+    # )
+    # # cui.execute()
+    # cui.show()

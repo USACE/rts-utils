@@ -27,6 +27,7 @@ FIELD_NAMES = [
     "rtsutils_src",
 ]
 
+
 def extract_zip(src, dst):
     """read the zip file as bytes and extract"""
     open_url = urllib2.urlopen(src)
@@ -63,7 +64,7 @@ def main(cfg):
             if cfg.personal_config not in fc.read():
                 with open(cavi_config_path, "a") as append_cfg:
                     append_cfg.write(
-                        r"include $APPDATA\{}\dist\{}".format(cfg.repo, cfg.personal_config)
+                        r"include $APPDATA\{}\{}".format(cfg.repo, cfg.personal_config)
                     )
                     append_cfg.write("\n\n# Here is the space after the last line\n\n")
             else:
@@ -102,7 +103,7 @@ def main(cfg):
         JOptionPane.showMessageDialog(
             None,
             "Restart the CAVI to apply changes",
-            "Program Error",
+            "Program Done",
             JOptionPane.INFORMATION_MESSAGE,
         )
 
@@ -110,12 +111,11 @@ def main(cfg):
         print(ex)
 
 
-
 if __name__ == "__main__":
     Config = namedtuple("Config", FIELD_NAMES)
-#
-# ~~~~~~ Configure Here ~~~~~~ #
-#
+    #
+    # ~~~~~~ Configure Here ~~~~~~ #
+    #
     Config.user = "USACE"
     Config.repo = "rts-utils"
     Config.branch = "refactor/rtsutil-package"
@@ -124,15 +124,19 @@ if __name__ == "__main__":
     Config.cavi_config_name = "CAVI.config"
     Config.appdata = os.getenv("APPDATA")
     Config.rtsutils_dst = os.path.join(Config.appdata, Config.repo)
-    Config.personal_config_path = os.path.join(Config.rtsutils_dst, Config.personal_config)
+    Config.personal_config_path = os.path.join(
+        Config.rtsutils_dst, Config.personal_config
+    )
     Config.rtsutils_src = (
         "https://raw.githubusercontent.com/{USER}/{REPO}/{BRANCH}/{FILE_PATH}".format(
-            USER=Config.user, REPO=Config.repo, BRANCH=Config.branch, FILE_PATH=Config.file_path
+            USER=Config.user,
+            REPO=Config.repo,
+            BRANCH=Config.branch,
+            FILE_PATH=Config.file_path,
         )
     )
-#
-# ~~~~~~ Configure Here ~~~~~~ #
-#
+    #
+    # ~~~~~~ Configure Here ~~~~~~ #
+    #
 
     main(Config)
-

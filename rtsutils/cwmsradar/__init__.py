@@ -25,15 +25,15 @@ cwmsdata_file = cwms_data2dss.__file__.replace("$py.class", ".py")
 cwms_data2dss.progName = os.path.split(cwmsdata_file)[1]
 
 class CwmsRADAR():
-    '''
+    """
     CWMS Data class used to set inputs that will ultimately build the sys.argv
     that the cwms_data2dss.py module will use.
-    '''
+    """
 
     def __init__(self):
-        '''
+        """
         Initialize the class
-        '''
+        """
         print('Initialize class CwmsRADAR')
         tmpdir = tempfile.gettempdir()
         self.input = None
@@ -46,9 +46,9 @@ class CwmsRADAR():
         self.dssids = None
     
     def run(self):
-        '''
+        """
         Build the sys.argv and then run the module
-        '''
+        """
         self.arg_dict = {
         'i': self.input,
         'd': self.dssfile,
@@ -74,20 +74,20 @@ class CwmsRADAR():
                 cwms_data2dss.main()
             else:
                 print('No input file!')
-        except TypeError, err:
+        except TypeError as ex:
             print(err)
             sys.exit(1)
 
     def read_config(self, config=None):
-        '''
-        '''
+        """
+        """
         
         def read_config(jsonconfig):
             # jdata = None
             try:
                 with open(jsonconfig, 'r') as jsonfile:
                     jdata = json.loads(jsonfile.read())
-            except ValueError, ex:
+            except ValueError as ex:
                 raise Exception("Check config file JSON formatting!")
 
             return jdata
@@ -101,11 +101,11 @@ class CwmsRADAR():
                 self.dssids.append(val)
 
     def set_tsids(self, tsids=None, dssids=None):
-        '''
+        """
         Input is a list of TSIDs and DSS IDs.  If no DSS IDs, TSID names will
         be used.  This def will create a temporary file, write the names in the
         cwms_data2dss format, and set the -i as the temporary file
-        '''
+        """
         if tsids is None: tsids = self.tsids
         if dssids is None: dssids = self.dssids
 
@@ -137,19 +137,19 @@ class CwmsRADAR():
                     f.write(tsids[i] + " = " + dssids[i] + '\n')
 
     def format_datetime(self, dt):
-        '''
+        """
         Datetime (dt) input is a HecTime.  Output is a string formated for
         cwms_data2dss.py
-        '''
+        """
         dt.showTimeAsBeginningOfDay(True)
         _dt = '{:04}-{:02}-{:02}T{:02}:{:02}:00'.format(dt.year(), dt.month(),
             dt.day(), dt.hour(), dt.minute())
         return _dt
 
     def set_timezone(self, tz):
-        '''
+        """
         Timezone input is a string.
-        '''
+        """
         if tz in time_zones:
             self.timezone = tz
             print('Timezone set to: {}'.format(self.timezone))

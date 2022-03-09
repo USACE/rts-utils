@@ -4,13 +4,14 @@ Get USGS data Python package
 
 __all__ = ['USGSDataRetrieve']
 
-from java.util import TimeZone
+
 import os
 import sys
 import csv
 import tempfile
 import threading
 
+from java.util import TimeZone
 
 
 
@@ -49,6 +50,7 @@ class USGSDataRetrieve():
         self.forget = None
         self.loglevel = None
         self.working_directory = os.path.dirname(__file__)
+        self.arg_dict = None
 
     def run(self):
         """
@@ -85,7 +87,7 @@ class USGSDataRetrieve():
         Run (import) getusgs as a seperate thread so it terminates itself and not
         all other scripts
         """
-        import getusgs
+        import rtsutils.usgs.getusgs
 
     def is_forget(self):
         """

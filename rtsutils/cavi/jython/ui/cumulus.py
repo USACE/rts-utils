@@ -97,7 +97,7 @@ class CumulusUI:
                 None,
                 stderr.split("::")[-1],
                 "Program Error",
-                JOptionPane.INFORMATION_MESSAGE,
+                JOptionPane.ERROR_MESSAGE,
             )
 
         try:
@@ -166,7 +166,7 @@ class CumulusUI:
                     None,
                     "Program Error",
                     stderr.split("::")[-1],
-                    JOptionPane.INFORMATION_MESSAGE,
+                    JOptionPane.ERROR_MESSAGE,
                 )
 
             self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
@@ -565,16 +565,17 @@ class CumulusUI:
 
 if __name__ == "__main__":
     # tesing #
-    cui = CumulusUI()
-    cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_cumulus.json")
-    cui.parameters(
-        {
-            "Scheme": "https",
-            "Host": "cumulus-api.rsgis.dev",
-            "Endpoint": "downloads",
-            "After": "2022-02-17T12:00:00Z",
-            "Before": "2022-02-18T12:00:00Z",
-            "Timeout": 120,
-        }
-    )
-    cui.show()
+    print("Testing")
+    # cui = CumulusUI()
+    # cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_cumulus.json")
+    # cui.parameters(
+    #     {
+    #         "Scheme": "https",
+    #         "Host": "cumulus-api.rsgis.dev",
+    #         "Endpoint": "downloads",
+    #         "After": "2022-02-17T12:00:00Z",
+    #         "Before": "2022-02-18T12:00:00Z",
+    #         "Timeout": 120,
+    #     }
+    # )
+    # cui.show()
