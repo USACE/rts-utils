@@ -283,10 +283,10 @@ class WaterExtractUI:
             lbl_select_file.setFont(Font("Tahoma", 0, 14))
             lbl_select_file.setText("DSS File Downloads")
 
-            self.txt_select_file.setFont(Font("Tahoma", 0, 18))
+            self.txt_select_file.setFont(Font("Tahoma", 0, 14))
             self.txt_select_file.setToolTipText("FQPN to output file (.dss)")
 
-            btn_select.setFont(Font("Tahoma", 0, 18))
+            btn_select.setFont(Font("Tahoma", 0, 14))
             btn_select.setText("...")
             btn_select.setToolTipText("Select File...")
             btn_select.actionPerformed = self.select_file
