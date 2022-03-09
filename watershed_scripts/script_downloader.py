@@ -2,8 +2,11 @@ from __future__ import with_statement
 import os
 import sys
 import urllib
+import glob
+from shutil import copyfile
+import hec2
 from com.rma.model import Project
-from javax.swing import JOptionPane
+from javax.swing    import JButton, JDialog, JOptionPane, JEditorPane, UIManager
 import traceback
 import xml.etree.ElementTree as ET
 import datetime
@@ -11,8 +14,6 @@ import tempfile, shutil
 import json
 import zipfile
 import webbrowser
-import subprocess
-from time import sleep
 
 cwms_home = os.getcwd()
 watershed_path = Project.getCurrentProject().getProjectDirectory()
@@ -33,9 +34,9 @@ def get_remote_data(url):
 ################################################################################
 def download_file(url, dest):
 	try:
-		print('Downloading {} to {}'.format(url, dest))
+		print 'Downloading {} to {}'.format(url, dest)
 		urllib.urlretrieve(url, dest)
-		print('Download Complete!')
+		print("Download Complete!")
 	except:
 		raise Exception('Unable to download from: {}'.format(url))
 ################################################################################
@@ -57,26 +58,9 @@ def recursive_overwrite(src, dest, ignore=None):
     else:
         shutil.copyfile(src, dest)
 #################################################################################
-# Created because a file/folder might be getting scanned and is locked
-def persistent_rename(src, dst):
-
-	sleep_time = 2
-	num_retries = 6
-	for x in range(0, num_retries):  
-		try:
-			print('trying rename attempt: {}'.format(x))
-			os.rename(src, dst)
-			return
-			# str_error = None
-		except Exception as str_error:
-			sleep(sleep_time)
-			pass
-
-#################################################################################
 def script_downloader(remote_repo, selection, appConfig):
 
 	update_libs = bool(appConfig['scripts'][selection]['update_libs'])
-	print('update_libs: {}'.format(update_libs))
 	config_files = appConfig['scripts'][selection]['config_files']
 	watershed_path = Project.getCurrentProject().getProjectDirectory()
 	ws_script_dir = os.path.join(watershed_path, 'scripts')
@@ -85,7 +69,7 @@ def script_downloader(remote_repo, selection, appConfig):
 	print(scriptSrcURL)
 
 	scriptDstFilePath = os.path.join(ws_script_dir, appConfig['scripts'][selection]['filename'])
-	print(scriptDstFilePath)
+	print scriptDstFilePath
 
 	# Copy the script file
 	if get_remote_data(scriptSrcURL):
@@ -122,33 +106,26 @@ def script_downloader(remote_repo, selection, appConfig):
 				download_file(fileSrcURL, fileDstPath)
 				downloaded_configs.append(fileDstPath)
 			else:
-				print('Skipping download of config file: {}'.format(fname))
+				print 'Skipping download of config file: {}'.format(fname)
 
 
 	try:
 		temp_dir = tempfile.mkdtemp()
-		print('created temp folder {}'.format(temp_dir))
+		print 'created temp folder {}'.format(temp_dir)
 
 		# Download the master repo zip for the library packages
-		# https://github.com/usace/rts-utils/archive/{branch}.zip
 		repo_url_parts = remote_repo.split('/')
-		# replace raw.githubusercontent.com with github.com
 		repo_url_parts[2] = 'github.com'
-		# get the branch before we change the url part[5]
-		branch = repo_url_parts[-1] # develop, master or stable
-		print('Downloading from the branch: {}'.format(branch))
-		repo_url_parts[5] = 'archive'		
-		
-		repo_branch_filename = branch+'.zip'
-		repo_url_parts.append(repo_branch_filename)
+		repo_url_parts[5] = 'archive'
+		repo_url_parts.append('master.zip')
 		zip_url = '/'.join(repo_url_parts)
 
-		download_file(zip_url, temp_dir+'/'+repo_branch_filename)
+		download_file(zip_url, temp_dir+'/master.zip')
 
-		with zipfile.ZipFile(os.path.join(temp_dir, repo_branch_filename), "r") as z:
+		with zipfile.ZipFile(os.path.join(temp_dir, 'master.zip'), "r") as z:
 			z.extractall(temp_dir)
 
-			print('--Files in temp folder--{}--'.format(temp_dir))
+			print('--Files in temp folder--')
 			for f in os.listdir(temp_dir):
 				print(f)
 				if os.path.isdir(os.path.join(temp_dir, f)):
@@ -158,91 +135,55 @@ def script_downloader(remote_repo, selection, appConfig):
 
 					print('*'*50)
 					print('Copying repo libraries...')
-					print('From: {}'.format(pkg_dir_src))
-					print('To: {}'.format(pkg_dir_dst))
+					print 'From: {}'.format(pkg_dir_src)
+					print 'To: {}'.format(pkg_dir_dst)
 					print('*'*50)
 
 					# Copy the packages/libs from temp folder to destination
 					recursive_overwrite(pkg_dir_src, pkg_dir_dst)
 
-					if update_libs:
-						# Check for 3rd party libraries that need to be downloaded
-						#------------------------------------------------------------
-						for lib_name, lib_obj in appConfig['third_party_libs'].items():
-							filename = os.path.basename(lib_obj['url'])
-							lib_dest_dir = os.path.join(os.getenv('APPDATA'), 'rsgis', lib_name)
-							version_file = os.path.join(lib_dest_dir, 'version.json')
+					# Check for 3rd party libraries that need to be downloaded
+					#------------------------------------------------------------
+					for lib_name, lib_obj in appConfig['third_party_libs'].items():
+						filename = os.path.basename(lib_obj['url'])
+						lib_dest_dir = os.path.join(os.getenv('APPDATA'), 'rsgis', lib_name)
+						version_file = os.path.join(lib_dest_dir, 'version.json')
 
-							download_lib = True
+						download_lib = True
 
-							# Ensure 3rd party lib folder exists before checking files/writing to it
-							if not os.path.isdir(lib_dest_dir):
-								os.mkdir(lib_dest_dir)
-
-							if os.path.isfile(version_file):
-								print('Loading json file {}'.format(version_file))
-								with open(version_file) as json_file:
-									version = json.load(json_file)['version']
-									if version == lib_obj['version']:
-										download_lib = False
-										print('Will not download lib: {}'.format(lib_name))
+						if os.path.isfile(version_file):
+							print 'Loading json file {}'.format(version_file)
+							with open(version_file) as json_file:
+								version = json.load(json_file)['version']
+								if version == lib_obj['version']:
+									download_lib = False
+									print 'Will not download lib: {}'.format(lib_name)
 
 
-							if download_lib:
+						if download_lib:
 
-								ext_lib_message = 'This may take a little longer while supporting libraries are downloaded.\n'
-								ext_lib_message += 'You will receive a confirmation when complete.'
-								JOptionPane.showMessageDialog(None, ext_lib_message, "Working", JOptionPane.INFORMATION_MESSAGE)
+							dest_file = os.path.join(lib_dest_dir, filename)
+							download_file(lib_obj['url'], dest_file)
 
-								dest_file = os.path.join(lib_dest_dir, filename)
-								download_file(lib_obj['url'], dest_file)
+							if zipfile.is_zipfile(dest_file):
+								with zipfile.ZipFile(dest_file, "r") as z:
+									z.extractall(lib_dest_dir)
 
-								if zipfile.is_zipfile(dest_file):
-									with zipfile.ZipFile(dest_file, "r") as z:									
-										
-										try:
-											z.extractall(lib_dest_dir)
-										except:
-											print('Unable to extract: {}'.format(dest_file))
-											
-											# This is a ridiculous hack/work around because jython 2.7
-											# has a bug with certain unicode file/folder names and will
-											# not extract properly.  Ex: vortex
-											try:
-												print('Trying 7zip extract...')
-												SevenZip = "C:/Program Files/7-Zip/7z.exe"
-												cmd = '"{}" x {} -o{} * -r -aoa'.format(SevenZip, dest_file, lib_dest_dir)
-												print(cmd)
-												subprocess.check_call(cmd)
-											except:
-												print('7zip extract failed')
+								# Delete the zip file
+								os.remove(dest_file)
 
-									# Rename the subdir to 'latest' to provide a more predictable library path
-									extracted_folders = [obj for obj in os.listdir(lib_dest_dir) if os.path.isdir(os.path.join(lib_dest_dir, obj))]	
-									if len(extracted_folders) == 1:										
-										rename_src = os.path.join(lib_dest_dir, extracted_folders[0])
-										rename_dst = os.path.join(lib_dest_dir, 'latest')
-										print('renaming {} to {}'.format(rename_src, rename_dst))
-										try:
-											os.rename(rename_src, rename_dst)
-										except:
-											persistent_rename(rename_src, rename_dst)
-
-									# Delete the zip file
-									os.remove(dest_file)
-
-								# Write the version to json file for comparison later
-								with open(version_file, 'w') as outfile:
-									json.dump(lib_obj, outfile)
-						#------------------------------------------------------------
+							# Write the version to json file for comparison later
+							with open(version_file, 'w') as outfile:
+								json.dump(lib_obj, outfile)
+					#------------------------------------------------------------
 
 	except:
 		print('Unable to create temp folder')
-		print('Unexpected error:', sys.exc_info())
+		print "Unexpected error:", sys.exc_info()
 		print(traceback.print_exc())
 	finally:
 		shutil.rmtree(temp_dir)
-		print('removing {}'.format(temp_dir))
+		print 'removing {}'.format(temp_dir)
 
 	try:
 		help_url = appConfig['scripts'][selection]['help_url']
@@ -297,11 +238,11 @@ def isScriptButtonAdded(filename):
 ################################################################################
 def main():
 
-	code_version = '10Feb2022'
+	code_version = '24Aug2021'
 	# Get the config file stored on Github.
 	# This allows new scripts to be added without this script needing to be replaced on every PC/Server Watershed
 
-	remote_repo = "https://raw.githubusercontent.com/usace/rts-utils/develop"
+	remote_repo = "https://raw.githubusercontent.com/usace/rts-utils/master"
 
 	remote_config = get_remote_data(remote_repo+'/script_downloader/downloader_config.json')
 	# Verify remote data was returned, otherwise exit
@@ -340,7 +281,7 @@ def main():
 	if selection is None:
 		return
 
-	# script_filename = appConfig['scripts'][selection]['filename']
+	script_filename = appConfig['scripts'][selection]['filename']
 
 	script_downloader(remote_repo, selection, appConfig)
 
