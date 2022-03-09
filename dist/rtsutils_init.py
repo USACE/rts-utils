@@ -63,7 +63,7 @@ def main(cfg):
             if cfg.personal_config not in fc.read():
                 with open(cavi_config_path, "a") as append_cfg:
                     append_cfg.write(
-                        r"include $APPDATA\{}\dist\{}".format(cfg.repo, cfg.personal_config)
+                        r"include $APPDATA\{}\{}".format(cfg.repo, cfg.personal_config)
                     )
                     append_cfg.write("\n\n# Here is the space after the last line\n\n")
             else:

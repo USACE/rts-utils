@@ -21,7 +21,7 @@ params_ = {
 
 # shred directory is the 'shared' directory in the CAVI's open watershed
 SHARED = status.get_shared_directory()
-CONFIG = os.path.join(SHARED, arg2)
+CONFIG = os.path.join(SHARED, "{}-cfg.json".format(arg2))
 
 
 # Get the time window from the CAVI

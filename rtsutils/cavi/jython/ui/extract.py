@@ -594,11 +594,11 @@ class WaterExtractUI:
 
 if __name__ == "__main__":
     # tesing #
-
-    cui = WaterExtractUI()
-    cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
-    cui.parameters(
-        {"Host": "develop-water-api.corps.cloud", "Scheme": "https", "Timeout": 120}
-    )
-    # cui.execute()
-    cui.show()
+    print("Testing")
+    # cui = WaterExtractUI()
+    # cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
+    # cui.parameters(
+    #     {"Host": "develop-water-api.corps.cloud", "Scheme": "https", "Timeout": 120}
+    # )
+    # # cui.execute()
+    # cui.show()
