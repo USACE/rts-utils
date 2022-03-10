@@ -15,7 +15,8 @@ if tw != None:
     st, et = tw
     print("Time window: {}".format(tw))
 else:
-    raise Exception('No Forecast open or in "Setup Tab"')
+    MessageBox.showError("No Forecast open or in 'Setup Tab'")
+    raise Exception("No Forecast open or in 'Setup Tab'")
 
 cwmsdat = CwmsRADAR()
 cwmsdat.begintime = cwmsdat.format_datetime(HecTime(st))

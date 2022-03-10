@@ -13,7 +13,7 @@ from hec.hecmath import TimeSeriesMath
 from hec.hecmath.functions import TimeSeriesFunctions
 from hec.io import TimeSeriesContainer
 from hec.lang import TimeStep
-from java.awt import Font, Point
+from java.awt import Font, Point, Cursor
 from java.lang import Short
 from javax.swing import (
     BorderFactory,
@@ -576,10 +576,18 @@ class WaterExtractUI:
             event : ActionEvent
                 component-defined action
             """
-            self.save(event)
-            self.outer_class.execute()
-            self.close(event)
-
+            try:
+                source = event.getSource()
+                prev = source.getCursor()
+                source.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR))
+                self.save(event)
+                self.outer_class.execute()
+                self.close(event)
+            except Exception as ex:
+                print(ex)
+            finally:
+                source.setCursor(prev)
+                
         def close(self, event):
             """close the UI
 

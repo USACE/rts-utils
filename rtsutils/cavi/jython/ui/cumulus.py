@@ -8,7 +8,7 @@ from collections import OrderedDict
 import tempfile
 
 from hec.heclib.dss import HecDSSUtilities
-from java.awt import Font, Point
+from java.awt import Font, Point, Cursor
 from java.lang import Short
 from javax.swing import (
     BorderFactory,
@@ -547,10 +547,18 @@ class CumulusUI:
             event : ActionEvent
                 component-defined action
             """
-            self.save(event)
-            self.outer_class.execute()
-            self.close(event)
-
+            try:
+                source = event.getSource()
+                prev = source.getCursor()
+                source.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR))
+                self.save(event)
+                self.outer_class.execute()
+                self.close(event)
+            except Exception as ex:
+                print(ex)
+            finally:
+                source.setCursor(prev)
+                
         def close(self, event):
             """close the UI
 
