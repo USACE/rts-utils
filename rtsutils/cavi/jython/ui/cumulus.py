@@ -513,31 +513,50 @@ class CumulusUI:
             event : ActionEvent
                 component-defined action
             """
+            if self.save_config():
+                source = event.getSource()
+                source.setText("Configuration Saved")
+
+        def save_config(self):
+            """save the selected configurations to file
+            """
             selected_watershed = self.lst_watersheds.getSelectedValue()
             selected_products = self.lst_products.getSelectedValues()
+            dssfile = self.txt_select_file.getText()
 
-            watershed_id = self.api_watersheds[selected_watershed]["id"]
-            watershed_slug = self.api_watersheds[selected_watershed]["slug"]
-            product_ids = [self.api_products[p]["id"] for p in selected_products]
+            if selected_products and selected_watershed and dssfile:
+                watershed_id = self.api_watersheds[selected_watershed]["id"]
+                watershed_slug = self.api_watersheds[selected_watershed]["slug"]
+                product_ids = [self.api_products[p]["id"] for p in selected_products]
+                
+                # Get, set and save jutil.configurations
+                self.configurations["watershed_id"] = watershed_id
+                self.configurations["watershed_slug"] = watershed_slug
+                self.configurations["product_ids"] = product_ids
+                self.configurations["dss"] = dssfile
+                DictConfig(self.config_path).write(self.configurations)
+            else:
+                JOptionPane.showMessageDialog(
+                    None,
+                    "Missing configuration inputs",
+                    "Configuration Inputs",
+                    JOptionPane.INFORMATION_MESSAGE,
+                )
+                return False
+            
+            # msg = []
+            # for k, v in sorted(self.configurations.items()):
+            #     v = "\n".join(v) if isinstance(v, list) else v
+            #     msg.append("{}: {}".format(k, v))
 
-            # Get, set and save jutil.configurations
-            self.configurations["watershed_id"] = watershed_id
-            self.configurations["watershed_slug"] = watershed_slug
-            self.configurations["product_ids"] = product_ids
-            self.configurations["dss"] = self.txt_select_file.getText()
-            DictConfig(self.config_path).write(self.configurations)
+            # JOptionPane.showMessageDialog(
+            #     None,
+            #     "\n\n".join(msg),
+            #     "Updated Config",
+            #     JOptionPane.INFORMATION_MESSAGE,
+            # )
 
-            msg = []
-            for k, v in sorted(self.configurations.items()):
-                v = "\n".join(v) if isinstance(v, list) else v
-                msg.append("{}: {}".format(k, v))
-
-            JOptionPane.showMessageDialog(
-                None,
-                "\n\n".join(msg),
-                "Updated Config",
-                JOptionPane.INFORMATION_MESSAGE,
-            )
+            return True
 
         def execute(self, event):
             """set configurations to execute Go binding
@@ -547,18 +566,14 @@ class CumulusUI:
             event : ActionEvent
                 component-defined action
             """
-            try:
+
+            if self.save_config():
                 source = event.getSource()
                 prev = source.getCursor()
                 source.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR))
-                self.save(event)
-                self.outer_class.execute()
-                self.close(event)
-            except Exception as ex:
-                print(ex)
-            finally:
                 source.setCursor(prev)
-                
+                self.close(event)
+
         def close(self, event):
             """close the UI
 
@@ -571,19 +586,20 @@ class CumulusUI:
             self.dispose()
 
 
-if __name__ == "__main__":
-    # tesing #
-    print("Testing")
-    # cui = CumulusUI()
-    # cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_cumulus.json")
-    # cui.parameters(
-    #     {
-    #         "Scheme": "https",
-    #         "Host": "cumulus-api.rsgis.dev",
-    #         "Endpoint": "downloads",
-    #         "After": "2022-02-17T12:00:00Z",
-    #         "Before": "2022-02-18T12:00:00Z",
-    #         "Timeout": 120,
-    #     }
-    # )
-    # cui.show()
+# if __name__ == "__main__":
+#     # tesing #
+#     print("Testing")
+#     cui = CumulusUI()
+#     cui.set_config_file(r"")
+#     cui.parameters(
+#         {
+#             "Scheme": "https",
+#             "Host": "develop-cumulus-api.corps.cloud",
+#             "Endpoint": "downloads",
+#             "After": "2022-02-17T12:00:00Z",
+#             "Before": "2022-02-18T12:00:00Z",
+#             "Timeout": 120,
+#         }
+#     )
+
+#     cui.show()

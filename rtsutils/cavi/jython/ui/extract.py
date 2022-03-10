@@ -544,29 +544,49 @@ class WaterExtractUI:
             event : ActionEvent
                 component-defined action
             """
+            if self.save_config():
+                source = event.getSource()
+                source.setText("Configuration Saved")
+
+        def save_config(self):
+            """save the selected configurations to file
+            """
             selected_watershed = self.lst_watersheds.getSelectedValue()
+            apart = self.txt_apart.getText()
+            dssfile = self.txt_select_file.getText()
 
-            watershed_id = self.api_watersheds[selected_watershed]["id"]
-            watershed_slug = self.api_watersheds[selected_watershed]["slug"]
+            if selected_watershed and apart and dssfile:
+                watershed_id = self.api_watersheds[selected_watershed]["id"]
+                watershed_slug = self.api_watersheds[selected_watershed]["slug"]
 
-            # Get, set and save jutil.configurations
-            self.configurations["watershed_id"] = watershed_id
-            self.configurations["watershed_slug"] = watershed_slug
-            self.configurations["apart"] = self.txt_apart.getText()
-            self.configurations["dss"] = self.txt_select_file.getText()
-            DictConfig(self.config_path).write(self.configurations)
+                # Get, set and save jutil.configurations
+                self.configurations["watershed_id"] = watershed_id
+                self.configurations["watershed_slug"] = watershed_slug
+                self.configurations["apart"] = apart
+                self.configurations["dss"] = dssfile
+                DictConfig(self.config_path).write(self.configurations)
+            else:
+                JOptionPane.showMessageDialog(
+                    None,
+                    "Missing configuration inputs",
+                    "Configuration Inputs",
+                    JOptionPane.INFORMATION_MESSAGE,
+                )
+                return False
 
-            msg = []
-            for k, v in sorted(self.configurations.items()):
-                v = "\n".join(v) if isinstance(v, list) else v
-                msg.append("{}: {}".format(k, v))
+            # msg = []
+            # for k, v in sorted(self.configurations.items()):
+            #     v = "\n".join(v) if isinstance(v, list) else v
+            #     msg.append("{}: {}".format(k, v))
 
-            JOptionPane.showMessageDialog(
-                None,
-                "\n\n".join(msg),
-                "Updated Config",
-                JOptionPane.INFORMATION_MESSAGE,
-            )
+            # JOptionPane.showMessageDialog(
+            #     None,
+            #     "\n\n".join(msg),
+            #     "Updated Configuration",
+            #     JOptionPane.INFORMATION_MESSAGE,
+            # )
+
+            return True
 
         def execute(self, event):
             """set configurations to execute Go binding
@@ -576,18 +596,16 @@ class WaterExtractUI:
             event : ActionEvent
                 component-defined action
             """
-            try:
+
+            if self.save_config():
                 source = event.getSource()
                 prev = source.getCursor()
                 source.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR))
-                self.save(event)
                 self.outer_class.execute()
-                self.close(event)
-            except Exception as ex:
-                print(ex)
-            finally:
                 source.setCursor(prev)
-                
+                self.close(event)
+
+
         def close(self, event):
             """close the UI
 
@@ -600,11 +618,11 @@ class WaterExtractUI:
             self.dispose()
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # tesing #
-    print("Testing")
+    # print("Testing")
     # cui = WaterExtractUI()
-    # cui.set_config_file(r"C:\Users\u4rs9jsg\projects\rts-utils\test_extract.json")
+    # cui.set_config_file(r"")
     # cui.parameters(
     #     {"Host": "develop-water-api.corps.cloud", "Scheme": "https", "Timeout": 120}
     # )
