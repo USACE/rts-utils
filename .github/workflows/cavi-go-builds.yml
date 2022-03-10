@@ -1,12 +1,12 @@
 name: CAVI Go Builds
 
 on:
-  # push:
-  #   paths:
-  #     - "rtsutils/go/**"
-  #   branches:
-  #     - develop
-  #     - stable
+  push:
+    paths:
+      - "rtsutils/go/cavi/**"
+    branches:
+      # - develop
+      - stable
   workflow_dispatch:
 jobs:
   windows-build:
@@ -80,7 +80,7 @@ jobs:
           path: ${{ github.workspace }}/rtsutils/go/linux/
 
   update-repo:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [ubuntu-build, macos-build, windows-build]
     steps:
       - name: Checkout Repo
@@ -103,6 +103,12 @@ jobs:
         with:
           name: dist-ubuntu
           path: ${{ github.workspace }}/rtsutils/go/linux/
+
+      - name: Zip Source
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ${{ github.workspace }}\rtsutils `
+          -DestinationPath ${{ github.workspace }}\dist\${{ github.event.repository.name }}.zip -Force
 
       - name: Commit Changes
         uses: EndBug/add-and-commit@v8

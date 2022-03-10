@@ -1,6 +1,13 @@
 name: Distribution Zip Files
 
 on:
+  push:
+    paths:
+      - "rtsutils/**"
+      - "!rtsutils/go/cavi/**"
+    branches:
+      # - develop
+      - stable
   workflow_dispatch:
 jobs:
   windows-zip:
