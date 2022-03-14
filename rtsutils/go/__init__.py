@@ -28,7 +28,7 @@ if platform.python_implementation() == "Jython":
 CAVI_GO = "{}/{}/{}".format(os.path.dirname(__file__), _PLATFORM_SYS, _BINDING)
 
 
-def get(go_flags=None, out_err=TRUE, is_shell=FALSE):
+def get(go_flags=None, out_err=True, is_shell=False):
     """Method to initiate the Go binding as a subprocess
 
     Parameters
