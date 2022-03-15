@@ -6,7 +6,7 @@ This update script is Jython running in the CAVI env
 import os
 import distutils.dir_util
 from collections import namedtuple
-from rtsutils import go, APPDATA, TRUE, FALSE
+from rtsutils import go, APPDATA
 from rtsutils.cavi.jython import status
 
 from javax.swing import JOptionPane
@@ -35,7 +35,7 @@ def main(cfg):
         "Branch": cfg.branch,
         "Path": cfg.rtsutils_dst,
     }
-    _, std_err = go.get(config, out_err=TRUE, is_shell=FALSE)
+    _, std_err = go.get(config, out_err=True, is_shell=False)
 
     print(std_err)
     if "error" in std_err:
@@ -65,7 +65,7 @@ if __name__ == "__main__":
 #
     Config.user = "USACE"
     Config.repo = "rts-utils"
-    Config.branch = "refactor/rtsutil-package"
+    Config.branch = "stable"
     Config.appdata = APPDATA
     Config.rtsutils_dst = os.path.join(Config.appdata, Config.repo)
 #

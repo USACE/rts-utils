@@ -3,6 +3,7 @@
 import os
 from java.util import TimeZone
 from hec.heclib.util import HecTime
+from hec.script import MessageBox
 
 from rtsutils.cavi.jython.ui import extract
 from rtsutils.cavi.jython import status
@@ -30,7 +31,8 @@ if tw != None:
     st, et = tw
     print("Time window: {}".format(tw))
 else:
-    raise Exception('No forecast open on Modeling tab to get a timewindow.')
+    MessageBox.showError("No forecast open on Modeling tab to get a timewindow.")
+    raise Exception("No forecast open on Modeling tab to get a timewindow.")
 
 # set the start time and convert to UTC
 ws_tz = status.get_timezone()
@@ -50,10 +52,10 @@ params_["After"] = after
 params_["Before"] = before
 
 #
-cui = extract.WaterExtractUI()
-cui.set_config_file(CONFIG)
-cui.parameters(params_)
+cui = extract.Extract()
+cui.extract_configuration(CONFIG)
+cui.go_configuration(params_)
 if HEADLESS:
     cui.execute()
 else:
-    cui.show()
+    cui.invoke()

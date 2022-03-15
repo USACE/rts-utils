@@ -3,6 +3,7 @@
 import os
 from java.util import TimeZone
 from hec.heclib.util import HecTime
+from hec.script import MessageBox
 
 from rtsutils.cavi.jython.ui import cumulus
 from rtsutils.cavi.jython import status
@@ -30,18 +31,19 @@ if tw != None:
     st, et = tw
     print("Time window: {}".format(tw))
 else:
-    raise Exception('No forecast open on Modeling tab to get a timewindow.')
+    MessageBox.showError("No forecast open on Modeling tab to get a timewindow.", "Error")
+    raise Exception("No forecast open on Modeling tab to get a timewindow.")
 
 # set the start time and convert to UTC
 ws_tz = status.get_timezone()
 
 st = HecTime(st, HecTime.MINUTE_GRANULARITY)
 st.showTimeAsBeginningOfDay(True)
-HecTime.convertTimeZone(st, ws_tz, TimeZone.getTimeZone('UTC'))
+HecTime.convertTimeZone(st, ws_tz, TimeZone.getTimeZone("UTC"))
 
 et = HecTime(et, HecTime.MINUTE_GRANULARITY)
 et.showTimeAsBeginningOfDay(True)
-HecTime.convertTimeZone(et, ws_tz, TimeZone.getTimeZone('UTC'))
+HecTime.convertTimeZone(et, ws_tz, TimeZone.getTimeZone("UTC"))
 
 after = "{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z".format(st.year(), st.month(), st.day(), st.hour(), st.minute())
 before = "{}-{:02d}-{:02d}T{:02d}:{:02d}:00Z".format(et.year(), et.month(), et.day(), et.hour(), et.minute())
@@ -50,10 +52,10 @@ params_["After"] = after
 params_["Before"] = before
 
 #
-cui = cumulus.CumulusUI()
-cui.set_config_file(CONFIG)
-cui.parameters(params_)
+cui = cumulus.Cumulus()
+cui.cumulus_configuration(CONFIG)
+cui.go_configuration(params_)
 if HEADLESS:
     cui.execute()
 else:
-    cui.show()
+    cui.invoke()

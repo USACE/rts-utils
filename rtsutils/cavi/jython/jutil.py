@@ -3,11 +3,24 @@
 Java classes used to render dialogs to the user within the
 CAVI environmnet
 """
-import os
-from textwrap import dedent
-from rtsutils import FALSE
 
-from hec.heclib.dss import HecDss
+from collections import namedtuple
+import os
+import tempfile
+from textwrap import dedent
+from rtsutils.usgs import USGS_EXTRACT_CODES
+
+try:
+    from hec.lang import TimeStep
+    from hec.io import TimeSeriesContainer
+    from hec.hecmath import TimeSeriesMath
+    from hec.hecmath.functions import TimeSeriesFunctions
+    from hec.heclib.dss import HecDss
+    from hec.heclib.dss import HecDSSUtilities
+
+except ImportError as ex:
+    print(ex)
+
 from java.io import File
 from java.time import LocalDateTime, ZonedDateTime, ZoneId
 from java.time.format import DateTimeFormatter, DateTimeFormatterBuilder
@@ -15,92 +28,117 @@ from javax.swing import JFileChooser, JFrame, JOptionPane, UIManager
 from javax.swing.filechooser import FileNameExtensionFilter
 
 
-def token():
-    """Provide the user a dialog to add their bearer token
+def put_timeseries(site, dss, apart):
+    """Save timeseries to DSS File
 
-    Return
+    exception handled with a message output saying site not saved, but
+    continues on trying additional site/parameter combinations
+
+    Parameters
+    ----------
+    site: json
+        JSON object containing meta data about the site/parameter combination,
+        time array and value array
+    dss: HecDss DSS file object
+        The open DSS file records are written to
+    Returns
+    -------
+    None
+
+    Raises
     ------
-    string
-        User's input into dialog
+    HEC DSS exception
     """
+    site_parameters = namedtuple("site_parameters", site.keys())(**site)
+    parameter, unit, data_type, version = USGS_EXTRACT_CODES[site_parameters.code]
 
-    msg = """The Bearer Token in your configuration has expired!
-Please enter a new token here.
-"""
-    token_ = JOptionPane.showInputDialog(
-        None,  # dialog parent component
-        dedent(msg),  # message
-        "Bearer Token Input",  # title
-        JOptionPane.WARNING_MESSAGE,
-    )
+    try:
+        times = [
+            HecTime(t, HecTime.MINUTE_GRANULARITY).value() for t in site_parameters.times
+        ]
 
-    return token_
+        timestep_min = None
+        for t_time in range(len(times) - 1):
+            time_step = abs(times[t_time + 1] - times[t_time])
+            if time_step < timestep_min or timestep_min is None:
+                timestep_min = time_step
+        epart = TimeStep().getEPartFromIntervalMinutes(timestep_min)
+        # Set the pathname
+        pathname = "/{0}/{1}/{2}//{3}/{4}/".format(
+            apart, site_parameters.site_number, parameter, epart, version
+        ).upper()
+        apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
 
-
-class LookAndFeel:
-    """Set the look and feel of the UI.  Execute before the objects are created.//n
-    Takes one argument for the name of the look and feel class.
-    """
-
-    def __init__(self, name="Nimbus"):
-        self.name = name
-        for info in UIManager.getInstalledLookAndFeels():
-            if info.getName() == name:
-                UIManager.setLookAndFeel(info.getClassName())
-
-    def __repr__(self):
-        return "{self.__class__.__name__}({self.name})".format(self=self)
-
-
-class TimeFormatter:
-    """Java time formatter/builder dealing with different date time formats"""
-
-    def __init__(self, zid=ZoneId.of("UTC")):
-        self.zid = zid
-        self.form_builder = self.format_builder()
-
-    def __repr__(self):
-        return "{self.__class__.__name__}({self.zid})".format(self=self)
-
-    def format_builder(self):
-        """
-        Return DateTimeFormatter
-
-        Used to define the datetime format allowing for proper parsing.
-        """
-        form_builder = DateTimeFormatterBuilder()
-        form_builder.parseCaseInsensitive()
-        form_builder.appendPattern(
-            "[[d][dd]MMMyyyy[[,][ ][:][Hmm[ss]][H:mm[:ss]][HHmm][HH:mm[:ss]]]]"
-            + "[[d][dd]-[M][MM][MMM]-yyyy[[,] [Hmm[ss]][H:mm[:ss]][HHmm][HH:mm[:ss]]]]"
-            + "[yyyy-[M][MM][MMM]-[d][dd][['T'][ ][Hmm[ss]][H:mm[:ss]][HHmm[ss]][HH:mm[:ss]]]]"
+        container = TimeSeriesContainer()
+        container.fullName = pathname
+        container.location = apart
+        container.parameter = parameter
+        container.type = data_type
+        container.version = version
+        container.interval = timestep_min
+        container.units = unit
+        container.times = times
+        container.values = site_parameters.values
+        container.numberValues = len(site_parameters.times)
+        container.startTime = times[0]
+        container.endTime = times[-1]
+        container.timeZoneID = "UTC"
+        # container.makeAscending()
+        if not TimeSeriesMath.checkTimeSeries(container):
+            return 'site_parameters: "{}" not saved to DSS'.format(
+                site_parameters.site_number
+            )
+        tsc = TimeSeriesFunctions.snapToRegularInterval(
+            container, epart, "0MIN", "0MIN", "0MIN"
         )
-        return form_builder.toFormatter()
 
-    def iso_instant(self):
-        """
-        Return DateTimeFormatter ISO_INSTANT
+        # Put the data to DSS
+        dss.put(tsc)
+    except Exception as ex:
+        print(ex)
+        return "site_parameters: '{}' not saved to DSS".format(
+            site_parameters.site_number
+        )
 
-        Datetime format will be in the form '2020-12-03T10:15:30Z'
-        """
-        return DateTimeFormatter.ISO_INSTANT
 
-    def parse_local_date_time(self, date_time):
-        """
-        Return LocalDateTime
 
-        Input is a java.lang.String parsed to LocalDateTime
-        """
-        return LocalDateTime.parse(date_time, self.form_builder)
+def convert_dss(dss_src, dss_dst):
+    """convert DSS7 from Cumulus to DSS6 on local machine defined by DSS
+    destination
 
-    def parse_zoned_date_time(self, date_time, zone_id):
-        """
-        Return ZonedDateTime
+    Parameters
+    ----------
+    dss_src : string
+        DSS downloaded file location
+    dss_dst : string
+        DSS location, user defined
+    """
+    msg = "Downloaded grid not found"
+    try:
+        if os.path.exists(dss_src):
+            dss7 = HecDSSUtilities()
+            dss7.setDSSFileName(dss_src)
+            dss6_temp = os.path.join(tempfile.gettempdir(), "dss6.dss")
+            result = dss7.convertVersion(dss6_temp)
+            dss6 = HecDSSUtilities()
+            dss6.setDSSFileName(dss6_temp)
+            dss6.copyFile(dss_dst)
+            dss7.close()
+            dss6.close()
 
-        Input is a java.lang.String parsed to LocalDateTime and ZoneId applied.
-        """
-        ldt = self.parse_local_date_time(date_time)
-        return ZonedDateTime.of(ldt, zone_id)
+            print("Try removing tmp DSS files")
+            os.remove(dss_src)
+            os.remove(dss6_temp)
+
+            msg = "Converted '{}' to '{}' (int={})".format(dss_src, dss_dst, result)
+    except NameError as ex:
+        print(ex)
+        quit()
+    except Exception as ex:
+        print(ex)
+
+
+    print(msg)
 
 
 class FileChooser(JFileChooser):
@@ -119,8 +157,8 @@ class FileChooser(JFileChooser):
         self.current_dir = None
         self.title = None
         self.set_dialog_title(self.title)
-        self.set_multi_select(FALSE)
-        self.set_hidden_files(FALSE)
+        self.set_multi_select(False)
+        self.set_hidden_files(False)
         self.set_file_type("dss")
         self.set_filter("HEC-DSS File ('*.dss')", "dss")
 
@@ -249,24 +287,3 @@ class FileChooser(JFileChooser):
         self.output_path = self.getSelectedFile().getPath()
         if not self.output_path.endswith(".dss"):
             self.output_path += ".dss"
-
-
-if __name__ == "__main__":
-    # testing purposes
-    # testing TimeFormatter()
-    # tf = TimeFormatter()
-    # tz = tf.zid
-    # st = tf.parse_zoned_date_time("2022-02-02T12:00:00", tz)
-    # et = tf.parse_zoned_date_time("2022-02-12T12:00:00", tz)
-    # print(st, et)
-
-    # testing FileChooser()
-    fc = FileChooser()
-    fc.title = "Select Output DSS File"
-    fc.set_current_dir(os.getenv("HOME"))
-
-    fc.show()
-    print(type(fc.output_path))
-    # dss = HecDss.open(fc.output_path)
-    # if dss:
-    #     dss.close()
