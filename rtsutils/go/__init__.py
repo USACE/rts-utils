@@ -8,7 +8,7 @@ import os
 import platform
 import sys
 
-from rtsutils import TRUE, FALSE, null
+from rtsutils import null
 
 
 _PLATFORM_SYS = platform.system().lower()

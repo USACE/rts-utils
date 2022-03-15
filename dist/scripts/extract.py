@@ -52,10 +52,10 @@ params_["After"] = after
 params_["Before"] = before
 
 #
-cui = extract.WaterExtractUI()
-cui.set_config_file(CONFIG)
-cui.parameters(params_)
+cui = extract.Extract()
+cui.extract_configuration(CONFIG)
+cui.go_configuration(params_)
 if HEADLESS:
     cui.execute()
 else:
-    cui.show()
+    cui.invoke()

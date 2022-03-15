@@ -8,7 +8,6 @@ from collections import namedtuple
 import os
 import tempfile
 from textwrap import dedent
-from rtsutils import FALSE
 from rtsutils.usgs import USGS_EXTRACT_CODES
 
 try:
@@ -27,28 +26,6 @@ from java.time import LocalDateTime, ZonedDateTime, ZoneId
 from java.time.format import DateTimeFormatter, DateTimeFormatterBuilder
 from javax.swing import JFileChooser, JFrame, JOptionPane, UIManager
 from javax.swing.filechooser import FileNameExtensionFilter
-
-
-def token():
-    """Provide the user a dialog to add their bearer token
-
-    Return
-    ------
-    string
-        User's input into dialog
-    """
-
-    msg = """The Bearer Token in your configuration has expired!
-Please enter a new token here.
-"""
-    token_ = JOptionPane.showInputDialog(
-        None,  # dialog parent component
-        dedent(msg),  # message
-        "Bearer Token Input",  # title
-        JOptionPane.WARNING_MESSAGE,
-    )
-
-    return token_
 
 
 def put_timeseries(site, dss, apart):
@@ -164,72 +141,6 @@ def convert_dss(dss_src, dss_dst):
     print(msg)
 
 
-class LookAndFeel:
-    """Set the look and feel of the UI.  Execute before the objects are created.//n
-    Takes one argument for the name of the look and feel class.
-    """
-
-    def __init__(self, name="Nimbus"):
-        self.name = name
-        for info in UIManager.getInstalledLookAndFeels():
-            if info.getName() == name:
-                UIManager.setLookAndFeel(info.getClassName())
-
-    def __repr__(self):
-        return "{self.__class__.__name__}({self.name})".format(self=self)
-
-
-class TimeFormatter:
-    """Java time formatter/builder dealing with different date time formats"""
-
-    def __init__(self, zid=ZoneId.of("UTC")):
-        self.zid = zid
-        self.form_builder = self.format_builder()
-
-    def __repr__(self):
-        return "{self.__class__.__name__}({self.zid})".format(self=self)
-
-    def format_builder(self):
-        """
-        Return DateTimeFormatter
-
-        Used to define the datetime format allowing for proper parsing.
-        """
-        form_builder = DateTimeFormatterBuilder()
-        form_builder.parseCaseInsensitive()
-        form_builder.appendPattern(
-            "[[d][dd]MMMyyyy[[,][ ][:][Hmm[ss]][H:mm[:ss]][HHmm][HH:mm[:ss]]]]"
-            + "[[d][dd]-[M][MM][MMM]-yyyy[[,] [Hmm[ss]][H:mm[:ss]][HHmm][HH:mm[:ss]]]]"
-            + "[yyyy-[M][MM][MMM]-[d][dd][['T'][ ][Hmm[ss]][H:mm[:ss]][HHmm[ss]][HH:mm[:ss]]]]"
-        )
-        return form_builder.toFormatter()
-
-    def iso_instant(self):
-        """
-        Return DateTimeFormatter ISO_INSTANT
-
-        Datetime format will be in the form '2020-12-03T10:15:30Z'
-        """
-        return DateTimeFormatter.ISO_INSTANT
-
-    def parse_local_date_time(self, date_time):
-        """
-        Return LocalDateTime
-
-        Input is a java.lang.String parsed to LocalDateTime
-        """
-        return LocalDateTime.parse(date_time, self.form_builder)
-
-    def parse_zoned_date_time(self, date_time, zone_id):
-        """
-        Return ZonedDateTime
-
-        Input is a java.lang.String parsed to LocalDateTime and ZoneId applied.
-        """
-        ldt = self.parse_local_date_time(date_time)
-        return ZonedDateTime.of(ldt, zone_id)
-
-
 class FileChooser(JFileChooser):
     """Java Swing JFileChooser allowing for the user to select the dss file
     for output.  Currently, once seleted the result is written to the user's
@@ -246,8 +157,8 @@ class FileChooser(JFileChooser):
         self.current_dir = None
         self.title = None
         self.set_dialog_title(self.title)
-        self.set_multi_select(FALSE)
-        self.set_hidden_files(FALSE)
+        self.set_multi_select(False)
+        self.set_hidden_files(False)
         self.set_file_type("dss")
         self.set_filter("HEC-DSS File ('*.dss')", "dss")
 
@@ -376,24 +287,3 @@ class FileChooser(JFileChooser):
         self.output_path = self.getSelectedFile().getPath()
         if not self.output_path.endswith(".dss"):
             self.output_path += ".dss"
-
-
-if __name__ == "__main__":
-    # testing purposes
-    # testing TimeFormatter()
-    # tf = TimeFormatter()
-    # tz = tf.zid
-    # st = tf.parse_zoned_date_time("2022-02-02T12:00:00", tz)
-    # et = tf.parse_zoned_date_time("2022-02-12T12:00:00", tz)
-    # print(st, et)
-
-    # testing FileChooser()
-    fc = FileChooser()
-    fc.title = "Select Output DSS File"
-    fc.set_current_dir(os.getenv("HOME"))
-
-    fc.show()
-    print(type(fc.output_path))
-    # dss = HecDss.open(fc.output_path)
-    # if dss:
-    #     dss.close()

@@ -1,20 +1,11 @@
 """Java Swing UI for Water API extracting time series
 """
 
-import copy
-import json
 import os
-from collections import OrderedDict, namedtuple
+import json
 from functools import partial
-
-from hec.heclib.dss import HecDss
-from hec.heclib.util import HecTime
-from hec.hecmath import TimeSeriesMath
-from hec.hecmath.functions import TimeSeriesFunctions
-from hec.io import TimeSeriesContainer
-from hec.lang import TimeStep
-from java.awt import Font, Point, Cursor
-from java.lang import Short
+from java.lang import Runnable, Short
+from java.awt import EventQueue, Font, Point, Cursor
 from javax.swing import (
     BorderFactory,
     GroupLayout,
@@ -31,122 +22,39 @@ from javax.swing import (
     ListSelectionModel,
     SwingConstants,
 )
-from rtsutils import FALSE, TRUE, go, null
+from rtsutils import go
 from rtsutils.cavi.jython import jutil
-from rtsutils.usgs import USGS_EXTRACT_CODES
-from rtsutils.utils import EXTRACT_ICON
 from rtsutils.utils.config import DictConfig
+from rtsutils.utils import EXTRACT_ICON, watershed_index, watershed_refactor
 
 
-DSSVERSION = 6
-
-
-def put_ts(site, dss, apart):
-    """Save timeseries to DSS File
-
-    exception handled with a message output saying site not saved, but
-    continues on trying additional site/parameter combinations
-
-    Parameters
-    ----------
-    site: json
-        JSON object containing meta data about the site/parameter combination,
-        time array and value array
-    dss: HecDss DSS file object
-        The open DSS file records are written to
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    HEC DSS exception
-    """
-
-    site_parameters = namedtuple("site_parameters", site.keys())(**site)
-    parameter, unit, data_type, version = USGS_EXTRACT_CODES[site_parameters.code]
-    times = [
-        HecTime(t, HecTime.MINUTE_GRANULARITY).value() for t in site_parameters.times
-    ]
-
-    timestep_min = None
-    for t_time in range(len(times) - 1):
-        time_step = abs(times[t_time + 1] - times[t_time])
-        if time_step < timestep_min or timestep_min is None:
-            timestep_min = time_step
-    epart = TimeStep().getEPartFromIntervalMinutes(timestep_min)
-    # Set the pathname
-    pathname = "/{0}/{1}/{2}//{3}/{4}/".format(
-        apart, site_parameters.site_number, parameter, epart, version
-    ).upper()
-    # apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
-
-    container = TimeSeriesContainer()
-    container.fullName = pathname
-    container.location = apart
-    container.parameter = parameter
-    container.type = data_type
-    container.version = version
-    container.interval = timestep_min
-    container.units = unit
-    container.times = times
-    container.values = site_parameters.values
-    container.numberValues = len(site_parameters.times)
-    container.startTime = times[0]
-    container.endTime = times[-1]
-    container.timeZoneID = "UTC"
-    # container.makeAscending()
-    if not TimeSeriesMath.checkTimeSeries(container):
-        return 'site_parameters: "{}" not saved to DSS'.format(
-            site_parameters.site_number
-        )
-    tsc = TimeSeriesFunctions.snapToRegularInterval(
-        container, epart, "0MIN", "0MIN", "0MIN"
-    )
-    # Put the data to DSS
-    try:
-        dss.put(tsc)
-    except Exception as ex:
-        print(ex)
-        return "site_parameters: '{}' not saved to DSS".format(
-            site_parameters.site_number
-        )
-
-
-class WaterExtractUI:
-    """Java Swing for Water Extract configurations"""
-
-    go_config = {
-        "Scheme": "https",
-        "Subcommand": "get",
-        "StdOut": "true",
-    }
-    config_path = None
+class Extract():
+    config_path = {}
+    go_config = {}
 
     @classmethod
-    def show(cls):
-        """set UI visible true"""
-        cls.user_interface = cls.UI()
-        cls.user_interface.setVisible(TRUE)
+    def invoke(cls):
+        """The invoke classmethod 'runs' the runnable cumulus class
+        """
+        EventQueue.invokeLater(cls.Extract_Runnable())
 
     @classmethod
     def execute(cls):
         """executing the Go binding as a subprocess"""
-
         configurations = DictConfig(cls.config_path).read()
-        go_config = copy.deepcopy(cls.go_config)
 
-        go_config["Subcommand"] = "extract"
-        go_config["Slug"] = configurations["watershed_slug"]
-        go_config["Endpoint"] = "watersheds/{}/extract".format(
-            configurations["watershed_slug"]
-        )
+        cls.go_config.update({
+            "StdOut": "true",
+            "Subcommand": "extract",
+            "Endpoint": "watersheds/{}/extract".format(
+                configurations["watershed_slug"]
+            ),
+        })
 
-        sub = go.get(out_err=FALSE, is_shell=FALSE)
-        sub.stdin.write(json.dumps(go_config))
+        sub = go.get(out_err=False, is_shell=False)
+        sub.stdin.write(json.dumps(cls.go_config))
         sub.stdin.close()
         dsspath = configurations["dss"]
-        dss = HecDss.open(dsspath)
 
         byte_array = bytearray()
         for iter_byte in iter(partial(sub.stdout.read, 1), b""):
@@ -162,26 +70,23 @@ class WaterExtractUI:
                         JOptionPane.ERROR_MESSAGE,
                     )
 
-                msg = put_ts(obj, dss, configurations["apart"])
+                msg = jutil.put_timeseries(obj, dsspath, configurations["apart"])
                 if msg:
                     print(msg)
-
-        if dss:
-            dss.done()
 
         std_err = sub.stderr.read()
         sub.stderr.close()
         sub.stdout.close()
+        print(std_err)
         if "error" in std_err:
-            print(std_err)
             JOptionPane.showMessageDialog(
                 None,
                 std_err.split("::")[-1],
-                "Program Done",
-                JOptionPane.INFORMATION_MESSAGE,
+                "Error",
+                JOptionPane.ERROR_MESSAGE,
             )
+            quit()
 
-        print(std_err)
         JOptionPane.showMessageDialog(
             None,
             "Program Done",
@@ -190,12 +95,12 @@ class WaterExtractUI:
         )
 
     @classmethod
-    def set_config_file(cls, cfg):
-        """Set the cumulus configuration file"""
+    def extract_configuration(cls, cfg):
+        """Set the extract configuration file"""
         cls.config_path = cfg
 
     @classmethod
-    def parameters(cls, dict_):
+    def go_configuration(cls, dict_):
         """update Go parameters
 
         Parameters
@@ -203,247 +108,10 @@ class WaterExtractUI:
         dict_ : dict
             Go parameters to update class defined configurations
         """
-        cls.go_config.update(dict_)
+        cls.go_config = dict_
 
-    class UI(JFrame):
-        """Java Swing JFrame
-
-        Parameters
-        ----------
-        JFrame : Java Swing JFrame
-            JFrame used to define the GUI
-        """
-
-        def __init__(self):
-            super(WaterExtractUI.UI, self).__init__()
-            self.outer_class = WaterExtractUI()
-
-            if self.outer_class.config_path is None:
-                JOptionPane.showMessageDialog(
-                    None,
-                    "No configuration file path provided\n\nExiting program",
-                    "Missing Configuration File",
-                    JOptionPane.ERROR_MESSAGE,
-                )
-
-            self.config_path = self.outer_class.config_path
-            go_config = copy.deepcopy(self.outer_class.go_config)
-
-            self.configurations = DictConfig(self.config_path).read()
-
-            go_config["Endpoint"] = "watersheds"
-            ws_out, stderr = go.get(go_config, out_err=TRUE, is_shell=FALSE)
-            if "error" in stderr:
-                print(stderr)
-                JOptionPane.showMessageDialog(
-                    None,
-                    stderr.split("::")[-1],
-                    "Missing Configuration File",
-                    JOptionPane.ERROR_MESSAGE,
-                )
-
-            self.api_watersheds = self.watershed_refactor(json.loads(ws_out))
-
-            #
-            # ~~~~~~~~~~~~ START OF THE JAVA PANE ~~~~~~~~~~~~
-            #
-            jScrollPane1 = JScrollPane()
-            self.lst_watersheds = JList()
-            lbl_select_file = JLabel()
-            self.txt_select_file = JTextField()
-            btn_select = JButton()
-            btn_execute = JButton()
-            self.cbx_apart = JCheckBox()
-            self.txt_apart = JTextField()
-            btn_save = JButton()
-            btn_close = JButton()
-
-            # self.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            self.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
-            self.setTitle("Extract Time Series Configuration")
-            self.setAlwaysOnTop(FALSE)
-            self.setIconImage(ImageIcon(EXTRACT_ICON).getImage())
-            self.setLocation(Point(10, 10))
-            self.setLocationByPlatform(TRUE)
-            self.setName("WaterExtractUI")
-            self.setResizable(FALSE)
-
-            self.lst_watersheds = JList(
-                sorted(self.api_watersheds.keys()), valueChanged=self.watersheds
-            )
-            self.lst_watersheds.setBorder(
-                BorderFactory.createTitledBorder(
-                    null, "Watersheds", 2, 2, Font("Tahoma", 0, 14)
-                )
-            )
-            self.lst_watersheds.setFont(Font("Tahoma", 0, 14))
-            self.lst_watersheds.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-            jScrollPane1.setViewportView(self.lst_watersheds)
-
-            lbl_select_file.setFont(Font("Tahoma", 0, 14))
-            lbl_select_file.setText("DSS File Downloads")
-
-            self.txt_select_file.setFont(Font("Tahoma", 0, 14))
-            self.txt_select_file.setToolTipText("FQPN to output file (.dss)")
-
-            btn_select.setFont(Font("Tahoma", 0, 14))
-            btn_select.setText("...")
-            btn_select.setToolTipText("Select File...")
-            btn_select.actionPerformed = self.select_file
-
-            btn_execute.setFont(Font("Tahoma", 0, 14))
-            # NOI18N
-            btn_execute.setText("Save and Execute Configuration")
-            btn_execute.setToolTipText("Save and Execute Configuration")
-            btn_execute.setHorizontalTextPosition(SwingConstants.CENTER)
-            btn_execute.actionPerformed = self.execute
-
-            btn_save.setFont(Font("Tahoma", 0, 14))
-            # NOI18N
-            btn_save.setText("Save Configuration")
-            btn_save.setToolTipText("Save Configuration")
-            btn_save.setHorizontalTextPosition(SwingConstants.CENTER)
-            btn_save.actionPerformed = self.save
-
-            btn_close.setFont(Font("Tahoma", 0, 14))
-            btn_close.setText("Close")
-            btn_close.setToolTipText("Close GUI")
-            btn_close.setHorizontalTextPosition(SwingConstants.CENTER)
-            btn_close.actionPerformed = self.close
-
-            self.cbx_apart.setFont(Font("Tahoma", 0, 14))
-            self.cbx_apart.setText("DSS A part")
-            self.cbx_apart.setToolTipText("DSS A part override")
-            self.cbx_apart.actionPerformed = self.check_apart
-
-            self.txt_apart.setEditable(FALSE)
-            self.txt_apart.setFont(Font("Tahoma", 0, 14))
-            self.txt_apart.setToolTipText("DSS A part override")
-
-            # set the checkbox and checkbox input text field
-            try:
-                self.txt_apart.setText(self.configurations["apart"])
-                if (
-                    self.configurations["apart"] != ""
-                    and self.configurations["watershed_slug"]
-                    != self.configurations["apart"]
-                ):
-                    self.cbx_apart.selected = TRUE
-                    self.txt_apart.editable = TRUE
-
-                self.txt_select_file.setText(self.configurations["dss"])
-                idx = self.watershed_index(
-                    self.configurations["watershed_id"], self.api_watersheds
-                )
-                self.lst_watersheds.setSelectedIndex(idx)
-            except KeyError as ex:
-                print("KeyError: missing {}".format(ex))
-
-            layout = GroupLayout(self.getContentPane())
-            self.getContentPane().setLayout(layout)
-            layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
-                    layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(
-                        layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(
-                            layout.createSequentialGroup()
-                            .addGroup(
-                                layout.createParallelGroup(
-                                    GroupLayout.Alignment.LEADING
-                                )
-                                .addGroup(
-                                    layout.createSequentialGroup()
-                                    .addComponent(lbl_select_file)
-                                    .addGap(0, 0, Short.MAX_VALUE)
-                                )
-                                .addComponent(
-                                    self.txt_select_file,
-                                    GroupLayout.PREFERRED_SIZE,
-                                    429,
-                                    GroupLayout.PREFERRED_SIZE,
-                                )
-                            )
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(btn_select)
-                        )
-                        .addComponent(jScrollPane1)
-                        .addGroup(
-                            layout.createSequentialGroup()
-                            .addComponent(self.cbx_apart)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(self.txt_apart)
-                        )
-                        .addGroup(
-                            layout.createSequentialGroup()
-                            .addComponent(btn_execute)
-                            .addGap(18, 18, 18)
-                            .addComponent(btn_save)
-                            .addPreferredGap(
-                                LayoutStyle.ComponentPlacement.RELATED,
-                                GroupLayout.DEFAULT_SIZE,
-                                Short.MAX_VALUE,
-                            )
-                            .addComponent(btn_close)
-                        )
-                    )
-                    .addContainerGap()
-                )
-            )
-            layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
-                    layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(
-                        jScrollPane1,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.DEFAULT_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addGap(18, 18, 18)
-                    .addGroup(
-                        layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(self.cbx_apart)
-                        .addComponent(
-                            self.txt_apart,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.DEFAULT_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                        )
-                    )
-                    .addGap(18, 18, 18)
-                    .addComponent(lbl_select_file)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addGroup(
-                        layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(
-                            self.txt_select_file,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.DEFAULT_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                        )
-                        .addComponent(btn_select)
-                    )
-                    .addPreferredGap(
-                        LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE
-                    )
-                    .addGroup(
-                        layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(btn_execute)
-                        .addComponent(btn_save)
-                        .addComponent(btn_close)
-                    )
-                    .addContainerGap()
-                )
-            )
-
-            self.pack()
-            self.setLocationRelativeTo(None)
-
-        #
-        # ~~~~~~~~~~~~ END OF THE JAVA PANE ~~~~~~~~~~~~
-        #
+    class Extract_Runnable(Runnable):
+        """_summary_"""
 
         def watersheds(self, event):
             """event handler selecting a watershed from the list
@@ -453,59 +121,14 @@ class WaterExtractUI:
             event : ActionEvent
                 component-defined action
             """
-            # index = self.lst_watersheds.selectedIndex
-            if not self.cbx_apart.selected:
-                selected_watershed = self.lst_watersheds.getSelectedValue()
-                self.txt_apart.setText(self.api_watersheds[selected_watershed]["slug"])
+            # index = self.watershed_list.selectedIndex
+            if not self.check_box.selected:
+                selected_watershed = self.watershed_list.getSelectedValue()
+                self.apart.setText(self.api_watersheds[selected_watershed]["slug"])
 
             if not event.getValueIsAdjusting():
                 pass
-                # print(self.api_watersheds[self.lst_watersheds.getSelectedValue()])
-
-        def watershed_refactor(self, json_):
-            """refactor the input list to a dictionary
-
-            Parameters
-            ----------
-            json_ : dict
-                JSON object
-
-            Returns
-            -------
-            OrderedDict
-                ordered dictionary
-            """
-            return OrderedDict(
-                {"{}:{}".format(d["office_symbol"], d["name"]): d for d in json_}
-            )
-
-        def watershed_index(self, ws_id, ws_dict):
-            """define the JList index from selection
-
-            Parameters
-            ----------
-            ws_id : string
-                watershed selected
-            ws_dict : dict
-                dictionary of watersheds
-
-            Returns
-            -------
-            int
-                JList index from selected watershed
-            """
-            try:
-                idx = [
-                    i
-                    for i, k in enumerate(sorted(ws_dict.keys()))
-                    if ws_id == ws_dict[k]["id"]
-                ][0]
-            except IndexError as ex:
-                print(ex)
-                print("setting index to 0")
-                idx = 0
-
-            return idx
+                # print(self.api_watersheds[self.watershed_list.getSelectedValue()])
 
         def check_apart(self, event):
             """check box activating DSS Apart editing
@@ -515,9 +138,9 @@ class WaterExtractUI:
             event : ActionEvent
                 component-defined action
             """
-            self.txt_apart.editable = self.cbx_apart.selected
+            self.apart.editable = self.check_box.selected
 
-        def select_file(self, event):
+        def select(self, event):
             """initiate Java Swing JFileChooser
 
             Parameters
@@ -528,65 +151,13 @@ class WaterExtractUI:
             file_chooser = jutil.FileChooser()
             file_chooser.title = "Select Output DSS File"
             try:
-                _dir = os.path.dirname(self.txt_select_file.getText())
+                _dir = os.path.dirname(self.dsspath.getText())
                 file_chooser.set_current_dir(_dir)
             except TypeError as ex:
                 print(ex)
 
             file_chooser.show()
-            self.txt_select_file.setText(file_chooser.output_path)
-
-        def save(self, event):
-            """save the selected configurations to file
-
-            Parameters
-            ----------
-            event : ActionEvent
-                component-defined action
-            """
-            if self.save_config():
-                source = event.getSource()
-                source.setText("Configuration Saved")
-
-        def save_config(self):
-            """save the selected configurations to file
-            """
-            selected_watershed = self.lst_watersheds.getSelectedValue()
-            apart = self.txt_apart.getText()
-            dssfile = self.txt_select_file.getText()
-
-            if selected_watershed and apart and dssfile:
-                watershed_id = self.api_watersheds[selected_watershed]["id"]
-                watershed_slug = self.api_watersheds[selected_watershed]["slug"]
-
-                # Get, set and save jutil.configurations
-                self.configurations["watershed_id"] = watershed_id
-                self.configurations["watershed_slug"] = watershed_slug
-                self.configurations["apart"] = apart
-                self.configurations["dss"] = dssfile
-                DictConfig(self.config_path).write(self.configurations)
-            else:
-                JOptionPane.showMessageDialog(
-                    None,
-                    "Missing configuration inputs",
-                    "Configuration Inputs",
-                    JOptionPane.INFORMATION_MESSAGE,
-                )
-                return False
-
-            # msg = []
-            # for k, v in sorted(self.configurations.items()):
-            #     v = "\n".join(v) if isinstance(v, list) else v
-            #     msg.append("{}: {}".format(k, v))
-
-            # JOptionPane.showMessageDialog(
-            #     None,
-            #     "\n\n".join(msg),
-            #     "Updated Configuration",
-            #     JOptionPane.INFORMATION_MESSAGE,
-            # )
-
-            return True
+            self.dsspath.setText(file_chooser.output_path)
 
         def execute(self, event):
             """set configurations to execute Go binding
@@ -603,28 +174,251 @@ class WaterExtractUI:
                 source.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR))
                 self.outer_class.execute()
                 source.setCursor(prev)
-                self.close(event)
 
-
-        def close(self, event):
-            """close the UI
+        def save(self, event):
+            """save the selected configurations to file
 
             Parameters
             ----------
             event : ActionEvent
                 component-defined action
             """
-            self.setVisible(FALSE)
+            if self.save_config():
+                source = event.getSource()
+                source.setText("Configuration Saved")
+
+        def save_config(self):
+            """save the selected configurations to file
+            """
+            selected_watershed = self.watershed_list.getSelectedValue()
+            apart = self.apart.getText()
+            dssfile = self.dsspath.getText()
+
+            if selected_watershed and apart and dssfile:
+                watershed_id = self.api_watersheds[selected_watershed]["id"]
+                watershed_slug = self.api_watersheds[selected_watershed]["slug"]
+
+                # Get, set and save jutil.configurations
+                self.configurations["watershed_id"] = watershed_id
+                self.configurations["watershed_slug"] = watershed_slug
+                self.configurations["apart"] = apart
+                self.configurations["dss"] = dssfile
+                DictConfig(self.outer_class.config_path).write(self.configurations)
+            else:
+                JOptionPane.showMessageDialog(
+                    None,
+                    "Missing configuration inputs",
+                    "Configuration Inputs",
+                    JOptionPane.INFORMATION_MESSAGE,
+                )
+                return False
+            return True
+
+        def close(self, event):
+            """Close the dialog
+
+            Parameters
+            ----------
+            event : ActionEvent
+                component-defined action
+            """
             self.dispose()
+        
+        def create_jbutton(self, label, action):
+            """Dynamic JButton creation
+
+            Parameters
+            ----------
+            label : str
+                set text and tooltip
+            action : actionPerformed
+                the action in the class to be performed
+
+            Returns
+            -------
+            JButton
+                java swing JButton
+            """
+            jbutton = self.jbutton = JButton()
+            jbutton.setFont(Font("Tahoma", 0, 14))
+            jbutton.setText(label)
+            jbutton.setToolTipText(label)
+            jbutton.actionPerformed = action
+            jbutton.setHorizontalTextPosition(SwingConstants.CENTER)
+
+            return jbutton
+
+        def create_jlist(self, label, values=None, mode=ListSelectionModel.MULTIPLE_INTERVAL_SELECTION):
+            """Dynamic JList creation
+
+            Parameters
+            ----------
+            label : str
+                set text and tooltip
+            values : OrderedDict, optional
+                ordered dictionary, by default None
+            mode : ListSelectionModel, optional
+                define JList selection method, by default ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+
+            Returns
+            -------
+            JList
+                java swing JList
+            """
+            jlist = self.jlist = JList(sorted(values))
+            jlist.setFont(Font("Tahoma", 0, 14))
+            jlist.setSelectionMode(mode)
+            jlist.setToolTipText(label)
+            jlist.setBorder(
+                BorderFactory.createTitledBorder(
+                    None, label, 2, 2, Font("Tahoma", 0, 14)
+                )
+            )
+            return jlist
+
+        def run(self):
+            """Invloke
+            """
+            self.outer_class = Extract()
+
+            if self.outer_class.config_path is None:
+                JOptionPane.showMessageDialog(
+                    None,
+                    "No configuration file path provided\n\nExiting program",
+                    "Missing Configuration File",
+                    JOptionPane.ERROR_MESSAGE,
+                )
+
+            self.configurations = DictConfig(self.outer_class.config_path).read()
+
+            self.outer_class.go_config["StdOut"] = "true"
+            self.outer_class.go_config["Subcommand"] = "get"
+            self.outer_class.go_config["Endpoint"] = "watersheds"
+
+            ws_out, stderr = go.get(self.outer_class.go_config, out_err=True, is_shell=False)
+
+            if "error" in stderr:
+                print(stderr)
+                JOptionPane.showMessageDialog(
+                    None,
+                    stderr.split("::")[-1],
+                    "Program Error",
+                    JOptionPane.ERROR_MESSAGE,
+                )
+
+            self.api_watersheds = watershed_refactor(json.loads(ws_out))
+
+            frame = JFrame("Extract Time Series Configuration")
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
+            frame.setAlwaysOnTop(False)
+            frame.setIconImage(ImageIcon(EXTRACT_ICON).getImage())
+            frame.setLocation(Point(10, 10))
+            frame.setLocationByPlatform(True)
+            frame.setName("WaterExtractUI")
+            frame.setResizable(True)
+            content_pane = frame.getContentPane()
+
+            # create lists
+            self.watershed_list = self.create_jlist("Watersheds", self.api_watersheds, ListSelectionModel.SINGLE_SELECTION)
+            self.watershed_list.valueChanged = self.watersheds
+            
+            # create buttons
+            select_button = self.create_jbutton("...", self.select)
+            execute_button = self.create_jbutton("Save and Execute Configuration", self.execute)
+            save_button = self.create_jbutton("Save Configuration", self.save)
+            close_button = self.create_jbutton("close", self.close)
+            # create label
+            label = self.label = JLabel()
+            label.setFont(Font("Tahoma", 0, 14))
+            label.setText("DSS File Downloads")
+            # create text field for dsspath
+            dsspath = self.dsspath = JTextField()
+            dsspath.setFont(Font("Tahoma", 0, 14))
+            dsspath.setToolTipText("FQPN to output file (.dss)")
+            # create text field for apart
+            apart = self.apart = JTextField()
+            apart.setEditable(False)
+            apart.setFont(Font("Tahoma", 0, 14))
+            apart.setToolTipText("DSS A part override")
+            # create check box
+            check_box = self.check_box = JCheckBox()
+            check_box.setFont(Font("Tahoma", 0, 14))
+            check_box.setText("DSS A part")
+            check_box.setToolTipText("DSS A part override")
+            check_box.actionPerformed = self.check_apart
+            # create scroll pane
+            jScrollPane1 = JScrollPane()
+            jScrollPane1.setViewportView(self.watershed_list)
+
+            # set the checkbox and checkbox input text field
+            try:
+                apart.setText(self.configurations["apart"])
+                if (
+                    self.configurations["apart"] != ""
+                    and self.configurations["watershed_slug"]
+                    != self.configurations["apart"]
+                ):
+                    check_box.selected = True
+                    apart.editable = True
+
+                self.dsspath.setText(self.configurations["dss"])
+                idx = watershed_index(
+                    self.configurations["watershed_id"], self.api_watersheds
+                )
+                self.watershed_list.setSelectedIndex(idx)
+            except KeyError as ex:
+                print("KeyError: missing {}".format(ex))
+
+            layout = GroupLayout(content_pane)
+            content_pane.setLayout(layout)
+            layout.setHorizontalGroup(
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(jScrollPane1)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(check_box)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(apart))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(label)
+                            .addGap(0, 0, Short.MAX_VALUE))
+                        .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                            .addComponent(dsspath, GroupLayout.DEFAULT_SIZE, 429, Short.MAX_VALUE)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(select_button))
+                        .addGroup(layout.createSequentialGroup()
+                            .addGap(0, 0, Short.MAX_VALUE)
+                            .addComponent(execute_button)
+                            .addGap(18, 18, 18)
+                            .addComponent(save_button)))
+                    .addContainerGap())
+            )
+            layout.setVerticalGroup(
+                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(check_box)
+                        .addComponent(apart, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(label)
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(dsspath, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(select_button))
+                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(execute_button)
+                        .addComponent(save_button))
+                    .addContainerGap())
+            )
+
+            frame.pack()
+            frame.setLocationRelativeTo(None)
 
 
-# if __name__ == "__main__":
-    # tesing #
-    # print("Testing")
-    # cui = WaterExtractUI()
-    # cui.set_config_file(r"")
-    # cui.parameters(
-    #     {"Host": "develop-water-api.corps.cloud", "Scheme": "https", "Timeout": 120}
-    # )
-    # # cui.execute()
-    # cui.show()
+            frame.setVisible(True)
