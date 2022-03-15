@@ -69,7 +69,6 @@ class Extract():
                         "Missing Configuration File",
                         JOptionPane.ERROR_MESSAGE,
                     )
-
                 msg = jutil.put_timeseries(obj, dsspath, configurations["apart"])
                 if msg:
                     print(msg)
@@ -111,7 +110,7 @@ class Extract():
         cls.go_config = dict_
 
     class Extract_Runnable(Runnable):
-        """_summary_"""
+        """java.lang.Runnable class executes run when called"""
 
         def watersheds(self, event):
             """event handler selecting a watershed from the list
