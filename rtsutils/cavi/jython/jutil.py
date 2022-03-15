@@ -7,7 +7,6 @@ CAVI environmnet
 from collections import namedtuple
 import os
 import tempfile
-from textwrap import dedent
 from rtsutils.usgs import USGS_EXTRACT_CODES
 
 try:
@@ -15,20 +14,17 @@ try:
     from hec.io import TimeSeriesContainer
     from hec.hecmath import TimeSeriesMath
     from hec.hecmath.functions import TimeSeriesFunctions
-    from hec.heclib.dss import HecDss
-    from hec.heclib.dss import HecDSSUtilities
-
+    from hec.heclib.dss import HecDss, HecDSSUtilities
+    from hec.heclib.util import HecTime
 except ImportError as ex:
     print(ex)
 
 from java.io import File
-from java.time import LocalDateTime, ZonedDateTime, ZoneId
-from java.time.format import DateTimeFormatter, DateTimeFormatterBuilder
-from javax.swing import JFileChooser, JFrame, JOptionPane, UIManager
+from javax.swing import JFileChooser
 from javax.swing.filechooser import FileNameExtensionFilter
 
 
-def put_timeseries(site, dss, apart):
+def put_timeseries(site, dsspath, apart):
     """Save timeseries to DSS File
 
     exception handled with a message output saying site not saved, but
@@ -39,8 +35,8 @@ def put_timeseries(site, dss, apart):
     site: json
         JSON object containing meta data about the site/parameter combination,
         time array and value array
-    dss: HecDss DSS file object
-        The open DSS file records are written to
+    dsspath: str
+        path to dss file
     Returns
     -------
     None
@@ -52,6 +48,7 @@ def put_timeseries(site, dss, apart):
     site_parameters = namedtuple("site_parameters", site.keys())(**site)
     parameter, unit, data_type, version = USGS_EXTRACT_CODES[site_parameters.code]
 
+    dss = HecDss.open(dsspath)
     try:
         times = [
             HecTime(t, HecTime.MINUTE_GRANULARITY).value() for t in site_parameters.times
