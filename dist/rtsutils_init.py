@@ -55,7 +55,7 @@ def main(cfg):
         if os.path.isdir(sys_path) and (sys_path not in sys.path):
             sys.path.append(sys_path)
         # import methods
-        from rtsutils import go, TRUE, FALSE
+        from rtsutils import go
         from rtsutils.cavi.jython import status
 
         # check the user's CAVI personal configurations
@@ -79,7 +79,7 @@ def main(cfg):
                 "Branch": cfg.branch,
                 "Path": cfg.rtsutils_dst,
             }
-            std_out, std_err = go.get(config, out_err=TRUE, is_shell=FALSE)
+            std_out, std_err = go.get(config, out_err=True, is_shell=False)
             print(std_out)
             print(std_err)
             if "error" in std_err:
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     #
     Config.user = "USACE"
     Config.repo = "rts-utils"
-    Config.branch = "refactor/rtsutil-package"
+    Config.branch = "stable"
     Config.file_path = "dist/rts-utils.zip"
     Config.personal_config = "RTSUTILS-Personal.config"
     Config.cavi_config_name = "CAVI.config"

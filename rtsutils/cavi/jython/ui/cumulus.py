@@ -89,7 +89,7 @@ class Cumulus():
         cls.go_config = dict_
 
     class Cumulus_Runnable(Runnable):
-        """_summary_"""
+        """java.lang.Runnable class executes run when called"""
 
         def select(self, event):
             """initiate Java Swing JFileChooser
