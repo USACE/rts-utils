@@ -62,7 +62,7 @@ def put_timeseries(site, dsspath, apart):
         epart = TimeStep().getEPartFromIntervalMinutes(timestep_min)
         # Set the pathname
         pathname = "/{0}/{1}/{2}//{3}/{4}/".format(
-            apart, site_parameters.site_number, parameter, epart, version
+            apart, site_parameters.name, parameter, epart, "{} ({})".format(version, site_parameters.site_number)
         ).upper()
         apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
 
