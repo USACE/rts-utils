@@ -24,7 +24,7 @@ from javax.swing import JFileChooser
 from javax.swing.filechooser import FileNameExtensionFilter
 
 
-def put_timeseries(site, dsspath, apart):
+def put_timeseries(site, dsspath, apart, bpart):
     """Save timeseries to DSS File
 
     exception handled with a message output saying site not saved, but
@@ -61,10 +61,15 @@ def put_timeseries(site, dsspath, apart):
                 timestep_min = time_step
         epart = TimeStep().getEPartFromIntervalMinutes(timestep_min)
         # Set the pathname
+        if bpart == "Name":
+            bpart = site_parameters.name
+        elif bpart == "Site Number":
+            bpart = site_parameters.site_number
+        
         pathname = "/{0}/{1}/{2}//{3}/{4}/".format(
-            apart, site_parameters.name, parameter, epart, "{} ({})".format(version, site_parameters.site_number)
+            apart, bpart, parameter, epart, version
         ).upper()
-        apart, bpart, cpart, _, _, fpart = pathname.split('/')[1:-1]
+        # apart, bpart, _, _, _, _ = pathname.split('/')[1:-1]
 
         container = TimeSeriesContainer()
         container.fullName = pathname
