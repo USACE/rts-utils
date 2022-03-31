@@ -27,6 +27,7 @@ public class Extract extends javax.swing.JFrame {
     private void initComponents() {
 
         jFileChooser1 = new javax.swing.JFileChooser();
+        buttonGroup = new javax.swing.ButtonGroup();
         jScrollPane1 = new javax.swing.JScrollPane();
         watershed_list = new javax.swing.JList();
         label = new javax.swing.JLabel();
@@ -36,6 +37,9 @@ public class Extract extends javax.swing.JFrame {
         check_box = new javax.swing.JCheckBox();
         apart = new javax.swing.JTextField();
         save_button = new javax.swing.JButton();
+        name_radio_button = new javax.swing.JRadioButton();
+        label1 = new javax.swing.JLabel();
+        site_num_radio_button = new javax.swing.JRadioButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Extract Time Series Configuration");
@@ -80,6 +84,18 @@ public class Extract extends javax.swing.JFrame {
         save_button.setToolTipText("Save Configuration");
         save_button.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
+        buttonGroup.add(name_radio_button);
+        name_radio_button.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        name_radio_button.setSelected(true);
+        name_radio_button.setLabel("name");
+
+        label1.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        label1.setText("DSS B part");
+
+        buttonGroup.add(site_num_radio_button);
+        site_num_radio_button.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        site_num_radio_button.setText("Site Number");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -87,41 +103,53 @@ public class Extract extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 92, Short.MAX_VALUE)
+                        .addComponent(execute_button)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(save_button))
                     .addComponent(jScrollPane1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(check_box)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(apart))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(label)
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(dsspath, javax.swing.GroupLayout.DEFAULT_SIZE, 429, Short.MAX_VALUE)
+                        .addComponent(dsspath)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(select_button))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(execute_button)
-                        .addGap(18, 18, 18)
-                        .addComponent(save_button)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(label)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(label1)
+                                .addGap(27, 27, 27)
+                                .addComponent(name_radio_button)
+                                .addGap(43, 43, 43)
+                                .addComponent(site_num_radio_button)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(check_box)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(apart)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 163, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(check_box)
                     .addComponent(apart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(label1)
+                    .addComponent(name_radio_button)
+                    .addComponent(site_num_radio_button))
+                .addGap(18, 18, 18)
                 .addComponent(label)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(dsspath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(select_button))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(execute_button)
                     .addComponent(save_button))
@@ -168,14 +196,18 @@ public class Extract extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField apart;
+    private javax.swing.ButtonGroup buttonGroup;
     private javax.swing.JCheckBox check_box;
     private javax.swing.JTextField dsspath;
     private javax.swing.JButton execute_button;
     private javax.swing.JFileChooser jFileChooser1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel label;
+    private javax.swing.JLabel label1;
+    private javax.swing.JRadioButton name_radio_button;
     private javax.swing.JButton save_button;
     private javax.swing.JButton select_button;
+    private javax.swing.JRadioButton site_num_radio_button;
     private javax.swing.JList watershed_list;
     // End of variables declaration//GEN-END:variables
 }

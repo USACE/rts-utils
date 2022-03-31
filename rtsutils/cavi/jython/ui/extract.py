@@ -8,6 +8,7 @@ from java.lang import Runnable, Short
 from java.awt import EventQueue, Font, Point, Cursor
 from javax.swing import (
     BorderFactory,
+    ButtonGroup,
     GroupLayout,
     ImageIcon,
     JButton,
@@ -18,6 +19,7 @@ from javax.swing import (
     JOptionPane,
     JScrollPane,
     JTextField,
+    JRadioButton,
     LayoutStyle,
     ListSelectionModel,
     SwingConstants,
@@ -69,7 +71,7 @@ class Extract():
                         "Missing Configuration File",
                         JOptionPane.ERROR_MESSAGE,
                     )
-                msg = jutil.put_timeseries(obj, dsspath, configurations["apart"])
+                msg = jutil.put_timeseries(obj, dsspath, configurations["apart"], configurations["bpart"])
                 if msg:
                     print(msg)
 
@@ -128,6 +130,11 @@ class Extract():
             if not event.getValueIsAdjusting():
                 pass
                 # print(self.api_watersheds[self.watershed_list.getSelectedValue()])
+
+        def toggle(self, event):
+            for element in self.button_group.elements:
+                if element.selected:
+                    print("Selected: {}".format(element.getText()))
 
         def check_apart(self, event):
             """check box activating DSS Apart editing
@@ -193,6 +200,10 @@ class Extract():
             apart = self.apart.getText()
             dssfile = self.dsspath.getText()
 
+            for element in self.button_group.elements:
+                if element.selected:
+                    self.configurations["bpart"] = element.getLabel()
+
             if selected_watershed and apart and dssfile:
                 watershed_id = self.api_watersheds[selected_watershed]["id"]
                 watershed_slug = self.api_watersheds[selected_watershed]["slug"]
@@ -213,16 +224,14 @@ class Extract():
                 return False
             return True
 
-        def close(self, event):
-            """Close the dialog
+        def create_jradio(self, label, action, selected=False):
+            rbutton = JRadioButton()
+            rbutton.setText(label)
+            rbutton.itemStateChanged = action
+            rbutton.setSelected(selected)
 
-            Parameters
-            ----------
-            event : ActionEvent
-                component-defined action
-            """
-            self.dispose()
-        
+            return rbutton
+
         def create_jbutton(self, label, action):
             """Dynamic JButton creation
 
@@ -320,16 +329,20 @@ class Extract():
             # create lists
             self.watershed_list = self.create_jlist("Watersheds", self.api_watersheds, ListSelectionModel.SINGLE_SELECTION)
             self.watershed_list.valueChanged = self.watersheds
-            
+
             # create buttons
             select_button = self.create_jbutton("...", self.select)
             execute_button = self.create_jbutton("Save and Execute Configuration", self.execute)
             save_button = self.create_jbutton("Save Configuration", self.save)
-            close_button = self.create_jbutton("close", self.close)
+
             # create label
             label = self.label = JLabel()
             label.setFont(Font("Tahoma", 0, 14))
             label.setText("DSS File Downloads")
+            label1 = self.label1 = JLabel()
+            label1.setFont(Font("Tahoma", 0, 14))
+            label1.setText("DSS B part")
+
             # create text field for dsspath
             dsspath = self.dsspath = JTextField()
             dsspath.setFont(Font("Tahoma", 0, 14))
@@ -345,6 +358,14 @@ class Extract():
             check_box.setText("DSS A part")
             check_box.setToolTipText("DSS A part override")
             check_box.actionPerformed = self.check_apart
+
+            # create radio buttons
+            button_group = self.button_group = ButtonGroup()
+            name_radio_button = self.create_jradio("Name", self.toggle, True)
+            site_num_radio_button = self.create_jradio("Site Number", self.toggle)
+            button_group.add(name_radio_button)
+            button_group.add(site_num_radio_button)
+
             # create scroll pane
             jScrollPane1 = JScrollPane()
             jScrollPane1.setViewportView(self.watershed_list)
@@ -365,6 +386,9 @@ class Extract():
                     self.configurations["watershed_id"], self.api_watersheds
                 )
                 self.watershed_list.setSelectedIndex(idx)
+                for element in self.button_group.elements:
+                    if self.configurations["bpart"] == element.getText():
+                        element.selected = True
             except KeyError as ex:
                 print("KeyError: missing {}".format(ex))
 
@@ -375,41 +399,53 @@ class Extract():
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                            .addGap(0, 92, Short.MAX_VALUE)
+                            .addComponent(execute_button)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(save_button))
                         .addComponent(jScrollPane1)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(check_box)
-                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(apart))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(label)
-                            .addGap(0, 0, Short.MAX_VALUE))
                         .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                            .addComponent(dsspath, GroupLayout.DEFAULT_SIZE, 429, Short.MAX_VALUE)
+                            .addComponent(dsspath)
                             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(select_button))
                         .addGroup(layout.createSequentialGroup()
-                            .addGap(0, 0, Short.MAX_VALUE)
-                            .addComponent(execute_button)
-                            .addGap(18, 18, 18)
-                            .addComponent(save_button)))
+                            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                .addComponent(label)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(label1)
+                                    .addGap(27, 27, 27)
+                                    .addComponent(name_radio_button)
+                                    .addGap(43, 43, 43)
+                                    .addComponent(site_num_radio_button)))
+                            .addGap(0, 0, Short.MAX_VALUE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(check_box)
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(apart)))
                     .addContainerGap())
             )
             layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 163, Short.MAX_VALUE)
+                    .addGap(18, 18, 18)
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(check_box)
                         .addComponent(apart, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGap(18, 18, 18)
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(label1)
+                        .addComponent(name_radio_button)
+                        .addComponent(site_num_radio_button))
+                    .addGap(18, 18, 18)
                     .addComponent(label)
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGap(18, 18, 18)
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(dsspath, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addComponent(select_button))
-                    .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                    .addGap(18, 18, 18)
                     .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(execute_button)
                         .addComponent(save_button))
