@@ -14,7 +14,7 @@ HEADLESS = False
 
 # set some initial parameters
 params_ = {
-    "Host": "develop-cumulus-api.corps.cloud",
+    "Host": "cumulus-api.corps.cloud",
     "Scheme": "https",
     "Timeout": 150  # default is 300
 }
