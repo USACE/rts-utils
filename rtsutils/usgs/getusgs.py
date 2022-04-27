@@ -1333,4 +1333,3 @@ if outputLevel > NONE :
 	m = (elapsed - 3600 * h) / 60
 	s = elapsed % 60
 	log.output("\n=== getUSGS version %s (%s) was alive for %2.2d:%2.2d:%2.2d ===" % (programVersion, programDate, h, m, s))
-System.exit(0)
