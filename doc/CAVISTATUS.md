@@ -15,6 +15,7 @@
 | get_selected_forecast()  | hec2.rts.model.Forecast      | Return the selected forecast object                                                       |
 | get_extract_timewindow() | String[]                     | Get the selected forecast and return its timewindow as a tuple of start time and end time |
 | get_forecast_dss()       | String                       | Get the selected forecast and return the forecast.dss path                                |
+| get_shared_directory()   | String                       | Get the open watershed and return its project's shared directory                          |
 
 ---
 
