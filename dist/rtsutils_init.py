@@ -55,42 +55,48 @@ def main(cfg):
         if os.path.isdir(sys_path) and (sys_path not in sys.path):
             sys.path.append(sys_path)
         # import methods
-        from rtsutils import go, utils
+        from rtsutils import go
         from rtsutils.cavi.jython import status
 
         # check the user's CAVI personal configurations
         for config_name in cfg.cavi_config_name:
             cavi_config_path = os.path.join(status.get_working_dir(), config_name)
-            with utils.open_w_error(cavi_config_path, "r") as (fh, err):
-                if cfg.personal_config not in fh.read() and err is not None:
-                    with open(cavi_config_path, "a") as append_cfg:
-                        append_cfg.write(
-                            "include $APPDATA\\{}\\{}".format(cfg.repo, cfg.personal_config)
-                        )
-                        append_cfg.write("\n\n# Here is the space after the last line\n\n")
-                else:
-                    raise Exception(err)
+            try:
+                with open(cavi_config_path, "r") as fh:
+                    if cfg.personal_config not in fh.read():
+                        with open(cavi_config_path, "a") as append_cfg:
+                            append_cfg.write(
+                                "include $APPDATA\\{}\\{}".format(cfg.repo, cfg.personal_config)
+                            )
+                            append_cfg.write("\n\n# Here is the space after the last line\n\n")
 
-                # use go.get() to clone/update the repo on the user's pc
-                config = {
-                    "Host": "github.com",
-                    "Scheme": "https",
-                    "Subcommand": "git",
-                    "Endpoint": cfg.user + "/" + cfg.repo,
-                    "Branch": cfg.branch,
-                    "Path": cfg.rtsutils_dst,
-                }
-                std_out, std_err = go.get(config, out_err=True, is_shell=False)
-                print(std_out)
-                print(std_err)
-                if "error" in std_err:
-                    JOptionPane.showMessageDialog(
-                        None,
-                        std_err,
-                        "Program Error",
-                        JOptionPane.ERROR_MESSAGE,
-                    )
-                    raise Exception(std_err)
+                    # use go.get() to clone/update the repo on the user's pc
+                    config = {
+                        "Host": "github.com",
+                        "Scheme": "https",
+                        "Subcommand": "git",
+                        "Endpoint": cfg.user + "/" + cfg.repo,
+                        "Branch": cfg.branch,
+                        "Path": cfg.rtsutils_dst,
+                    }
+                    std_out, std_err = go.get(config, out_err=True, is_shell=False)
+                    print(std_out)
+                    print(std_err)
+                    if "error" in std_err:
+                        JOptionPane.showMessageDialog(
+                            None,
+                            std_err,
+                            "Program Error",
+                            JOptionPane.ERROR_MESSAGE,
+                        )
+                        raise Exception(std_err)
+            except Exception as ex:
+                JOptionPane.showMessageDialog(
+                    None,
+                    "{}".format(ex),
+                    "Exception",
+                    JOptionPane.ERROR_MESSAGE,
+                )
         #
         # copy all scripts from dist/scripts
         update_src = os.path.join(cfg.rtsutils_dst, "dist", "scripts")
@@ -109,7 +115,13 @@ def main(cfg):
         )
 
     except ImportError as ex:
-        print(ex)
+        JOptionPane.showMessageDialog(
+            None,
+            ex,
+            "ImportError",
+            JOptionPane.ERROR_MESSAGE,
+        )
+
 
 
 if __name__ == "__main__":

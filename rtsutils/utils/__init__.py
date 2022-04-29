@@ -2,7 +2,6 @@
 """
 
 from collections import OrderedDict
-from contextlib import contextmanager
 import os
 
 UTILS_PATH = os.path.join(os.path.dirname(__file__))
@@ -97,17 +96,4 @@ def product_index(prod_select, prod_dict):
         if prod_dict[k]["id"] in prod_select
     ]
     return idxs
-
-
-@contextmanager
-def open_w_error(filename, mode="r"):
-    try:
-        f = open(filename, mode)
-    except IOError as err:
-        yield None, err
-    else:
-        try:
-            yield f, None
-        finally:
-            f.close()
 
