@@ -29,6 +29,9 @@ func goGitPull(r *git.Repository, po *git.PullOptions) error {
 		return err
 	}
 
+	// reset hard before trying a pull
+	w.Reset(&git.ResetOptions{Mode: git.HardReset})
+
 	if err = w.Pull(po); err != nil {
 		return err
 	}
