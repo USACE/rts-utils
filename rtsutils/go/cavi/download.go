@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,7 +29,7 @@ type updateStatus struct {
 }
 
 func (us *updateStatus) getStatus(u string) {
-	b, err := getResponseBody(u)
+	b, err := getResponseBody(u, false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,11 +94,15 @@ func getResponse(u string) (*http.Response, error) {
 
 }
 
-func getResponseBody(u string) ([]byte, error) {
+func getResponseBody(u string, tb bool) ([]byte, error) {
 	// Make a new request and get the response
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: tb},
+	}
 	timeout := time.Duration(time.Second * 10)
 	client := http.Client{
-		Timeout: timeout,
+		Timeout:   timeout,
+		Transport: tr,
 	}
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
