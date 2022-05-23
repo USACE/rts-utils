@@ -3,10 +3,11 @@
 This setup script is specific to CWMS on Windows
 """
 #
+import distutils.dir_util
 import os
 import sys
 import urllib2
-import distutils.dir_util
+
 from io import BytesIO
 from zipfile import ZipFile
 from collections import namedtuple
@@ -36,7 +37,6 @@ def extract_zip(src, dst):
     with ZipFile(bytes_io, "r") as zip_ref:
         zip_ref.extractall(dst)
 
-
 def main(cfg):
     """Initial setup rtsutils
 
@@ -59,37 +59,44 @@ def main(cfg):
         from rtsutils.cavi.jython import status
 
         # check the user's CAVI personal configurations
-        cavi_config_path = os.path.join(status.get_working_dir(), cfg.cavi_config_name)
-        with open(cavi_config_path, "r") as fc:
-            if cfg.personal_config not in fc.read():
-                with open(cavi_config_path, "a") as append_cfg:
-                    append_cfg.write(
-                        r"include $APPDATA\{}\{}".format(cfg.repo, cfg.personal_config)
-                    )
-                    append_cfg.write("\n\n# Here is the space after the last line\n\n")
-            else:
-                print("{} already in CAVI.config".format(cfg.personal_config))
+        for config_name in cfg.cavi_config_name:
+            cavi_config_path = os.path.join(status.get_working_dir(), config_name)
+            try:
+                with open(cavi_config_path, "r") as fh:
+                    if cfg.personal_config not in fh.read():
+                        with open(cavi_config_path, "a") as append_cfg:
+                            append_cfg.write(
+                                "include $APPDATA\\{}\\{}".format(cfg.repo, cfg.personal_config)
+                            )
+                            append_cfg.write("\n\n# Here is the space after the last line\n\n")
 
-            # use go.get() to clone/update the repo on the user's pc
-            config = {
-                "Host": "github.com",
-                "Scheme": "https",
-                "Subcommand": "git",
-                "Endpoint": cfg.user + "/" + cfg.repo,
-                "Branch": cfg.branch,
-                "Path": cfg.rtsutils_dst,
-            }
-            std_out, std_err = go.get(config, out_err=True, is_shell=False)
-            print(std_out)
-            print(std_err)
-            if "error" in std_err:
+                    # use go.get() to clone/update the repo on the user's pc
+                    config = {
+                        "Host": "github.com",
+                        "Scheme": "https",
+                        "Subcommand": "git",
+                        "Endpoint": cfg.user + "/" + cfg.repo,
+                        "Branch": cfg.branch,
+                        "Path": cfg.rtsutils_dst,
+                    }
+                    std_out, std_err = go.get(config, out_err=True, is_shell=False)
+                    print(std_out)
+                    print(std_err)
+                    if "error" in std_err:
+                        JOptionPane.showMessageDialog(
+                            None,
+                            std_err,
+                            "Program Error",
+                            JOptionPane.ERROR_MESSAGE,
+                        )
+                        raise Exception(std_err)
+            except Exception as ex:
                 JOptionPane.showMessageDialog(
                     None,
-                    std_err,
-                    "Program Error",
+                    "{}".format(ex),
+                    "Exception",
                     JOptionPane.ERROR_MESSAGE,
                 )
-                raise Exception(std_err)
         #
         # copy all scripts from dist/scripts
         update_src = os.path.join(cfg.rtsutils_dst, "dist", "scripts")
@@ -108,7 +115,13 @@ def main(cfg):
         )
 
     except ImportError as ex:
-        print(ex)
+        JOptionPane.showMessageDialog(
+            None,
+            ex,
+            "ImportError",
+            JOptionPane.ERROR_MESSAGE,
+        )
+
 
 
 if __name__ == "__main__":
@@ -121,7 +134,7 @@ if __name__ == "__main__":
     Config.branch = "stable"
     Config.file_path = "dist/rts-utils.zip"
     Config.personal_config = "RTSUTILS-Personal.config"
-    Config.cavi_config_name = "CAVI.config"
+    Config.cavi_config_name = ["CAVI.config", "HEC-RTS.config"]
     Config.appdata = os.getenv("APPDATA")
     Config.rtsutils_dst = os.path.join(Config.appdata, Config.repo)
     Config.personal_config_path = os.path.join(
