@@ -20,7 +20,7 @@ usage: %s
 
 Options:
 `
-	authserver = "http://localhost:50123"
+	authserver = "https://localhost:50123"
 )
 
 type flagOptions struct {
@@ -104,10 +104,11 @@ func main() {
 		}
 
 		// get auth token
-		auth, err := getResponseBody(authserver)
+		auth, err := getAuth(authserver)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error::%s\n", err)
 		}
+		fmt.Printf("Auth: %s", auth)
 		co.Auth = string(auth)
 
 		url.Path = co.Endpoint
