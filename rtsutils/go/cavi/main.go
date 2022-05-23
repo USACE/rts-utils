@@ -104,7 +104,7 @@ func main() {
 		}
 
 		// get auth token
-		auth, err := getResponseBody(authserver, true)
+		auth, err := getAuth(authserver)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error::%s\n", err)
 		}
@@ -148,7 +148,7 @@ func main() {
 		}
 		log.Println("Initiating 'endpoint' command")
 		url.Path = co.Endpoint
-		b, err := getResponseBody(url.String(), false)
+		b, err := getResponseBody(url.String())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error::%s\n", err)
 		}

@@ -29,7 +29,7 @@ type updateStatus struct {
 }
 
 func (us *updateStatus) getStatus(u string) {
-	b, err := getResponseBody(u, false)
+	b, err := getResponseBody(u)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -94,11 +94,39 @@ func getResponse(u string) (*http.Response, error) {
 
 }
 
-func getResponseBody(u string, tb bool) ([]byte, error) {
-	// Make a new request and get the response
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: tb},
+func getResponseBody(u string) ([]byte, error) {
+	timeout := time.Duration(time.Second * 10)
+	client := http.Client{
+		Timeout: timeout,
 	}
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if sc := resp.StatusCode; sc != 200 {
+		return nil, fmt.Errorf("response status code %d", sc)
+	}
+
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+func getAuth(u string) ([]byte, error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
 	timeout := time.Duration(time.Second * 10)
 	client := http.Client{
 		Timeout:   timeout,
