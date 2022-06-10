@@ -44,7 +44,7 @@ class Cumulus():
         cls.go_config.update({
             "StdOut": "true",
             "Subcommand": "grid",
-            "Endpoint": "downloads",
+            # "Endpoint": "downloads",
             "ID": configurations["watershed_id"],
             "Products": configurations["product_ids"],
         })

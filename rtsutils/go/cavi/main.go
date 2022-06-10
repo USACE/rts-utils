@@ -106,10 +106,11 @@ func main() {
 		// get auth token
 		auth, err := getAuth(authserver)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error::%s\n", err)
+			fmt.Printf("error::%s\n", err)
+		} else {
+			fmt.Printf("Auth: %s", auth)
+			co.Auth = string(auth)
 		}
-		fmt.Printf("Auth: %s", auth)
-		co.Auth = string(auth)
 
 		url.Path = co.Endpoint
 
@@ -162,7 +163,7 @@ func (co *flagOptions) addFlagOptions() {
 	// t2.Truncate(24 * time.Hour)
 	t1 := t2.AddDate(0, 0, -7)
 
-	flag.StringVar(&co.Scheme, "id", "", "UUID")
+	flag.StringVar(&co.ID, "id", "", "UUID")
 	flag.StringVar(&co.Scheme, "scheme", "https", "URL scheme; default=https")
 	flag.StringVar(&co.Host, "host", "localhost", "URL host; default=localhost")
 	flag.StringVar(&co.Auth, "auth", "", "Authorization Token")

@@ -20,7 +20,7 @@ func grid(url url.URL, p payload, t int, tk string) (string, error) {
 		log.Printf("Payload: %+v", p)
 	}
 
-	url.Path = url.Path + "/" + us.ID
+	url.Path = "downloads/" + us.ID
 
 	log.Println("Endpoint/ID: " + url.Path)
 	timeout := time.Duration(int(time.Second) * int(t))

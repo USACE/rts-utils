@@ -16,6 +16,7 @@ HEADLESS = False
 params_ = {
     "Host": "cumulus-api.corps.cloud",
     "Scheme": "https",
+    "Endpoint": "deprecated/anonymous_downloads",
     "Timeout": 150  # default is 300
 }
 
