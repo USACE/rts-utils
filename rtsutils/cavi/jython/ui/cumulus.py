@@ -261,8 +261,8 @@ class Cumulus():
                     JOptionPane.ERROR_MESSAGE,
                 )
 
-            self.api_watersheds = watershed_refactor(json.loads(ws_out))
-            self.api_products = product_refactor(json.loads(ps_out))
+            self.api_watersheds = watershed_refactor(json.loads(ws_out)) if ws_out else {}
+            self.api_products = product_refactor(json.loads(ps_out)) if ps_out else {}
 
             frame = JFrame("Cumulus Configuration")
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
