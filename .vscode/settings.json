@@ -3,5 +3,6 @@
     "python.linting.enabled": true,
     "python.analysis.extraPaths": [
         "${workspaceRoot}/"
-    ]
+    ],
+    "python.formatting.provider": "autopep8"
 }
