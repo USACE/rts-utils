@@ -6,7 +6,7 @@ on:
       - "rtsutils/go/cavi/**"
     branches:
       # - develop
-      - stable
+      # - stable
   workflow_dispatch:
 jobs:
   windows-build:
@@ -32,52 +32,6 @@ jobs:
         with:
           name: dist-windows
           path: ${{ github.workspace }}\rtsutils\go\windows\
-
-  macos-build:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
-
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.17
-
-      - name: Build Go on macOS
-        run: |
-          cd ${{ github.workspace }}/rtsutils/go/cavi
-          go build -o ../darwin/cavi .
-          cd ${{ github.workspace }}
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: dist-macos
-          path: ${{ github.workspace }}/rtsutils/go/darwin/
-
-  ubuntu-build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
-
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.17
-
-      - name: Build Go on Ubuntu
-        run: |
-          cd ${{ github.workspace }}/rtsutils/go/cavi
-          go build -o ../linux/cavi .
-          cd ${{ github.workspace }}
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: dist-ubuntu
-          path: ${{ github.workspace }}/rtsutils/go/linux/
 
   update-repo:
     runs-on: windows-latest
