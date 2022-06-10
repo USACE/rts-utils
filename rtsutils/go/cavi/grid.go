@@ -8,25 +8,28 @@ import (
 	"github.com/pkg/errors"
 )
 
-func grid(url url.URL, p payload, t int, tk string) (string, error) {
+func grid(url url.URL, p payload, t int) (string, error) {
+	// func grid(url url.URL, p payload, t int, tk string) (string, error) {
 
 	var dssfilepath string
 
 	var us updateStatus
-	if err := us.postPayload(url.String(), p, tk); err != nil {
+	if err := us.postPayload(url.String(), p); err != nil {
 		return dssfilepath, err
 	} else {
 		log.Println("Download ID:", us.ID)
 		log.Printf("Payload: %+v", p)
 	}
 
-	url.Path = url.Path + "/" + us.ID
+	downloadUrl := url
+	downloadUrl.Path = "downloads" + "/" + us.ID
+	// url.Path = url.Path + "/" + us.ID
 
 	log.Println("Endpoint/ID: " + url.Path)
 	timeout := time.Duration(int(time.Second) * int(t))
 	var fn filename
 	for start := time.Now(); time.Since(start) < timeout; {
-		us.getStatus(url.String())
+		us.getStatus(downloadUrl.String())
 		if us.Status == "FAILED" {
 			return "", errors.New("Status: FAILED")
 		}

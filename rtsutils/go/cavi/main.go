@@ -20,7 +20,7 @@ usage: %s
 
 Options:
 `
-	authserver = "https://localhost:50123"
+	// authserver = "https://localhost:50123"
 )
 
 type flagOptions struct {
@@ -104,12 +104,13 @@ func main() {
 		}
 
 		// get auth token
-		auth, err := getAuth(authserver)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error::%s\n", err)
-		}
-		fmt.Printf("Auth: %s", auth)
-		co.Auth = string(auth)
+		// auth, err := getAuth(authserver)
+		// if err != nil {
+		// 	log.Printf("error::Auth server not running")
+		// } else {
+		// 	log.Printf("Auth: authenticated")
+		// 	co.Auth = string(auth)
+		// }
 
 		url.Path = co.Endpoint
 
@@ -119,7 +120,9 @@ func main() {
 			WatershedID: co.ID,
 			ProductID:   co.Products,
 		}
-		dss, err := grid(url, p, int(co.Timeout), co.Auth)
+		log.Printf("%s", p)
+		log.Printf("%s", url.String())
+		dss, err := grid(url, p, int(co.Timeout))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error::%s\n", err)
 			os.Exit(1)
@@ -162,7 +165,7 @@ func (co *flagOptions) addFlagOptions() {
 	// t2.Truncate(24 * time.Hour)
 	t1 := t2.AddDate(0, 0, -7)
 
-	flag.StringVar(&co.Scheme, "id", "", "UUID")
+	flag.StringVar(&co.ID, "id", "", "UUID")
 	flag.StringVar(&co.Scheme, "scheme", "https", "URL scheme; default=https")
 	flag.StringVar(&co.Host, "host", "localhost", "URL host; default=localhost")
 	flag.StringVar(&co.Auth, "auth", "", "Authorization Token")
