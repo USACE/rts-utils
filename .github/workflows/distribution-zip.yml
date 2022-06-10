@@ -15,12 +15,6 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
-      - name: Zip Source
-        shell: pwsh
-        run: |
-          Compress-Archive -Path ${{ github.workspace }}\rtsutils `
-          -DestinationPath ${{ github.workspace }}\dist\${{ github.event.repository.name }}.zip -Force
-
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
@@ -32,6 +26,12 @@ jobs:
           Set-Location ${{ github.workspace }}\rtsutils\go\cavi
           go build -o ..\windows\cavi.exe .
           Set-Location ${{ github.workspace }}
+
+      - name: Zip Source
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ${{ github.workspace }}\rtsutils `
+          -DestinationPath ${{ github.workspace }}\dist\${{ github.event.repository.name }}.zip -Force
 
       - name: Commit Changes
         uses: EndBug/add-and-commit@v8
