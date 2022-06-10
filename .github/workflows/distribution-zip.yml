@@ -4,7 +4,6 @@ on:
   push:
     paths:
       - "rtsutils/**"
-      - "!rtsutils/go/cavi/**"
     branches:
       # - develop
       - stable
@@ -15,6 +14,18 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Build Go on Windows
+        shell: pwsh
+        run: |
+          Set-Location ${{ github.workspace }}\rtsutils\go\cavi
+          go build -o ..\windows\cavi.exe .
+          Set-Location ${{ github.workspace }}
 
       - name: Zip Source
         shell: pwsh
