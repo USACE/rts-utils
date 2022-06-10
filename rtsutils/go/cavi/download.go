@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -122,38 +121,38 @@ func getResponseBody(u string) ([]byte, error) {
 	return b, nil
 }
 
-func getAuth(u string) ([]byte, error) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
+// func getAuth(u string) ([]byte, error) {
+// 	tr := &http.Transport{
+// 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+// 	}
 
-	timeout := time.Duration(time.Second * 10)
-	client := http.Client{
-		Timeout:   timeout,
-		Transport: tr,
-	}
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/json")
+// 	timeout := time.Duration(time.Second * 10)
+// 	client := http.Client{
+// 		Timeout:   timeout,
+// 		Transport: tr,
+// 	}
+// 	req, err := http.NewRequest("GET", u, nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	req.Header.Set("Accept", "application/json")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if sc := resp.StatusCode; sc != 200 {
-		return nil, fmt.Errorf("response status code %d", sc)
-	}
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if sc := resp.StatusCode; sc != 200 {
+// 		return nil, fmt.Errorf("response status code %d", sc)
+// 	}
 
-	defer resp.Body.Close()
+// 	defer resp.Body.Close()
 
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
-}
+// 	b, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return b, nil
+// }
 
 func (fn *filename) downloadDss(url string, d string) error {
 	resp, err := http.Get(url)
