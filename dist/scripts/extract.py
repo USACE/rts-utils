@@ -48,7 +48,7 @@ WHERE d.usgs_code_id = (SELECT id FROM parameter_code as pc WHERE pc.code = '${P
 # set the scheme, host, and timeout
 SCHEME = "https"
 HOST = "water-api.corps.cloud"
-TIMEOUT = 600
+TIMEOUT = 300
 
 # get the time window
 # after = "" # "YYYY-MM-DDTHH:MM:SSZ"
@@ -91,19 +91,6 @@ sub = go.get(out_err=False, is_shell=False)
 
 sub.stdin.write(json.dumps(CONFIG))
 sub.stdin.close()
-
-stderr = sub.stderr.read()
-sub.stderr.close()
-if "error" in stderr:
-    javax.swing.JOptionPane.showMessageDialog(
-        None,
-        stderr.split("::")[-1],
-        "Error",
-        javax.swing.JOptionPane.ERROR_MESSAGE,
-    )
-    quit()
-
-
 
 byte_array = bytearray()
 stmt = None
@@ -172,11 +159,23 @@ for iter_byte in iter(partial(sub.stdout.read, 1), b""):
         if msg:
             print(msg)
 
-
 if stmt:
     stmt.close()
 if conn:
     conn.close()
+
+std_err = sub.stderr.read()
+sub.stderr.close()
+sub.stdout.close()
+print(std_err)
+if "error" in std_err:
+    javax.swing.JOptionPane.showMessageDialog(
+        None,
+        std_err.split("::")[-1],
+        "Error",
+        javax.swing.JOptionPane.ERROR_MESSAGE,
+    )
+    quit()
 
 javax.swing.JOptionPane.showMessageDialog(
     None,
