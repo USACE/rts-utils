@@ -176,7 +176,7 @@ func (co *flagOptions) addFlagOptions() {
 	flag.StringVar(&co.Endpoint, "endpoint", "", "Get response body from endpoint")
 	flag.StringVar(&co.Branch, "branch", "", "GitHub repository branch name")
 	flag.StringVar(&co.Path, "path", "", "Path to target repository")
-	flag.Float64Var(&co.Timeout, "timeout", 300, "Grid download timeout (sec); default=300")
+	flag.Float64Var(&co.Timeout, "timeout", 600, "Grid download timeout (sec); default=600")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), usage, os.Args[0])

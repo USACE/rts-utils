@@ -24,7 +24,18 @@ from javax.swing import JFileChooser
 from javax.swing.filechooser import FileNameExtensionFilter
 
 
-def put_timeseries(site, dsspath, apart, bpart):
+def put_timeseries(
+    dssfilename,
+    apart = "", 
+    bpart = "", 
+    cpart = "",
+    epart = None,
+    fpart = "version",
+    unit = None,
+    datatype = None,
+    times = None,
+    values = None
+):
     """Save timeseries to DSS File
 
     exception handled with a message output saying site not saved, but
@@ -35,7 +46,7 @@ def put_timeseries(site, dsspath, apart, bpart):
     site: json
         JSON object containing meta data about the site/parameter combination,
         time array and value array
-    dsspath: str
+    dssfilename: str
         path to dss file
     Returns
     -------
@@ -45,50 +56,43 @@ def put_timeseries(site, dsspath, apart, bpart):
     ------
     HEC DSS exception
     """
-    site_parameters = namedtuple("site_parameters", site.keys())(**site)
-    parameter, unit, data_type, version = USGS_EXTRACT_CODES[site_parameters.code]
 
-    dss = HecDss.open(dsspath)
     try:
-        times = [
-            HecTime(t, HecTime.MINUTE_GRANULARITY).value() for t in site_parameters.times
-        ]
-
+        dss = HecDss.open(dssfilename)
+    except Exception as e:
+        raise
+    
+    try:
+        # map times and values
         timestep_min = None
         for t_time in range(len(times) - 1):
             time_step = abs(times[t_time + 1] - times[t_time])
             if time_step < timestep_min or timestep_min is None:
                 timestep_min = time_step
         epart = TimeStep().getEPartFromIntervalMinutes(timestep_min)
-        # Set the pathname
-        if bpart == "Name":
-            bpart = site_parameters.name
-        elif bpart == "Site Number":
-            bpart = site_parameters.site_number
-        
+
         pathname = "/{0}/{1}/{2}//{3}/{4}/".format(
-            apart, bpart, parameter, epart, version
+            apart, bpart, cpart, epart, fpart
         ).upper()
-        # apart, bpart, _, _, _, _ = pathname.split('/')[1:-1]
 
         container = TimeSeriesContainer()
         container.fullName = pathname
         container.location = apart
-        container.parameter = parameter
-        container.type = data_type
-        container.version = version
+        container.parameter = cpart
+        container.type = datatype
+        container.version = fpart
         container.interval = timestep_min
         container.units = unit
         container.times = times
-        container.values = site_parameters.values
-        container.numberValues = len(site_parameters.times)
+        container.values = values
+        container.numberValues = len(times)
         container.startTime = times[0]
         container.endTime = times[-1]
         container.timeZoneID = "UTC"
         # container.makeAscending()
         if not TimeSeriesMath.checkTimeSeries(container):
-            return 'site_parameters: "{}" not saved to DSS'.format(
-                site_parameters.site_number
+            return "\"{}\" not saved to DSS".format(
+                pathname
             )
         tsc = TimeSeriesFunctions.snapToRegularInterval(
             container, epart, "0MIN", "0MIN", "0MIN"
@@ -96,11 +100,10 @@ def put_timeseries(site, dsspath, apart, bpart):
 
         # Put the data to DSS
         dss.put(tsc)
+        dss.done()
     except Exception as ex:
         print(ex)
-        return "site_parameters: '{}' not saved to DSS".format(
-            site_parameters.site_number
-        )
+        return "site_parameters not saved to DSS"
 
 
 
