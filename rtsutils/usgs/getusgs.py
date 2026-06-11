@@ -307,8 +307,8 @@ A,B,C,D,E,F = 1,2,3,4,5,6
 IRREGULAR_INTERVAL = -1
 USGS_TEXT, SHEF_TEXT, DSS_FILE, CWMS_DB = 1, 2, 4, 8
 NONE, NORMAL, VERBOSE = 0, 1, 2
-URL_TEMPLATE_REL = "https://waterdata.usgs.gov/nwis/iv/?format=rdb,1.0&site=%s&period=PT%dH"
-URL_TEMPLATE_ABS = "https://waterdata.usgs.gov/nwis/iv/?format=rdb,1.0&site=%s&startDT=%s&endDT=%s"
+URL_TEMPLATE_REL = "https://waterservices.usgs.gov/nwis/iv/?format=rdb,1.0&site=%s&period=PT%dH"
+URL_TEMPLATE_ABS = "https://waterservices.usgs.gov/nwis/iv/?format=rdb,1.0&site=%s&startDT=%s&endDT=%s"
 #------------------#
 # program defaults #
 #------------------#
