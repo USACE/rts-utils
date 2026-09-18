@@ -22,18 +22,20 @@ func grid(url url.URL, p payload, t int) (string, error) {
 	}
 
 	downloadUrl := url
-	downloadUrl.Path = "downloads" + "/" + us.ID
+	downloadUrl.Path = apiEndpoint(url.Host, "downloads/"+us.ID)
 	// url.Path = url.Path + "/" + us.ID
 
 	log.Println("Endpoint/ID: " + url.Path)
 	timeout := time.Duration(int(time.Second) * int(t))
 	var fn filename
 	for start := time.Now(); time.Since(start) < timeout; {
-		us.getStatus(downloadUrl.String())
+		if err := us.getStatus(downloadUrl.String()); err != nil {
+			return "", err
+		}
 		if us.Status == "FAILED" {
 			return "", errors.New("Status: FAILED")
 		}
-		log.Printf("ID: %-40s Status: %-12s Progress: %-6d File: %s", us.ID, us.Status, us.Progress, us.File)
+		log.Printf("ID: %-40s Status: %-12s Progress: %-6d", us.ID, us.Status, us.Progress)
 		if us.Status == "SUCCESS" && us.Progress >= 100 && us.File != "" {
 			if err := fn.downloadDss(us.File, ""); err != nil {
 				return dssfilepath, err

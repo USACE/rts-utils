@@ -54,7 +54,7 @@ class Cumulus():
         if "error" in stderr:
             JOptionPane.showMessageDialog(
                 None,
-                stderr.split("::")[-1],
+                stderr.replace("error::", ""),
                 "Program Error",
                 JOptionPane.ERROR_MESSAGE,
             )
@@ -249,17 +249,24 @@ class Cumulus():
             self.outer_class.go_config["Endpoint"] = "watersheds"
 
             ws_out, stderr = go.get(self.outer_class.go_config, out_err=True, is_shell=False)
+            if "error::" in stderr or not ws_out:
+                JOptionPane.showMessageDialog(None,
+                    "Unable to load Cumulus watersheds.\n\n" + stderr.replace("error::", ""),
+                    "Cumulus Connection", JOptionPane.ERROR_MESSAGE)
+                print(stderr)
+                return
             self.outer_class.go_config["Endpoint"] = "products"
             ps_out, stderr = go.get(self.outer_class.go_config, out_err=True, is_shell=False)
 
-            if "error" in stderr:
+            if "error::" in stderr or not ps_out:
                 print(stderr)
                 JOptionPane.showMessageDialog(
                     None,
-                    stderr.split("::")[-1],
+                    "Unable to load Cumulus products.\n\n" + stderr.replace("error::", ""),
                     "Program Error",
                     JOptionPane.ERROR_MESSAGE,
                 )
+                return
 
             self.api_watersheds = watershed_refactor(json.loads(ws_out)) if ws_out else {}
             self.api_products = product_refactor(json.loads(ps_out)) if ps_out else {}
