@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -24,6 +25,7 @@ Options:
 )
 
 type flagOptions struct {
+	Version    bool
 	ID         string
 	Scheme     string
 	Host       string
@@ -43,6 +45,12 @@ type Products []string
 func main() {
 	var co flagOptions
 	co.addFlagOptions()
+	if co.Version {
+		fmt.Println(helperVersion)
+		return
+	}
+	executable, _ := os.Executable()
+	fmt.Fprintf(os.Stderr, "%s\nHelper: %s\n", helperVersion, executable)
 
 	// Get some stdin
 	stat, _ := os.Stdin.Stat()
@@ -59,9 +67,18 @@ func main() {
 	}
 
 	// need to check the allowable hosts
+	co.Host = strings.TrimSpace(co.Host)
 	if err := allowableHost(co.Host); err != nil {
-		fmt.Fprintf(os.Stderr, "error::%s\n", err)
+		fmt.Fprintf(os.Stderr, "error::Host %q is not allowed. For CWBI use Host=cumulus.cwbi.mil and Scheme=https, without /api in Host.\n", co.Host)
 		os.Exit(1)
+	}
+	apiToken = ""
+	if co.Host == "cumulus.cwbi.mil" {
+		if co.Scheme != "https" {
+			fmt.Fprintln(os.Stderr, "error::CWBI requires Scheme=https")
+			os.Exit(1)
+		}
+		apiToken = strings.TrimSpace(strings.TrimPrefix(co.Auth, "Bearer "))
 	}
 
 	// Basic URL and check service available
@@ -70,11 +87,14 @@ func main() {
 		Host:   co.Host,
 	}
 
-	if _, err := checkService(url.String()); err != nil {
-		fmt.Fprintf(os.Stderr, "error::%s\n", err)
-		os.Exit(1)
-	} else {
-		log.Println("Service up:", url.String())
+	// API requests must not depend on the separate website/login root working.
+	if co.Subcommand != "get" && co.Subcommand != "grid" {
+		resp, err := checkService(url.String())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error::%s\n", err)
+			os.Exit(1)
+		}
+		resp.Body.Close()
 	}
 
 	switch co.Subcommand {
@@ -95,6 +115,10 @@ func main() {
 		}
 	case "grid":
 		log.Println("Initiating 'grid' command")
+		if co.Host == "cumulus.cwbi.mil" && apiToken == "" {
+			fmt.Fprintln(os.Stderr, "error::CWBI downloads require CAC authentication. Install the accompanying rtsutils/go Python files and restart RTS.")
+			os.Exit(1)
+		}
 		if len(co.Products) == 0 {
 			fmt.Fprintf(os.Stderr, "error::No products provided\n")
 			flag.PrintDefaults()
@@ -112,15 +136,19 @@ func main() {
 		// 	co.Auth = string(auth)
 		// }
 
-		url.Path = co.Endpoint
+		url.Path = apiEndpoint(co.Host, co.Endpoint)
 
 		p := payload{
+			// Request body is unchanged for authenticated downloads.
 			After:       co.After,
 			Before:      co.Before,
 			WatershedID: co.ID,
 			ProductID:   co.Products,
 		}
 		log.Printf("%s", p)
+		if co.Host == "cumulus.cwbi.mil" {
+			url.Path = "api/downloads"
+		}
 		log.Printf("%s", url.String())
 		dss, err := grid(url, p, int(co.Timeout))
 		if err != nil {
@@ -150,10 +178,11 @@ func main() {
 			os.Exit(1)
 		}
 		log.Println("Initiating 'endpoint' command")
-		url.Path = co.Endpoint
+		url.Path = apiEndpoint(co.Host, co.Endpoint)
 		b, err := getResponseBody(url.String())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error::%s\n", err)
+			os.Exit(1)
 		}
 		os.Stdout.WriteString(string(b))
 	}
@@ -161,6 +190,7 @@ func main() {
 }
 
 func (co *flagOptions) addFlagOptions() {
+	flag.BoolVar(&co.Version, "version", false, "Print helper build version without connecting")
 	t2 := time.Now().UTC()
 	// t2.Truncate(24 * time.Hour)
 	t1 := t2.AddDate(0, 0, -7)

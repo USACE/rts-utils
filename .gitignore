@@ -6,3 +6,8 @@
 
 # ignore any file that is a test
 *test*
+# Include CWBI regression tests.
+!rtsutils/go/cavi/cwbi_test.go
+!rtsutils/go/cavi/auth_test.go
+!tests/
+!tests/test_cwbi_auth.py
